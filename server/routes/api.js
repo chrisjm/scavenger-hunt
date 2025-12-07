@@ -152,7 +152,7 @@ router.get('/leaderboard', async (req, res) => {
 			})
 			.from(submissions)
 			.innerJoin(users, eq(submissions.userId, users.id))
-			.where(eq(submissions.valid, true))
+			.where(eq(submissions.valid, 1))
 			.groupBy(users.name)
 			.orderBy(desc(count(submissions.id)));
 
@@ -160,6 +160,40 @@ router.get('/leaderboard', async (req, res) => {
 	} catch (error) {
 		console.error('Error fetching leaderboard:', error);
 		res.status(500).json({ error: 'Failed to fetch leaderboard' });
+	}
+});
+
+// Update user profile endpoint
+router.put('/users/:userId', async (req, res) => {
+	try {
+		const { userId } = req.params;
+		const { name } = req.body;
+
+		// Validate input
+		if (!name || typeof name !== 'string') {
+			return res.status(400).json({ error: 'Name is required and must be a string' });
+		}
+
+		const trimmedName = name.trim();
+		if (trimmedName.length < 2 || trimmedName.length > 30) {
+			return res.status(400).json({ error: 'Name must be between 2 and 30 characters' });
+		}
+
+		// Check if user exists
+		const existingUser = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+		if (existingUser.length === 0) {
+			return res.status(404).json({ error: 'User not found' });
+		}
+
+		// Update user name
+		await db.update(users).set({ name: trimmedName }).where(eq(users.id, userId));
+
+		// Return updated user
+		const updatedUser = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+		res.json({ user: updatedUser[0] });
+	} catch (error) {
+		console.error('Error updating user:', error);
+		res.status(500).json({ error: 'Failed to update user profile' });
 	}
 });
 

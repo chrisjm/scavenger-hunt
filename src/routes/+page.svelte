@@ -2,6 +2,7 @@
 	import { io } from 'socket.io-client';
 	import type { Socket } from 'socket.io-client';
 	import LoginModal from '$lib/components/LoginModal.svelte';
+	import ProfileModal from '$lib/components/ProfileModal.svelte';
 	import StatsGrid from '$lib/components/StatsGrid.svelte';
 	import TaskGrid from '$lib/components/TaskGrid.svelte';
 	import TabbedView from '$lib/components/TabbedView.svelte';
@@ -21,6 +22,10 @@
 	let showLoginModal = $state(false);
 	let loginName = $state('');
 	let loggingIn = $state(false);
+
+	// Profile state
+	let showProfileModal = $state(false);
+	let savingProfile = $state(false);
 
 	// Derived stats
 	let unlockedTasks = $derived(tasks.filter((task) => task.unlocked));
@@ -139,14 +144,46 @@
 
 	// Load leaderboard data
 	async function loadLeaderboard() {
-		leaderboardLoading = true;
 		try {
+			leaderboardLoading = true;
 			const response = await fetch('/api/leaderboard');
-			leaderboard = await response.json();
+			if (response.ok) {
+				leaderboard = await response.json();
+			}
 		} catch (error) {
 			console.error('Failed to load leaderboard:', error);
 		} finally {
 			leaderboardLoading = false;
+		}
+	}
+
+	// Profile management
+	async function updateProfile(newName: string) {
+		if (!userId) return;
+
+		try {
+			savingProfile = true;
+			const response = await fetch(`/api/users/${userId}`, {
+				method: 'PUT',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ name: newName })
+			});
+
+			if (response.ok) {
+				const data = await response.json();
+				userName = data.user.name;
+				// Update localStorage
+				if (userName) {
+					localStorage.setItem('scavenger-hunt-userName', userName);
+				}
+			} else {
+				throw new Error('Failed to update profile');
+			}
+		} catch (error) {
+			console.error('Failed to update profile:', error);
+			throw error;
+		} finally {
+			savingProfile = false;
 		}
 	}
 
@@ -196,9 +233,26 @@
 
 <div class="container mx-auto p-4 md:p-6 max-w-4xl">
 	<!-- Hero Section -->
-	<div class="text-center mb-8 md:mb-12">
+	<div class="text-center mb-6 md:mb-8 relative">
+		<!-- Profile Button (top right) -->
+		{#if userName}
+			<button
+				onclick={() => (showProfileModal = true)}
+				class="absolute top-0 right-0 flex items-center gap-2 px-3 py-2 bg-white rounded-full shadow-md hover:shadow-lg transition-all border border-gray-200 text-sm"
+				title="Edit Profile"
+			>
+				<div
+					class="w-6 h-6 bg-gradient-to-br from-green-400 to-blue-500 rounded-full flex items-center justify-center text-white text-xs font-bold"
+				>
+					{userName.charAt(0).toUpperCase()}
+				</div>
+				<span class="hidden sm:inline text-gray-700">{userName}</span>
+				<span class="text-gray-400">⚙️</span>
+			</button>
+		{/if}
+
 		<h1
-			class="text-3xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-green-600 via-red-500 to-green-600 bg-clip-text text-transparent"
+			class="text-3xl md:text-5xl font-bold bg-gradient-to-r from-red-600 via-green-600 to-red-600 bg-clip-text text-transparent mb-3 md:mb-4"
 		>
 			🎄 Christmas Scavenger Hunt 🎄
 		</h1>
@@ -243,4 +297,13 @@
 	{loggingIn}
 	onLogin={loginUser}
 	onNameChange={handleNameChange}
+/>
+
+<!-- Profile Modal -->
+<ProfileModal
+	show={showProfileModal}
+	currentName={userName || ''}
+	saving={savingProfile}
+	onSave={updateProfile}
+	onClose={() => (showProfileModal = false)}
 />
