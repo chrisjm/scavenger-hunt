@@ -29,7 +29,7 @@
 </script>
 
 <div
-	class="bg-gradient-to-br from-white to-blue-50 rounded-xl shadow-xl p-8 border border-blue-100"
+	class="bg-gradient-to-br from-white to-blue-50 rounded-xl shadow-xl p-4 md:p-8 border border-blue-100"
 >
 	<!-- Tab Headers -->
 	<div class="flex items-center gap-3 mb-6">

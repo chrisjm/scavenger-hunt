@@ -194,15 +194,15 @@
 	}
 </script>
 
-<div class="container mx-auto p-6 max-w-4xl">
+<div class="container mx-auto p-4 md:p-6 max-w-4xl">
 	<!-- Hero Section -->
-	<div class="text-center mb-12">
+	<div class="text-center mb-8 md:mb-12">
 		<h1
-			class="text-5xl font-bold mb-4 bg-gradient-to-r from-green-600 via-red-500 to-green-600 bg-clip-text text-transparent"
+			class="text-3xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-green-600 via-red-500 to-green-600 bg-clip-text text-transparent"
 		>
 			🎄 Christmas Scavenger Hunt 🎄
 		</h1>
-		<p class="text-xl text-gray-600 max-w-2xl mx-auto">
+		<p class="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto px-4">
 			Find festive items around you and share them with the community! Upload photos to complete
 			challenges and see what others have discovered.
 		</p>

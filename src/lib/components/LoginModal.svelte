@@ -12,7 +12,7 @@
 
 {#if show}
 	<div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-		<div class="bg-white rounded-xl shadow-2xl max-w-md w-full p-8 transform transition-all">
+		<div class="bg-white rounded-xl shadow-2xl max-w-md w-full p-4 md:p-8 transform transition-all">
 			<div class="text-center mb-6">
 				<div
 					class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4"

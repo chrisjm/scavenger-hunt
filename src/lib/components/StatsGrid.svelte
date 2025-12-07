@@ -19,7 +19,7 @@
 </script>
 
 {#if !loading && totalTasks > 0}
-	<div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+	<div class="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-6 md:mb-8">
 		<div class="bg-white rounded-xl p-4 shadow-md border border-gray-100">
 			<div class="flex items-center gap-2 mb-2">
 				<span class="text-2xl">🎯</span>

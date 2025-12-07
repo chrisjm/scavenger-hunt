@@ -21,7 +21,7 @@
 </script>
 
 <div
-	class="bg-gradient-to-br from-white to-green-50 rounded-xl shadow-xl p-8 mb-8 border border-green-100"
+	class="bg-gradient-to-br from-white to-green-50 rounded-xl shadow-xl p-4 md:p-8 mb-8 border border-green-100"
 >
 	<div class="flex items-center gap-3 mb-6">
 		<div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">

@@ -50,7 +50,7 @@
 		{/if}
 	</div>
 
-	<div class="p-6">
+	<div class="p-4 md:p-6">
 		<!-- Task Icon and Title -->
 		<div class="flex items-start gap-3 mb-4">
 			<div
