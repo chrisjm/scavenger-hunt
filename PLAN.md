@@ -1,84 +1,45 @@
-## **Architecture Overview**
+### 🚨 Critical Blockers (Must Fix First)
 
-### **Phase 1: Server & Infrastructure (Day 1)**
+1.  **The "User Identity" Crash**
+    * **The Issue:** Your database schema enforces a foreign key constraint on `submissions.user_id` -> `users.id`.
+    * **The Bug:** The frontend currently generates a random `userId` (`user-` + random) and sends it with the upload. It *never* creates a corresponding entry in the `users` table.
+    * **The Result:** When you try to upload a photo, SQLite will throw a `FOREIGN KEY constraint failed` error, and the upload will crash.
+    * **The Fix:** You need a simple "Login/Name Entry" modal to register the user in the DB before they can play.
 
-  * **VPS Prep:**
-      * Ensure Node.js (LTS) is installed.
-      * Install **PM2** (`npm i -g pm2`) to manage the process and keep it alive.
-      * **Nginx Configuration:** You will need a specific block to handle WebSocket upgrades.
-      * *Task:* specific Nginx config for `proxy_set_header Upgrade $http_upgrade;` and `proxy_set_header Connection "upgrade";`.
-  * **Project Structure (Monorepo-ish):**
-      * Since you are using Express for the backend, use the **SvelteKit Node Adapter** (`@sveltejs/adapter-node`).
-      * Your `server.js` will look roughly like this:
-        ```javascript
-        import { handler } from './build/handler.js'; // SvelteKit build
-        import express from 'express';
-        import { Server } from 'socket.io';
-        import { createServer } from 'http';
+2.  **Code Duplication / Confusion**
+    * You have AI and DB logic in **two places**: `server/utils/` (used by Express) and `src/lib/server/` (standard SvelteKit).
+    * Currently, your Express server uses `server/utils`. You should stick to that for the API to avoid maintaining two copies of the Gemini logic.
 
-        const app = express();
-        const server = createServer(app);
-        const io = new Server(server);
+---
 
-        // API Routes & Socket logic go here...
+### 📝 Remaining Phase-d Plan
 
-        // Let SvelteKit handle everything else
-        app.use(handler);
+#### **Phase 3.5: User Identity & Leaderboard (Priority)**
+* [ ] **Create API Endpoint `/api/login`:**
+    * Accepts a `name`.
+    * Inserts into the `users` table (or retrieves existing).
+    * Returns the `userId`.
+* [ ] **Frontend "Name Entry" Modal:**
+    * If `localStorage` has no `userId`, show a modal asking "Who are you?".
+    * Save the response to `localStorage` and a Svelte store.
+* [ ] **Leaderboard Component:**
+    * Create a new API endpoint `/api/leaderboard` that runs `SELECT users.name, COUNT(*) as score FROM submissions WHERE valid=1 GROUP BY users.name`.
+    * Add a visual Leaderboard to `+page.svelte` (swappable tabs with the Feed).
 
-        server.listen(3000);
-        ```
+#### **Phase 4: Mobile & PWA Polish (Essential for Cameras)**
+* [ ] **Install PWA Plugin:**
+    * `npm install -D vite-plugin-pwa`.
+* [ ] **Manifest Configuration:**
+    * Configure `vite.config.ts` to generate `manifest.webmanifest`.
+    * **Crucial:** Set `display: standalone` so the browser UI (URL bar) disappears, making it look like a real app. This gives more screen space for the camera view.
+* [ ] **Mobile Layout Tweaks:**
+    * The current UI has a lot of padding (`p-6`, `p-8`). On a phone, this wastes space. Reduce padding for mobile breakpoints (e.g., `p-4 md:p-8`).
 
-### **Phase 2: Data & State (Day 2)**
+#### **Phase 5: Deployment Prep**
+* [ ] **Nginx Config:**
+    * You need to write the `nginx.conf` block for your VPS that handles the WebSocket upgrade headers, otherwise `socket.io` will fall back to long-polling (slower).
+* [ ] **Environment Secrets:**
+    * Ensure your `.env` on the VPS has the production `DATABASE_URL` and `GEMINI_API_KEY`.
 
-  * **SQLite Schema:**
-      * Since you want strictness to vary, add a `prompt_strictness` or `validation_prompt` column to the `Tasks` table.
-      * **Table: Tasks**
-          * `id` (int)
-          * `description` (text) - Displayed to user: "Find a Santa Hat"
-          * `ai_prompt` (text) - Hidden, sent to Gemini: "A photo of a red and white Santa hat"
-          * `min_confidence` (float) - e.g., 0.7 for loose, 0.9 for strict.
-          * `unlock_date` (datetime)
-  * **Image Storage:**
-      * Create a local directory `/uploads`.
-      * Serve this statically in Express: `app.use('/uploads', express.static('uploads'))`.
-      * *Note:* Ensure you implement a basic file cleanup or maximize storage if you expect 10 users \* 10MB photos \* 20 days (approx 2GB).
+---
 
-### **Phase 3: The "Judge" (AI Implementation) (Day 3-4)**
-
-  * **Gemini Flash Implementation:**
-      * You need **Structured Output** (JSON). Don't parse text.
-      * **Prompt Strategy:**
-        ```text
-        Role: You are a strict scavenger hunt judge.
-        Task: Verify if the image contains: {ai_prompt}
-        Output: Return JSON only: { "match": boolean, "confidence": float (0.0 to 1.0), "reasoning": "short string" }
-        ```
-      * *Tip:* Flash 2.0 is multimodal. You can pass the image buffer directly.
-  * **The "Strictness" Slider:**
-      * **Early Game (Low Strictness):** Prompt = "A photo containing {item}". Threshold = 0.6.
-      * **Late Game (High Strictness):** Prompt = "A photo clearly showing {item} in the center, well lit". Threshold = 0.85.
-      * **Logic:**
-        ```javascript
-        if (aiResponse.match && aiResponse.confidence >= task.min_confidence) {
-             // Success
-        }
-        ```
-
-### **Phase 4: The "Public Shaming" UI (Day 5)**
-
-  * **Real-time Feed:**
-      * When `socket.on('submission')` fires, push the new entry to a Svelte store.
-      * **The Shame Component:**
-          * If `match === true`: Show image with a green border + "Approved by AI".
-          * If `match === false`: Show image with a **Red Border** + the AI's reasoning (e.g., *"I see a cat, not a reindeer. Nice try, Uncle Bob."*). This is the comedy gold of the app.
-  * **Leaderboard:**
-      * Simple `SELECT user_id, count(*) FROM submissions WHERE valid = 1 GROUP BY user_id`.
-
-### **Phase 5: Deployment & PWA (Day 6)**
-
-  * **Build & Deploy:**
-      * Run `npm run build`.
-      * Upload to VPS.
-      * Start with PM2: `pm2 start server.js --name "scavenger"`.
-  * **HTTPS:**
-      * Use Certbot (`certbot --nginx`). Cameras often **will not work** on mobile browsers unless the site is served over HTTPS (security requirement for `navigator.mediaDevices`).
