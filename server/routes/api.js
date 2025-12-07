@@ -1,6 +1,6 @@
 import express from 'express';
 import path from 'path';
-import { eq } from 'drizzle-orm';
+import { eq, count, desc } from 'drizzle-orm';
 import { db, schema } from '../utils/database.js';
 import { validateImageWithAI, isSubmissionValid } from '../utils/ai-validator.js';
 import { upload, uploadsDir } from '../middleware/upload.js';
@@ -139,6 +139,27 @@ router.get('/tasks', async (req, res) => {
 	} catch (error) {
 		console.error('Error fetching tasks:', error);
 		res.status(500).json({ error: 'Failed to fetch tasks' });
+	}
+});
+
+// Leaderboard endpoint
+router.get('/leaderboard', async (req, res) => {
+	try {
+		const leaderboard = await db
+			.select({
+				name: users.name,
+				score: count(submissions.id)
+			})
+			.from(submissions)
+			.innerJoin(users, eq(submissions.userId, users.id))
+			.where(eq(submissions.valid, true))
+			.groupBy(users.name)
+			.orderBy(desc(count(submissions.id)));
+
+		res.json(leaderboard);
+	} catch (error) {
+		console.error('Error fetching leaderboard:', error);
+		res.status(500).json({ error: 'Failed to fetch leaderboard' });
 	}
 });
 

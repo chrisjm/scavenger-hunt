@@ -4,7 +4,7 @@
 	import LoginModal from '$lib/components/LoginModal.svelte';
 	import StatsGrid from '$lib/components/StatsGrid.svelte';
 	import TaskGrid from '$lib/components/TaskGrid.svelte';
-	import SubmissionsFeed from '$lib/components/SubmissionsFeed.svelte';
+	import TabbedView from '$lib/components/TabbedView.svelte';
 
 	let socket: Socket | undefined;
 	let submissions = $state<any[]>([]);
@@ -12,6 +12,8 @@
 	let uploading = $state(false);
 	let loading = $state(true);
 	let tasks = $state<any[]>([]);
+	let leaderboard = $state<any[]>([]);
+	let leaderboardLoading = $state(false);
 
 	// User authentication state
 	let userId = $state<string | null>(null);
@@ -95,6 +97,10 @@
 
 		socket.on('new-submission', (submission: any) => {
 			submissions = [submission, ...submissions];
+			// Refresh leaderboard when a valid submission comes in
+			if (submission.valid) {
+				loadLeaderboard();
+			}
 		});
 	}
 
@@ -112,6 +118,7 @@
 		}
 
 		loadTasks();
+		loadLeaderboard();
 
 		// Check for existing user
 		checkExistingUser();
@@ -128,6 +135,19 @@
 
 	function handleNameChange(name: string) {
 		loginName = name;
+	}
+
+	// Load leaderboard data
+	async function loadLeaderboard() {
+		leaderboardLoading = true;
+		try {
+			const response = await fetch('/api/leaderboard');
+			leaderboard = await response.json();
+		} catch (error) {
+			console.error('Failed to load leaderboard:', error);
+		} finally {
+			leaderboardLoading = false;
+		}
 	}
 
 	async function uploadImage(taskId: number) {
@@ -208,8 +228,8 @@
 		onUpload={uploadImage}
 	/>
 
-	<!-- Live Feed -->
-	<SubmissionsFeed {submissions} />
+	<!-- Community Activity -->
+	<TabbedView {submissions} {leaderboard} {leaderboardLoading} />
 </div>
 
 <!-- Login Modal -->
