@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { io } from 'socket.io-client';
 	import type { Socket } from 'socket.io-client';
-	import LoginModal from '$lib/components/LoginModal.svelte';
-	import ProfileModal from '$lib/components/ProfileModal.svelte';
+	import { goto } from '$app/navigation';
+	import { onMount } from 'svelte';
 	import StatsGrid from '$lib/components/StatsGrid.svelte';
 	import TaskGrid from '$lib/components/TaskGrid.svelte';
 	import TabbedView from '$lib/components/TabbedView.svelte';
@@ -19,13 +19,6 @@
 	// User authentication state
 	let userId = $state<string | null>(null);
 	let userName = $state<string | null>(null);
-	let showLoginModal = $state(false);
-	let loginName = $state('');
-	let loggingIn = $state(false);
-
-	// Profile state
-	let showProfileModal = $state(false);
-	let savingProfile = $state(false);
 
 	// Derived stats
 	let unlockedTasks = $derived(tasks.filter((task) => task.unlocked));
@@ -35,61 +28,36 @@
 	);
 	let approvedSubmissions = $derived(submissions.filter((sub) => sub.valid));
 
-	// Check for existing user in localStorage (for backward compatibility)
-	function checkExistingUser() {
+	// Check authentication and redirect if needed
+	onMount(() => {
 		const storedUserId = localStorage.getItem('scavenger-hunt-userId');
 		const storedUserName = localStorage.getItem('scavenger-hunt-userName');
 
-		if (storedUserId && storedUserName) {
-			userId = storedUserId;
-			userName = storedUserName;
-			// Clear old localStorage data since we now use database-only approach
-			localStorage.removeItem('scavenger-hunt-userId');
-			localStorage.removeItem('scavenger-hunt-userName');
-			return true;
-		}
-		return false;
-	}
-
-	// Login user
-	async function loginUser() {
-		if (!loginName.trim()) {
-			alert('Please enter your name');
+		if (!storedUserId || !storedUserName) {
+			// User is not logged in, redirect to login page
+			goto('/login');
 			return;
 		}
 
-		loggingIn = true;
+		// User is logged in
+		userId = storedUserId;
+		userName = storedUserName;
+
+		// Initialize the app
+		loadTasks();
+		loadLeaderboard();
+		connectSocket();
+	});
+
+	// Load tasks from API
+	async function loadTasks() {
 		try {
-			const response = await fetch('/api/login', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ name: loginName.trim() })
-			});
-
-			if (response.ok) {
-				const data = await response.json();
-				userId = data.userId;
-				userName = data.userName;
-
-				showLoginModal = false;
-				loginName = '';
-
-				// Connect to socket after successful login
-				connectSocket();
-			} else {
-				const error = await response.json();
-				if (response.status === 409) {
-					// Name already taken
-					alert(error.message || 'This name is already taken. Please choose a different name.');
-				} else {
-					alert('Login failed: ' + error.error);
-				}
-			}
+			const response = await fetch('/api/tasks');
+			tasks = await response.json();
 		} catch (error) {
-			console.error('Login error:', error);
-			alert('Login failed. Please try again.');
+			console.error('Failed to load tasks:', error);
 		} finally {
-			loggingIn = false;
+			loading = false;
 		}
 	}
 
@@ -112,37 +80,9 @@
 		});
 	}
 
-	$effect(() => {
-		// Load tasks from API
-		async function loadTasks() {
-			try {
-				const response = await fetch('/api/tasks');
-				tasks = await response.json();
-			} catch (error) {
-				console.error('Failed to load tasks:', error);
-			} finally {
-				loading = false;
-			}
-		}
-
-		loadTasks();
-		loadLeaderboard();
-
-		// Check for existing user
-		checkExistingUser();
-
-		return () => {
-			socket?.disconnect();
-		};
-	});
-
 	function handleFileSelect(event: Event) {
 		const target = event.target as HTMLInputElement;
 		selectedFile = target.files?.[0] || null;
-	}
-
-	function handleNameChange(name: string) {
-		loginName = name;
 	}
 
 	// Load leaderboard data
@@ -160,39 +100,6 @@
 		}
 	}
 
-	// Profile management
-	async function updateProfile(newName: string) {
-		if (!userId) return;
-
-		try {
-			savingProfile = true;
-			const response = await fetch(`/api/users/${userId}`, {
-				method: 'PUT',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ name: newName })
-			});
-
-			if (response.ok) {
-				const data = await response.json();
-				userName = data.user.name;
-			} else {
-				const error = await response.json();
-				if (response.status === 409) {
-					throw new Error(
-						error.message || 'This name is already taken. Please choose a different name.'
-					);
-				} else {
-					throw new Error('Failed to update profile');
-				}
-			}
-		} catch (error) {
-			console.error('Failed to update profile:', error);
-			throw error;
-		} finally {
-			savingProfile = false;
-		}
-	}
-
 	async function uploadImage(taskId: number) {
 		if (!selectedFile) {
 			alert('Please select an image first');
@@ -201,7 +108,7 @@
 
 		if (!userId) {
 			alert('Please log in first');
-			showLoginModal = true;
+			goto('/login');
 			return;
 		}
 
@@ -242,8 +149,8 @@
 	<div class="text-center mb-6 md:mb-8 relative">
 		<!-- Profile Button (top right) -->
 		{#if userName}
-			<button
-				onclick={() => (showProfileModal = true)}
+			<a
+				href="/profile"
 				class="absolute top-0 right-0 flex items-center gap-2 px-3 py-2 bg-white rounded-full shadow-md hover:shadow-lg transition-all border border-gray-200 text-sm"
 				title="Edit Profile"
 			>
@@ -254,7 +161,7 @@
 				</div>
 				<span class="hidden sm:inline text-gray-700">{userName}</span>
 				<span class="text-gray-400">⚙️</span>
-			</button>
+			</a>
 		{/if}
 
 		<h1
@@ -295,21 +202,3 @@
 	<!-- Community Activity -->
 	<TabbedView {submissions} {leaderboard} {leaderboardLoading} />
 </div>
-
-<!-- Login Modal -->
-<LoginModal
-	show={showLoginModal}
-	{loginName}
-	{loggingIn}
-	onLogin={loginUser}
-	onNameChange={handleNameChange}
-/>
-
-<!-- Profile Modal -->
-<ProfileModal
-	show={showProfileModal}
-	currentName={userName || ''}
-	saving={savingProfile}
-	onSave={updateProfile}
-	onClose={() => (showProfileModal = false)}
-/>

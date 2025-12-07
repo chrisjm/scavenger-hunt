@@ -3,11 +3,12 @@
 		show: boolean;
 		loginName: string;
 		loggingIn: boolean;
-		onLogin: () => Promise<void>;
+		onLogin: (isReturningUser: boolean) => Promise<void>;
 		onNameChange: (name: string) => void;
 	}
 
 	let { show, loginName, loggingIn, onLogin, onNameChange }: Props = $props();
+	let isReturningUser = $state(false);
 </script>
 
 {#if show}
@@ -19,14 +20,44 @@
 				>
 					<span class="text-green-600 text-3xl">🎄</span>
 				</div>
-				<h2 class="text-2xl font-bold text-gray-800 mb-2">Welcome to the Hunt!</h2>
-				<p class="text-gray-600">Enter your name to join the Christmas Scavenger Hunt</p>
+				<h2 class="text-2xl font-bold text-gray-800 mb-2">
+					{isReturningUser ? 'Welcome Back!' : 'Welcome to the Hunt!'}
+				</h2>
+				<p class="text-gray-600">
+					{isReturningUser
+						? 'Enter your username to continue your scavenger hunt'
+						: 'Choose a unique name to join the Christmas Scavenger Hunt'}
+				</p>
+			</div>
+
+			<!-- User Type Toggle -->
+			<div class="mb-6">
+				<div class="flex bg-gray-100 rounded-lg p-1">
+					<button
+						type="button"
+						onclick={() => (isReturningUser = false)}
+						class="flex-1 py-2 px-3 rounded-md text-sm font-medium transition-all duration-200 {!isReturningUser
+							? 'bg-white text-green-600 shadow-sm'
+							: 'text-gray-600 hover:text-gray-800'}"
+					>
+						🆕 New User
+					</button>
+					<button
+						type="button"
+						onclick={() => (isReturningUser = true)}
+						class="flex-1 py-2 px-3 rounded-md text-sm font-medium transition-all duration-200 {isReturningUser
+							? 'bg-white text-green-600 shadow-sm'
+							: 'text-gray-600 hover:text-gray-800'}"
+					>
+						🔄 Returning User
+					</button>
+				</div>
 			</div>
 
 			<form
 				onsubmit={(e) => {
 					e.preventDefault();
-					onLogin();
+					onLogin(isReturningUser);
 				}}
 			>
 				<div class="mb-6">
@@ -36,7 +67,7 @@
 						type="text"
 						value={loginName}
 						oninput={(e) => onNameChange(e.currentTarget.value)}
-						placeholder="Choose a unique name"
+						placeholder={isReturningUser ? 'Enter your username' : 'Choose a unique name'}
 						class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-green-500 focus:outline-none transition-colors disabled:bg-gray-100 disabled:cursor-not-allowed"
 						disabled={loggingIn}
 						maxlength="30"

@@ -8,10 +8,10 @@ import { upload, uploadsDir } from '../middleware/upload.js';
 const router = express.Router();
 const { tasks, submissions, users } = schema;
 
-// Login endpoint - creates a user with unique name or returns error if taken
+// Login endpoint - logs in existing user or creates new user
 router.post('/login', async (req, res) => {
 	try {
-		const { name } = req.body;
+		const { name, isReturningUser = false } = req.body;
 
 		if (!name || typeof name !== 'string' || name.trim().length === 0) {
 			return res.status(400).json({ error: 'Name is required' });
@@ -27,16 +27,30 @@ router.post('/login', async (req, res) => {
 		const existingUser = await db.select().from(users).where(eq(users.name, trimmedName)).limit(1);
 
 		if (existingUser.length > 0) {
-			// Name is taken
-			return res.status(409).json({
-				error: 'Name already taken',
-				message: `"${trimmedName}" is already taken. Please choose a different name.`
+			// User exists - log them in
+			return res.json({
+				userId: existingUser[0].id,
+				userName: existingUser[0].name,
+				isReturningUser: true
 			});
 		}
 
-		// Create new user with unique name
+		// User doesn't exist
+		if (isReturningUser) {
+			// They tried to log in as returning user but name doesn't exist
+			return res.status(404).json({
+				error: 'User not found',
+				message: `No user found with the name "${trimmedName}". Please check your spelling or create a new account.`
+			});
+		}
+
+		// Create new user
 		const newUser = await db.insert(users).values({ name: trimmedName }).returning();
-		res.json({ userId: newUser[0].id, userName: newUser[0].name });
+		res.json({
+			userId: newUser[0].id,
+			userName: newUser[0].name,
+			isReturningUser: false
+		});
 	} catch (error) {
 		console.error('Login error:', error);
 		// Handle unique constraint violation at database level
