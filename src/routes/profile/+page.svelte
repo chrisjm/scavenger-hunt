@@ -14,17 +14,14 @@
 	// Check if user is logged in
 	onMount(() => {
 		const storedUserId = localStorage.getItem('scavenger-hunt-userId');
-		const storedUserName = localStorage.getItem('scavenger-hunt-userName');
 
-		if (!storedUserId || !storedUserName) {
+		if (!storedUserId) {
 			// User is not logged in, redirect to login page
 			goto('/login');
 			return;
 		}
 
 		userId = storedUserId;
-		userName = storedUserName;
-		newName = storedUserName;
 	});
 
 	function validateName(name: string): boolean {
@@ -131,7 +128,7 @@
 				userName = data.user.name;
 
 				// Update localStorage
-				localStorage.setItem('scavenger-hunt-userName', userName);
+				// localStorage.setItem('scavenger-hunt-userName', userName);
 
 				// Show success message
 				nameError = '';

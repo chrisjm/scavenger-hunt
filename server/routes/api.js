@@ -4,6 +4,7 @@ import { eq, count, desc } from 'drizzle-orm';
 import { db, schema } from '../utils/database.js';
 import { validateImageWithAI, isSubmissionValid } from '../utils/ai-validator.js';
 import { upload, uploadsDir } from '../middleware/upload.js';
+import { resizeImageMiddleware } from '../middleware/imageResize.js';
 
 const router = express.Router();
 const { tasks, submissions, users } = schema;
@@ -95,77 +96,129 @@ router.get('/check-name/:name', async (req, res) => {
 	}
 });
 
-// Upload endpoint
-router.post('/upload', upload.single('image'), async (req, res) => {
-	try {
-		if (!req.file) {
-			return res.status(400).json({ error: 'No image file provided' });
-		}
+// Upload endpoint with image resizing
+router.post(
+	'/upload',
+	(req, res, next) => {
+		upload.single('image')(req, res, (err) => {
+			if (err) {
+				console.error('Multer error:', err);
 
-		const { userId, taskId } = req.body;
-		if (!userId || !taskId) {
-			return res.status(400).json({ error: 'userId and taskId are required' });
-		}
+				if (err.code === 'LIMIT_FILE_SIZE') {
+					return res.status(413).json({
+						error: 'Image file is too large. Please choose a file smaller than 10MB.'
+					});
+				}
 
-		// Get the task details
-		const task = await db
-			.select()
-			.from(tasks)
-			.where(eq(tasks.id, parseInt(taskId)))
-			.get();
-		if (!task) {
-			return res.status(404).json({ error: 'Task not found' });
-		}
+				if (err.message === 'Only image files are allowed!') {
+					return res.status(400).json({
+						error: 'Please select a valid image file (JPG, PNG, GIF, etc.)'
+					});
+				}
 
-		// Get the user details
-		const user = await db.select().from(users).where(eq(users.id, userId)).get();
-		if (!user) {
-			return res.status(404).json({ error: 'User not found' });
-		}
-
-		// Validate image with AI
-		const imagePath = path.join(uploadsDir, req.file.filename);
-		const aiResponse = await validateImageWithAI(imagePath, task);
-		const valid = isSubmissionValid(aiResponse, task);
-
-		// Store submission in database
-		const submissionId = crypto.randomUUID();
-		const submission = {
-			id: submissionId,
-			userId,
-			taskId: parseInt(taskId),
-			imagePath: `/uploads/${req.file.filename}`,
-			aiMatch: aiResponse.match,
-			aiConfidence: aiResponse.confidence,
-			aiReasoning: aiResponse.reasoning,
-			valid,
-			submittedAt: new Date()
-		};
-
-		await db.insert(submissions).values(submission);
-
-		// Broadcast to all connected clients
-		const submissionData = {
-			...submission,
-			taskDescription: task.description,
-			userName: user.name
-		};
-
-		req.io.to('scavenger-hunt').emit('new-submission', submissionData);
-
-		// Return submission data
-		res.json({
-			success: true,
-			submission: {
-				...submission,
-				aiResponse
+				return res.status(400).json({
+					error: 'File upload error. Please try again with a different image.'
+				});
 			}
+
+			next();
 		});
-	} catch (error) {
-		console.error('Upload error:', error);
-		res.status(500).json({ error: 'Upload failed' });
+	},
+	resizeImageMiddleware(),
+	async (req, res) => {
+		try {
+			if (!req.file) {
+				return res.status(400).json({ error: 'No image file provided' });
+			}
+
+			const { userId, taskId } = req.body;
+			if (!userId || !taskId) {
+				return res.status(400).json({ error: 'userId and taskId are required' });
+			}
+
+			// Get the task details
+			const task = await db
+				.select()
+				.from(tasks)
+				.where(eq(tasks.id, parseInt(taskId)))
+				.get();
+			if (!task) {
+				return res.status(404).json({ error: 'Task not found' });
+			}
+
+			// Get the user details
+			const user = await db.select().from(users).where(eq(users.id, userId)).get();
+			if (!user) {
+				return res.status(404).json({ error: 'User not found' });
+			}
+
+			// Validate image with AI
+			const imagePath = path.join(uploadsDir, req.file.filename);
+			const aiResponse = await validateImageWithAI(imagePath, task);
+			const valid = isSubmissionValid(aiResponse, task);
+
+			// Store submission in database
+			const submissionId = crypto.randomUUID();
+			const submission = {
+				id: submissionId,
+				userId,
+				taskId: parseInt(taskId),
+				imagePath: `/uploads/${req.file.filename}`,
+				aiMatch: aiResponse.match,
+				aiConfidence: aiResponse.confidence,
+				aiReasoning: aiResponse.reasoning,
+				valid,
+				submittedAt: new Date()
+			};
+
+			await db.insert(submissions).values(submission);
+
+			// Broadcast to all connected clients
+			const submissionData = {
+				...submission,
+				taskDescription: task.description,
+				userName: user.name
+			};
+
+			req.io.to('scavenger-hunt').emit('new-submission', submissionData);
+
+			// Return submission data
+			res.json({
+				success: true,
+				submission: {
+					...submission,
+					aiResponse
+				}
+			});
+		} catch (error) {
+			console.error('Upload error:', error);
+
+			// Provide more specific error messages
+			if (error.message && error.message.includes('FOREIGN KEY constraint failed')) {
+				return res.status(400).json({
+					error: 'Invalid user or task. Please refresh the page and try again.'
+				});
+			}
+
+			if (error.message && error.message.includes('SQLITE_BUSY')) {
+				return res.status(503).json({
+					error: 'Database is busy. Please try again in a moment.'
+				});
+			}
+
+			if (error.message && error.message.includes('AI validation failed')) {
+				return res.status(500).json({
+					error: 'AI image analysis is temporarily unavailable. Please try again later.'
+				});
+			}
+
+			// Generic server error
+			res.status(500).json({
+				error: 'Server error occurred while processing your image. Please try again.'
+			});
+		}
 	}
-});
+);
 
 // Get tasks endpoint
 router.get('/tasks', async (req, res) => {

@@ -1,5 +1,12 @@
 <script lang="ts">
 	import TaskCard from './TaskCard.svelte';
+	import {
+		resizeImage,
+		shouldResize,
+		formatFileSize,
+		type ResizeResult
+	} from '$lib/utils/imageResize';
+	import { Loader2 } from 'lucide-svelte';
 
 	interface Task {
 		id: number;
@@ -18,6 +25,55 @@
 	}
 
 	let { tasks, loading, selectedFile, uploading, onFileSelect, onUpload }: Props = $props();
+
+	// Image processing state
+	let processing = $state(false);
+	let resizeResult = $state<ResizeResult | null>(null);
+	let originalFile = $state<File | null>(null);
+
+	// Enhanced file selection with automatic resizing
+	async function handleFileSelect(event: Event) {
+		const target = event.target as HTMLInputElement;
+		const file = target.files?.[0];
+
+		if (!file) {
+			selectedFile = null;
+			resizeResult = null;
+			originalFile = null;
+			return;
+		}
+
+		// Store original file
+		originalFile = file;
+		processing = true;
+		resizeResult = null;
+
+		try {
+			// Check if file needs resizing
+			const needsResize = await shouldResize(file);
+
+			if (needsResize) {
+				// Resize the image
+				const result = await resizeImage(file);
+				resizeResult = result;
+				selectedFile = result.file;
+			} else {
+				// Use original file if no resize needed
+				selectedFile = file;
+				resizeResult = null;
+			}
+		} catch (error) {
+			console.error('Image processing failed:', error);
+			// Fallback to original file if resize fails
+			selectedFile = file;
+			resizeResult = null;
+		} finally {
+			processing = false;
+		}
+
+		// Call original handler for any additional logic
+		onFileSelect(event);
+	}
 </script>
 
 <div
@@ -36,19 +92,30 @@
 				type="file"
 				accept="image/*"
 				capture="environment"
-				onchange={onFileSelect}
-				class="block w-full text-sm text-gray-600 file:mr-2 md:file:mr-4 file:py-2 md:file:py-3 file:px-4 md:file:px-6 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-gradient-to-r file:from-green-50 file:to-green-100 file:text-green-700 hover:file:from-green-100 hover:file:to-green-200 file:transition-all file:duration-200 file:shadow-sm hover:file:shadow-md border-2 border-dashed border-green-200 rounded-lg p-3 md:p-4 hover:border-green-300 transition-colors"
+				onchange={handleFileSelect}
+				disabled={processing}
+				class="block w-full text-sm text-gray-600 file:mr-2 md:file:mr-4 file:py-2 md:file:py-3 file:px-4 md:file:px-6 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-gradient-to-r file:from-green-50 file:to-green-100 file:text-green-700 hover:file:from-green-100 hover:file:to-green-200 file:transition-all file:duration-200 file:shadow-sm hover:file:shadow-md border-2 border-dashed border-green-200 rounded-lg p-3 md:p-4 hover:border-green-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
 			/>
-			{#if selectedFile}
+
+			{#if processing}
+				<div class="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+					<div class="flex items-center gap-3">
+						<Loader2 class="w-4 h-4 animate-spin text-blue-600" />
+						<span class="text-sm font-medium text-blue-800">Processing image...</span>
+					</div>
+				</div>
+			{/if}
+
+			{#if selectedFile && !processing}
 				<div class="mt-3 p-3 bg-green-50 rounded-lg border border-green-200">
 					<div class="flex items-center gap-2 flex-wrap">
 						<span class="text-green-600">✅</span>
-						<span class="text-sm font-medium text-green-800 truncate flex-1"
-							>Selected: {selectedFile.name}</span
-						>
-						<span class="text-xs text-green-600 whitespace-nowrap"
-							>({Math.round(selectedFile.size / 1024)}KB)</span
-						>
+						<span class="text-sm font-medium text-green-800 truncate flex-1">
+							Selected: {selectedFile.name}
+						</span>
+						<span class="text-xs text-green-600 whitespace-nowrap">
+							({formatFileSize(selectedFile.size)})
+						</span>
 					</div>
 				</div>
 			{/if}

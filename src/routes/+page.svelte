@@ -124,20 +124,54 @@
 				body: formData
 			});
 
+			// Handle non-JSON responses (like network errors)
+			if (!response.ok) {
+				let errorMessage = 'Upload failed';
+
+				try {
+					const result = await response.json();
+					errorMessage = result.error || `Server error (${response.status})`;
+				} catch {
+					// If we can't parse JSON, use status-based messages
+					switch (response.status) {
+						case 400:
+							errorMessage = 'Invalid image file or missing information';
+							break;
+						case 404:
+							errorMessage = 'Task not found or user not found';
+							break;
+						case 413:
+							errorMessage = 'Image file is too large (max 10MB)';
+							break;
+						case 500:
+							errorMessage = 'Server error - please try again';
+							break;
+						default:
+							errorMessage = `Upload failed (Error ${response.status})`;
+					}
+				}
+
+				alert(errorMessage);
+				return;
+			}
+
 			const result = await response.json();
 
 			if (result.success) {
-				alert(
-					`Submission ${result.submission.valid ? 'accepted' : 'rejected'}!\nAI Reasoning: ${result.submission.aiReasoning}`
-				);
+				const message = result.submission.valid
+					? `🎉 Great photo! Your submission was accepted!\n\n${result.submission.aiReasoning}`
+					: `📸 Photo uploaded, but it doesn't quite match what we're looking for.\n\n${result.submission.aiReasoning}`;
+
+				alert(message);
 				selectedFile = null;
 				const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
 				if (fileInput) fileInput.value = '';
 			} else {
-				alert('Upload failed: ' + result.error);
+				alert('Upload failed: ' + (result.error || 'Unknown error'));
 			}
 		} catch (error) {
-			alert('Upload failed: ' + (error instanceof Error ? error.message : 'Unknown error'));
+			console.error('Upload error:', error);
+			alert('Network error - please check your connection and try again');
 		} finally {
 			uploading = false;
 		}
