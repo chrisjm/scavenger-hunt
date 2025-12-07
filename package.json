@@ -37,7 +37,6 @@
 		"@types/better-sqlite3": "^7.6.13",
 		"@types/multer": "^2.0.0",
 		"@types/node": "^22",
-		"@types/socket.io-client": "^3.0.0",
 		"drizzle-kit": "^0.31.7",
 		"drizzle-orm": "^0.44.7",
 		"eslint": "^9.39.1",
@@ -54,6 +53,7 @@
 		"typescript-eslint": "^8.47.0",
 		"vite": "^7.2.2",
 		"vite-plugin-devtools-json": "^1.0.0",
+		"vite-plugin-pwa": "^1.2.0",
 		"vitest": "^4.0.10"
 	},
 	"dependencies": {
