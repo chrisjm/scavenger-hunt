@@ -209,24 +209,28 @@
 	</div>
 
 	<!-- Stats Dashboard -->
-	<StatsGrid
-		{loading}
-		{totalTasks}
-		unlockedTasks={unlockedTasks.length}
-		{completionRate}
-		approvedSubmissions={approvedSubmissions.length}
-		totalSubmissions={submissions.length}
-	/>
+	<div class="mb-6 md:mb-8">
+		<StatsGrid
+			{loading}
+			{totalTasks}
+			unlockedTasks={unlockedTasks.length}
+			{completionRate}
+			approvedSubmissions={approvedSubmissions.length}
+			totalSubmissions={submissions.length}
+		/>
+	</div>
 
 	<!-- Upload Section -->
-	<TaskGrid
-		{tasks}
-		{loading}
-		{selectedFile}
-		{uploading}
-		onFileSelect={handleFileSelect}
-		onUpload={uploadImage}
-	/>
+	<div class="mb-6 md:mb-8">
+		<TaskGrid
+			{tasks}
+			{loading}
+			{selectedFile}
+			{uploading}
+			onFileSelect={handleFileSelect}
+			onUpload={uploadImage}
+		/>
+	</div>
 
 	<!-- Community Activity -->
 	<TabbedView {submissions} {leaderboard} {leaderboardLoading} />

@@ -81,8 +81,20 @@ try {
 app.use(handler);
 
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
-	console.log(`🚀 Server running on http://localhost:${PORT}`);
+const HOST = process.env.HOST || 'localhost';
+
+server.listen(PORT, HOST, () => {
+	console.log(`🚀 Server running on http://${HOST}:${PORT}`);
+
+	// If binding to all interfaces, show network info
+	if (HOST === '0.0.0.0') {
+		console.log(
+			`📱 Network access: Find your computer's IP address and use http://[YOUR_IP]:${PORT}`
+		);
+		console.log(`💡 On Mac: System Settings > Network, or run 'ifconfig | grep inet'`);
+		console.log(`💡 On Windows: ipconfig | findstr IPv4`);
+	}
+
 	console.log(`📁 Uploads directory: ${uploadsDir}`);
 	console.log(`🔌 Socket.IO enabled`);
 	console.log(`🤖 AI validation ready`);

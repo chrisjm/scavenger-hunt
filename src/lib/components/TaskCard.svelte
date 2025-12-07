@@ -60,8 +60,10 @@
 			>
 				<span class="text-2xl">{getTaskIcon(task.description)}</span>
 			</div>
-			<div class="flex-1">
-				<h3 class="font-bold text-lg text-gray-800 mb-1">{task.description}</h3>
+			<div class="flex-1 min-w-0">
+				<h3 class="font-bold text-base md:text-lg text-gray-800 mb-1 leading-tight">
+					{task.description}
+				</h3>
 				<div class="flex items-center gap-2 text-sm text-gray-600">
 					<span class="inline-flex items-center gap-1">
 						<span class="w-2 h-2 rounded-full {task.unlocked ? 'bg-green-400' : 'bg-gray-400'}"
