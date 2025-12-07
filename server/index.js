@@ -1,0 +1,92 @@
+import 'dotenv/config';
+import express from 'express';
+import { createServer } from 'http';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { setupSocketIO } from './utils/socket-handler.js';
+import { uploadsDir } from './middleware/upload.js';
+import apiRoutes from './routes/api.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Validate required environment variables
+const requiredEnvVars = ['DATABASE_URL', 'GEMINI_API_KEY'];
+const missingEnvVars = requiredEnvVars.filter((varName) => !process.env[varName]);
+
+if (missingEnvVars.length > 0) {
+	console.error('❌ Missing required environment variables:');
+	missingEnvVars.forEach((varName) => {
+		console.error(`   - ${varName}`);
+	});
+	console.error('\n💡 Make sure you have a .env file with the required variables.');
+	console.error('   Copy .env.example to .env and fill in the values.\n');
+	process.exit(1);
+}
+
+const app = express();
+const server = createServer(app);
+
+// Setup Socket.IO
+const io = setupSocketIO(server);
+
+// Middleware
+app.use(express.json());
+
+// Serve uploaded files statically
+app.use('/uploads', express.static(uploadsDir));
+
+// API Routes
+app.use('/api', apiRoutes);
+
+// Middleware to attach io to requests for broadcasting
+app.use((req, res, next) => {
+	req.io = io;
+	next();
+});
+
+// SvelteKit handler (only after build)
+let handler;
+try {
+	const svelteHandler = await import('../build/handler.js');
+	handler = svelteHandler.handler;
+	console.log('✅ SvelteKit handler loaded');
+} catch (error) {
+	console.log('⚠️  SvelteKit handler not found. Run "pnpm build" first.');
+	console.log('   Server will run in API-only mode for development.');
+
+	// Fallback for development - serve a simple message
+	handler = (req, res, next) => {
+		if (req.path.startsWith('/api') || req.path.startsWith('/uploads')) {
+			return next();
+		}
+		res.status(200).send(`
+			<html>
+				<body style="font-family: system-ui; padding: 2rem; text-align: center;">
+					<h1>🎄 Scavenger Hunt Server</h1>
+					<p>API server is running!</p>
+					<p>Run <code>pnpm build</code> to enable the full application.</p>
+					<p>API endpoints available:</p>
+					<ul style="list-style: none;">
+						<li><a href="/api/health">/api/health</a></li>
+						<li><a href="/api/tasks">/api/tasks</a></li>
+					</ul>
+				</body>
+			</html>
+		`);
+	};
+}
+
+// Let SvelteKit handle everything else
+app.use(handler);
+
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => {
+	console.log(`🚀 Server running on http://localhost:${PORT}`);
+	console.log(`📁 Uploads directory: ${uploadsDir}`);
+	console.log(`🔌 Socket.IO enabled`);
+	console.log(`🤖 AI validation ready`);
+	console.log(`🗄️  Database: ${process.env.DATABASE_URL}`);
+	console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+	console.log(`✅ All environment variables loaded`);
+});
