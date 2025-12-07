@@ -6,7 +6,51 @@ import { validateImageWithAI, isSubmissionValid } from '../utils/ai-validator.js
 import { upload, uploadsDir } from '../middleware/upload.js';
 
 const router = express.Router();
-const { tasks, submissions } = schema;
+const { tasks, submissions, users } = schema;
+
+// Login endpoint - creates or retrieves user
+router.post('/login', async (req, res) => {
+	try {
+		const { name } = req.body;
+		if (!name || typeof name !== 'string' || name.trim().length === 0) {
+			return res.status(400).json({ error: 'Name is required' });
+		}
+
+		const trimmedName = name.trim();
+
+		// Check if user already exists
+		const existingUser = await db.select().from(users).where(eq(users.name, trimmedName)).get();
+
+		if (existingUser) {
+			return res.json({
+				success: true,
+				userId: existingUser.id,
+				name: existingUser.name,
+				isNewUser: false
+			});
+		}
+
+		// Create new user
+		const newUserId = crypto.randomUUID();
+		const newUser = {
+			id: newUserId,
+			name: trimmedName,
+			createdAt: new Date()
+		};
+
+		await db.insert(users).values(newUser);
+
+		res.json({
+			success: true,
+			userId: newUserId,
+			name: trimmedName,
+			isNewUser: true
+		});
+	} catch (error) {
+		console.error('Login error:', error);
+		res.status(500).json({ error: 'Login failed' });
+	}
+});
 
 // Upload endpoint
 router.post('/upload', upload.single('image'), async (req, res) => {
@@ -28,6 +72,12 @@ router.post('/upload', upload.single('image'), async (req, res) => {
 			.get();
 		if (!task) {
 			return res.status(404).json({ error: 'Task not found' });
+		}
+
+		// Get the user details
+		const user = await db.select().from(users).where(eq(users.id, userId)).get();
+		if (!user) {
+			return res.status(404).json({ error: 'User not found' });
 		}
 
 		// Validate image with AI
@@ -55,7 +105,7 @@ router.post('/upload', upload.single('image'), async (req, res) => {
 		const submissionData = {
 			...submission,
 			taskDescription: task.description,
-			userName: 'Anonymous' // TODO: Get actual user name
+			userName: user.name
 		};
 
 		req.io.to('scavenger-hunt').emit('new-submission', submissionData);
