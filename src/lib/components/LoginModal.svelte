@@ -32,13 +32,14 @@
 				<div class="mb-6">
 					<label for="name" class="block text-sm font-medium text-gray-700 mb-2"> Your Name </label>
 					<input
-						id="name"
+						id="login-name"
 						type="text"
 						value={loginName}
 						oninput={(e) => onNameChange(e.currentTarget.value)}
-						placeholder="Enter your name..."
-						disabled={loggingIn}
+						placeholder="Choose a unique name"
 						class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-green-500 focus:outline-none transition-colors disabled:bg-gray-100 disabled:cursor-not-allowed"
+						disabled={loggingIn}
+						maxlength="30"
 						required
 					/>
 				</div>

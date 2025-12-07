@@ -8,47 +8,76 @@ import { upload, uploadsDir } from '../middleware/upload.js';
 const router = express.Router();
 const { tasks, submissions, users } = schema;
 
-// Login endpoint - creates or retrieves user
+// Login endpoint - creates a user with unique name or returns error if taken
 router.post('/login', async (req, res) => {
 	try {
 		const { name } = req.body;
+
 		if (!name || typeof name !== 'string' || name.trim().length === 0) {
 			return res.status(400).json({ error: 'Name is required' });
 		}
 
 		const trimmedName = name.trim();
 
-		// Check if user already exists
-		const existingUser = await db.select().from(users).where(eq(users.name, trimmedName)).get();
+		if (trimmedName.length < 2 || trimmedName.length > 30) {
+			return res.status(400).json({ error: 'Name must be between 2 and 30 characters' });
+		}
 
-		if (existingUser) {
-			return res.json({
-				success: true,
-				userId: existingUser.id,
-				name: existingUser.name,
-				isNewUser: false
+		// Check if user already exists
+		const existingUser = await db.select().from(users).where(eq(users.name, trimmedName)).limit(1);
+
+		if (existingUser.length > 0) {
+			// Name is taken
+			return res.status(409).json({
+				error: 'Name already taken',
+				message: `"${trimmedName}" is already taken. Please choose a different name.`
 			});
 		}
 
-		// Create new user
-		const newUserId = crypto.randomUUID();
-		const newUser = {
-			id: newUserId,
-			name: trimmedName,
-			createdAt: new Date()
-		};
-
-		await db.insert(users).values(newUser);
-
-		res.json({
-			success: true,
-			userId: newUserId,
-			name: trimmedName,
-			isNewUser: true
-		});
+		// Create new user with unique name
+		const newUser = await db.insert(users).values({ name: trimmedName }).returning();
+		res.json({ userId: newUser[0].id, userName: newUser[0].name });
 	} catch (error) {
 		console.error('Login error:', error);
+		// Handle unique constraint violation at database level
+		if (error.message && error.message.includes('UNIQUE constraint failed')) {
+			return res.status(409).json({
+				error: 'Name already taken',
+				message: 'This name is already taken. Please choose a different name.'
+			});
+		}
 		res.status(500).json({ error: 'Login failed' });
+	}
+});
+
+// Check name availability endpoint
+router.get('/check-name/:name', async (req, res) => {
+	try {
+		const { name } = req.params;
+
+		if (!name || name.trim().length === 0) {
+			return res.status(400).json({ error: 'Name is required' });
+		}
+
+		const trimmedName = name.trim();
+
+		if (trimmedName.length < 2 || trimmedName.length > 30) {
+			return res.status(400).json({
+				available: false,
+				error: 'Name must be between 2 and 30 characters'
+			});
+		}
+
+		// Check if name exists
+		const existingUser = await db.select().from(users).where(eq(users.name, trimmedName)).limit(1);
+
+		res.json({
+			available: existingUser.length === 0,
+			name: trimmedName
+		});
+	} catch (error) {
+		console.error('Name check error:', error);
+		res.status(500).json({ error: 'Failed to check name availability' });
 	}
 });
 
@@ -185,6 +214,16 @@ router.put('/users/:userId', async (req, res) => {
 			return res.status(404).json({ error: 'User not found' });
 		}
 
+		// Check if the new name is already taken by another user
+		const nameConflict = await db.select().from(users).where(eq(users.name, trimmedName)).limit(1);
+
+		if (nameConflict.length > 0 && nameConflict[0].id !== userId) {
+			return res.status(409).json({
+				error: 'Name already taken',
+				message: `"${trimmedName}" is already taken. Please choose a different name.`
+			});
+		}
+
 		// Update user name
 		await db.update(users).set({ name: trimmedName }).where(eq(users.id, userId));
 
@@ -193,6 +232,13 @@ router.put('/users/:userId', async (req, res) => {
 		res.json({ user: updatedUser[0] });
 	} catch (error) {
 		console.error('Error updating user:', error);
+		// Handle unique constraint violation at database level
+		if (error.message && error.message.includes('UNIQUE constraint failed')) {
+			return res.status(409).json({
+				error: 'Name already taken',
+				message: 'This name is already taken. Please choose a different name.'
+			});
+		}
 		res.status(500).json({ error: 'Failed to update user profile' });
 	}
 });

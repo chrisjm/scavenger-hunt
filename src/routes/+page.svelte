@@ -35,7 +35,7 @@
 	);
 	let approvedSubmissions = $derived(submissions.filter((sub) => sub.valid));
 
-	// Check for existing user in localStorage
+	// Check for existing user in localStorage (for backward compatibility)
 	function checkExistingUser() {
 		const storedUserId = localStorage.getItem('scavenger-hunt-userId');
 		const storedUserName = localStorage.getItem('scavenger-hunt-userName');
@@ -43,9 +43,12 @@
 		if (storedUserId && storedUserName) {
 			userId = storedUserId;
 			userName = storedUserName;
-		} else {
-			showLoginModal = true;
+			// Clear old localStorage data since we now use database-only approach
+			localStorage.removeItem('scavenger-hunt-userId');
+			localStorage.removeItem('scavenger-hunt-userName');
+			return true;
 		}
+		return false;
 	}
 
 	// Login user
@@ -59,32 +62,32 @@
 		try {
 			const response = await fetch('/api/login', {
 				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json'
-				},
+				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ name: loginName.trim() })
 			});
 
-			const result = await response.json();
-
-			if (result.success) {
-				userId = result.userId;
-				userName = result.name;
-
-				// Store in localStorage
-				localStorage.setItem('scavenger-hunt-userId', result.userId);
-				localStorage.setItem('scavenger-hunt-userName', result.name);
+			if (response.ok) {
+				const data = await response.json();
+				userId = data.userId;
+				userName = data.userName;
 
 				showLoginModal = false;
 				loginName = '';
 
-				// Connect to socket now that we have a user
+				// Connect to socket after successful login
 				connectSocket();
 			} else {
-				alert('Login failed: ' + result.error);
+				const error = await response.json();
+				if (response.status === 409) {
+					// Name already taken
+					alert(error.message || 'This name is already taken. Please choose a different name.');
+				} else {
+					alert('Login failed: ' + error.error);
+				}
 			}
 		} catch (error) {
-			alert('Login failed: ' + (error instanceof Error ? error.message : 'Unknown error'));
+			console.error('Login error:', error);
+			alert('Login failed. Please try again.');
 		} finally {
 			loggingIn = false;
 		}
@@ -172,12 +175,15 @@
 			if (response.ok) {
 				const data = await response.json();
 				userName = data.user.name;
-				// Update localStorage
-				if (userName) {
-					localStorage.setItem('scavenger-hunt-userName', userName);
-				}
 			} else {
-				throw new Error('Failed to update profile');
+				const error = await response.json();
+				if (response.status === 409) {
+					throw new Error(
+						error.message || 'This name is already taken. Please choose a different name.'
+					);
+				} else {
+					throw new Error('Failed to update profile');
+				}
 			}
 		} catch (error) {
 			console.error('Failed to update profile:', error);
