@@ -82,23 +82,76 @@ app.post('/api/upload', upload.single('image'), async (req, res) => {
 			return res.status(400).json({ error: 'userId and taskId are required' });
 		}
 
-		// TODO: Implement AI validation here
-		// For now, just store the submission
+		// Import AI validator and database
+		const { validateImageWithAI, isSubmissionValid } =
+			await import('./src/lib/server/ai-validator.ts');
+		const { db } = await import('./src/lib/server/db/index.ts');
+		const { tasks, submissions } = await import('./src/lib/server/db/schema.ts');
+		const { eq } = await import('drizzle-orm');
+
+		// Get the task details
+		const task = await db
+			.select()
+			.from(tasks)
+			.where(eq(tasks.id, parseInt(taskId)))
+			.get();
+		if (!task) {
+			return res.status(404).json({ error: 'Task not found' });
+		}
+
+		// Validate image with AI
+		const imagePath = path.join(__dirname, 'uploads', req.file.filename);
+		const aiResponse = await validateImageWithAI(imagePath, task);
+		const valid = isSubmissionValid(aiResponse, task);
+
+		// Store submission in database
+		const submissionId = crypto.randomUUID();
 		const submission = {
-			id: crypto.randomUUID(),
+			id: submissionId,
 			userId,
 			taskId: parseInt(taskId),
 			imagePath: `/uploads/${req.file.filename}`,
+			aiMatch: aiResponse.match,
+			aiConfidence: aiResponse.confidence,
+			aiReasoning: aiResponse.reasoning,
+			valid,
 			submittedAt: new Date()
 		};
 
-		// Broadcast to all connected clients
-		io.to('scavenger-hunt').emit('new-submission', submission);
+		await db.insert(submissions).values(submission);
 
-		res.json({ success: true, submission });
+		// Broadcast to all connected clients
+		io.to('scavenger-hunt').emit('new-submission', {
+			...submission,
+			taskDescription: task.description,
+			userName: 'Anonymous' // TODO: Get actual user name
+		});
+
+		res.json({ success: true, submission: { ...submission, aiResponse } });
 	} catch (error) {
 		console.error('Upload error:', error);
 		res.status(500).json({ error: 'Upload failed' });
+	}
+});
+
+// Get tasks endpoint
+app.get('/api/tasks', async (req, res) => {
+	try {
+		const { db } = await import('./src/lib/server/db/index.ts');
+		const { tasks } = await import('./src/lib/server/db/schema.ts');
+
+		const allTasks = await db.select().from(tasks).orderBy(tasks.unlockDate);
+
+		// Add unlocked status based on current date
+		const tasksWithStatus = allTasks.map((task) => ({
+			...task,
+			unlocked: new Date(task.unlockDate) <= new Date()
+		}));
+
+		res.json(tasksWithStatus);
+	} catch (error) {
+		console.error('Error fetching tasks:', error);
+		res.status(500).json({ error: 'Failed to fetch tasks' });
 	}
 });
 
