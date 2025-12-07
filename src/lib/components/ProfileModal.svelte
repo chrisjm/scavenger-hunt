@@ -11,40 +11,124 @@
 
 	let newName = $state('');
 	let nameError = $state('');
+	let checkingAvailability = $state(false);
+	let nameAvailable = $state<boolean | null>(null);
+	let checkTimeout: ReturnType<typeof setTimeout> | null = null;
 
 	// Reset form when modal opens
 	$effect(() => {
 		if (show) {
 			newName = currentName;
 			nameError = '';
+			nameAvailable = null;
+			checkingAvailability = false;
+			if (checkTimeout) {
+				clearTimeout(checkTimeout);
+				checkTimeout = null;
+			}
 		}
 	});
 
 	function validateName(name: string): boolean {
 		if (!name.trim()) {
 			nameError = 'Name cannot be empty';
+			nameAvailable = null;
 			return false;
 		}
 		if (name.trim().length < 2) {
 			nameError = 'Name must be at least 2 characters';
+			nameAvailable = null;
 			return false;
 		}
 		if (name.trim().length > 30) {
 			nameError = 'Name must be less than 30 characters';
+			nameAvailable = null;
 			return false;
 		}
 		nameError = '';
 		return true;
 	}
 
+	async function checkNameAvailability(name: string) {
+		const trimmedName = name.trim();
+
+		// Don't check if it's the same as current name
+		if (trimmedName === currentName) {
+			nameAvailable = true;
+			return;
+		}
+
+		if (!validateName(trimmedName)) {
+			return;
+		}
+
+		try {
+			checkingAvailability = true;
+			const response = await fetch(`/api/check-name/${encodeURIComponent(trimmedName)}`);
+			const data = await response.json();
+
+			if (response.ok) {
+				nameAvailable = data.available;
+				if (!data.available) {
+					nameError = `"${trimmedName}" is already taken. Please choose a different name.`;
+				}
+			} else {
+				nameError = data.error || 'Failed to check name availability';
+				nameAvailable = null;
+			}
+		} catch (error) {
+			console.error('Name availability check failed:', error);
+			nameAvailable = null;
+		} finally {
+			checkingAvailability = false;
+		}
+	}
+
+	function handleNameInput(name: string) {
+		newName = name;
+
+		// Clear previous timeout
+		if (checkTimeout) {
+			clearTimeout(checkTimeout);
+		}
+
+		// Reset availability state
+		nameAvailable = null;
+
+		// Validate immediately
+		if (!validateName(name)) {
+			return;
+		}
+
+		// Debounce the availability check
+		checkTimeout = setTimeout(() => {
+			checkNameAvailability(name);
+		}, 500);
+	}
+
 	async function handleSave() {
 		if (!validateName(newName)) return;
+
+		// If name is different from current, ensure it's available
+		if (newName.trim() !== currentName) {
+			if (!nameAvailable) {
+				// Check availability one more time before saving
+				await checkNameAvailability(newName);
+				if (!nameAvailable) {
+					return;
+				}
+			}
+		}
 
 		try {
 			await onSave(newName.trim());
 			onClose();
 		} catch (error) {
-			nameError = 'Failed to update name. Please try again.';
+			if (error instanceof Error && error.message.includes('already taken')) {
+				nameError = error.message;
+			} else {
+				nameError = 'Failed to update name. Please try again.';
+			}
 		}
 	}
 
@@ -119,23 +203,51 @@
 				<label for="profile-name" class="block text-sm font-medium text-gray-700 mb-2">
 					Display Name
 				</label>
-				<input
-					id="profile-name"
-					type="text"
-					bind:value={newName}
-					onkeydown={handleKeydown}
-					oninput={() => validateName(newName)}
-					placeholder="Enter your name"
-					class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-green-500 focus:ring-0 transition-colors text-lg"
-					class:border-red-300={nameError}
-					class:focus:border-red-500={nameError}
-					disabled={saving}
-					maxlength="30"
-				/>
+				<div class="relative">
+					<input
+						id="profile-name"
+						type="text"
+						bind:value={newName}
+						onkeydown={handleKeydown}
+						oninput={(e) => handleNameInput(e.currentTarget.value)}
+						placeholder="Choose a unique name"
+						class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-green-500 focus:ring-0 transition-colors text-lg pr-10"
+						class:border-red-300={nameError}
+						class:focus:border-red-500={nameError}
+						class:border-green-300={nameAvailable === true && newName.trim() !== currentName}
+						class:focus:border-green-500={nameAvailable === true && newName.trim() !== currentName}
+						disabled={saving}
+						maxlength="30"
+					/>
+
+					<!-- Status indicator -->
+					<div class="absolute right-3 top-1/2 transform -translate-y-1/2">
+						{#if checkingAvailability}
+							<div
+								class="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"
+							></div>
+						{:else if nameAvailable === true && newName.trim() !== currentName}
+							<span class="text-green-500 text-lg">✓</span>
+						{:else if nameAvailable === false}
+							<span class="text-red-500 text-lg">✗</span>
+						{/if}
+					</div>
+				</div>
+
 				{#if nameError}
 					<p class="mt-2 text-sm text-red-600 flex items-center gap-1">
 						<span>⚠️</span>
 						{nameError}
+					</p>
+				{:else if checkingAvailability}
+					<p class="mt-2 text-sm text-blue-600 flex items-center gap-1">
+						<span>🔍</span>
+						Checking availability...
+					</p>
+				{:else if nameAvailable === true && newName.trim() !== currentName}
+					<p class="mt-2 text-sm text-green-600 flex items-center gap-1">
+						<span>✅</span>
+						Name is available!
 					</p>
 				{/if}
 			</div>
@@ -159,7 +271,10 @@
 				</button>
 				<button
 					onclick={handleSave}
-					disabled={saving || !newName.trim() || !!nameError}
+					disabled={saving ||
+						!newName.trim() ||
+						!!nameError ||
+						(newName.trim() !== currentName && !nameAvailable)}
 					class="flex-1 px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl font-medium hover:from-green-700 hover:to-emerald-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
 				>
 					{#if saving}
