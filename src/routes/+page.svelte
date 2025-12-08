@@ -11,6 +11,9 @@
 	const userContext = getUserContext();
 	let userId = $derived(userContext.userId);
 	let userName = $derived(userContext.userName);
+	let isAdmin = $derived(userContext.isAdmin);
+	let userGroups = $derived(userContext.userGroups);
+	let activeGroupId = $derived(userContext.activeGroupId);
 
 	// State
 	let socket: Socket | undefined;
@@ -19,6 +22,13 @@
 	let submissions = $state<any[]>([]);
 	let leaderboard = $state<any[]>([]);
 	let leaderboardLoading = $state(false);
+	let groupList = $state<any[]>([]);
+	let joinGroupId = $state<string | null>(null);
+	let createName = $state('');
+	let createDescription = $state('');
+	let onboardingError = $state<string | null>(null);
+	let joining = $state(false);
+	let creating = $state(false);
 
 	// Derived stats
 	let unlockedTasks = $derived(tasks.filter((task) => task.unlocked));
@@ -34,8 +44,8 @@
 	// Load data when component mounts
 	onMount(() => {
 		loadTasks();
-		loadSubmissions();
-		loadLeaderboard();
+		// group-scoped data will load when activeGroupId is present
+		loadGroupList();
 	});
 
 	// Connect socket when userId is available
@@ -45,9 +55,18 @@
 		}
 	});
 
+	// Reload submissions/leaderboard whenever activeGroupId changes
+	$effect(() => {
+		if (activeGroupId) {
+			loadSubmissions();
+			loadLeaderboard();
+		}
+	});
+
 	async function loadSubmissions() {
+		if (!activeGroupId) return;
 		try {
-			const response = await fetch('/api/submissions');
+			const response = await fetch(`/api/submissions?groupId=${activeGroupId}`);
 			if (response.ok) {
 				submissions = await response.json();
 			}
@@ -68,9 +87,10 @@
 	}
 
 	async function loadLeaderboard() {
+		if (!activeGroupId) return;
 		try {
 			leaderboardLoading = true;
-			const response = await fetch('/api/submissions/leaderboard');
+			const response = await fetch(`/api/submissions/leaderboard?groupId=${activeGroupId}`);
 			if (response.ok) {
 				leaderboard = await response.json();
 			}
@@ -91,6 +111,9 @@
 		});
 
 		socket.on('new-submission', (submission: any) => {
+			// Ignore submissions from other groups
+			if (submission.groupId !== activeGroupId) return;
+
 			// Add new submission to the feed
 			submissions = [submission, ...submissions];
 
@@ -113,29 +136,176 @@
 			}
 		});
 	}
+
+	async function loadGroupList() {
+		try {
+			const response = await fetch('/api/groups');
+			if (response.ok) {
+				groupList = await response.json();
+			}
+		} catch (error) {
+			console.error('Failed to load groups:', error);
+		}
+	}
+
+	async function joinGroup() {
+		if (!userId || !joinGroupId) {
+			onboardingError = 'Select a group to join.';
+			return;
+		}
+		onboardingError = null;
+		joining = true;
+		try {
+			const response = await fetch(`/api/groups/${joinGroupId}/join`, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ userId })
+			});
+			if (!response.ok) {
+				const error = await response.json().catch(() => ({}));
+				onboardingError = error.error || 'Failed to join group';
+				return;
+			}
+			await userContext.refreshGroups();
+			userContext.setActiveGroup(joinGroupId);
+		} catch (error) {
+			console.error('Failed to join group:', error);
+			onboardingError = 'Failed to join group';
+		} finally {
+			joining = false;
+		}
+	}
+
+	async function createGroup() {
+		if (!userId || !createName.trim()) {
+			onboardingError = 'Enter a group name.';
+			return;
+		}
+		onboardingError = null;
+		creating = true;
+		try {
+			const response = await fetch('/api/groups', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					userId,
+					name: createName.trim(),
+					description: createDescription.trim() || undefined
+				})
+			});
+			if (!response.ok) {
+				const error = await response.json().catch(() => ({}));
+				onboardingError = error.error || 'Failed to create group';
+				return;
+			}
+			const data = await response.json();
+			await userContext.refreshGroups();
+			userContext.setActiveGroup(data.group.id);
+			createName = '';
+			createDescription = '';
+		} catch (error) {
+			console.error('Failed to create group:', error);
+			onboardingError = 'Failed to create group';
+		} finally {
+			creating = false;
+		}
+	}
 </script>
 
-<div class="container mx-auto max-w-4xl p-4 md:p-6">
-	<div class="relative mb-6 text-center md:mb-8">
-		<p class="mx-auto max-w-2xl px-4 text-lg text-gray-600 md:text-xl">
-			Find festive items, snap a photo, or choose one from your library to complete the challenge!
-		</p>
-	</div>
+{#if !activeGroupId}
+	<div class="container mx-auto max-w-3xl p-4 md:p-6">
+		<div
+			class="rounded-2xl border border-blue-100 bg-gradient-to-br from-white to-blue-50 p-6 shadow-sm"
+		>
+			<h2 class="text-2xl font-bold text-gray-800 mb-4">Join a group to get started</h2>
+			<p class="text-gray-600 mb-4">
+				The scavenger hunt is group-based. Join an existing group or create one if you’re an admin.
+			</p>
 
-	<div class="mb-6 md:mb-8">
-		<StatsGrid
-			{loading}
-			{totalTasks}
-			unlockedTasks={unlockedTasks.length}
-			{completionRate}
-			approvedSubmissions={approvedUserSubmissions.length}
-			totalSubmissions={userSubmissions.length}
-		/>
-	</div>
+			<div class="space-y-4">
+				<div>
+					<label for="group-select" class="block text-sm font-semibold text-gray-700 mb-2">
+						Select a group
+					</label>
+					<select
+						id="group-select"
+						class="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm"
+						bind:value={joinGroupId}
+					>
+						<option value={null}>-- Choose a group --</option>
+						{#each groupList as group}
+							<option value={group.id}>{group.name}</option>
+						{/each}
+					</select>
+					<button
+						class="mt-3 inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-white text-sm font-semibold shadow-sm hover:bg-blue-700 disabled:opacity-60"
+						onclick={joinGroup}
+						disabled={joining}
+					>
+						{joining ? 'Joining…' : 'Join Group'}
+					</button>
+				</div>
 
-	<div class="mb-6 md:mb-8">
-		<TaskGrid {tasks} {loading} {userId} {completedTaskIds} {userSubmissions} />
-	</div>
+				{#if isAdmin}
+					<div class="border-t border-gray-200 pt-4">
+						<h3 class="text-lg font-semibold text-gray-800 mb-2">Create a new group</h3>
+						<div class="space-y-2">
+							<input
+								class="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm"
+								placeholder="Group name"
+								bind:value={createName}
+							/>
+							<textarea
+								class="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm"
+								placeholder="Description (optional)"
+								rows="2"
+								bind:value={createDescription}
+							></textarea>
+							<button
+								class="inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-white text-sm font-semibold shadow-sm hover:bg-green-700 disabled:opacity-60"
+								onclick={createGroup}
+								disabled={creating}
+							>
+								{creating ? 'Creating…' : 'Create Group'}
+							</button>
+						</div>
+					</div>
+				{/if}
 
-	<TabbedView {submissions} {leaderboard} {leaderboardLoading} />
-</div>
+				{#if onboardingError}
+					<div class="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+						{onboardingError}
+					</div>
+				{/if}
+			</div>
+		</div>
+	</div>
+{:else}
+	<div class="container mx-auto max-w-4xl p-4 md:p-6">
+		<div class="relative mb-6 text-center md:mb-8">
+			<p class="mx-auto max-w-2xl px-4 text-lg text-gray-600 md:text-xl">
+				Find festive items, snap a photo, or choose one from your library to complete the challenge!
+			</p>
+			{#if activeGroupId}
+				<p class="text-sm text-gray-500 mt-2">Active group: {activeGroupId}</p>
+			{/if}
+		</div>
+
+		<div class="mb-6 md:mb-8">
+			<StatsGrid
+				{loading}
+				{totalTasks}
+				unlockedTasks={unlockedTasks.length}
+				{completionRate}
+				approvedSubmissions={approvedUserSubmissions.length}
+				totalSubmissions={userSubmissions.length}
+			/>
+		</div>
+
+		<div class="mb-6 md:mb-8">
+			<TaskGrid {tasks} {loading} {userId} {completedTaskIds} {userSubmissions} />
+		</div>
+
+		<TabbedView {submissions} {leaderboard} {leaderboardLoading} />
+	</div>
+{/if}
