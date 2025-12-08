@@ -15,7 +15,8 @@ router.get('/', async (req, res) => {
 		const { userId } = req.query;
 		if (!userId) return res.status(400).json({ error: 'User ID required' });
 
-		const userPhotos = await db.select()
+		const userPhotos = await db
+			.select()
 			.from(photos)
 			.where(eq(photos.userId, userId))
 			.orderBy(desc(photos.createdAt));
@@ -28,51 +29,50 @@ router.get('/', async (req, res) => {
 });
 
 // POST /api/library/upload
-router.post(
-	'/upload',
-	upload.single('image'),
-	resizeImageMiddleware(),
-	async (req, res) => {
-		try {
-			if (!req.file) return res.status(400).json({ error: 'No image provided' });
+router.post('/upload', upload.single('image'), resizeImageMiddleware(), async (req, res) => {
+	try {
+		if (!req.file) return res.status(400).json({ error: 'No image provided' });
 
-			const { userId } = req.body;
-			if (!userId) {
-				// Clean up orphan file if request is bad
-				await fs.unlink(req.file.path).catch(() => {});
-				return res.status(400).json({ error: 'User ID required' });
-			}
+		const { userId } = req.body;
+		if (!userId) {
+			// Clean up orphan file if request is bad
+			await fs.unlink(req.file.path).catch(() => {});
+			return res.status(400).json({ error: 'User ID required' });
+		}
 
-			const photoId = crypto.randomUUID();
-			const filePath = `/uploads/${req.file.filename}`;
+		const photoId = crypto.randomUUID();
+		const filePath = `/uploads/${req.file.filename}`;
 
-			const [newPhoto] = await db.insert(photos).values({
+		const [newPhoto] = await db
+			.insert(photos)
+			.values({
 				id: photoId,
 				userId,
 				filePath,
 				originalFilename: req.file.originalname,
 				fileSize: req.file.size
-			}).returning();
+			})
+			.returning();
 
-			res.json({ success: true, photo: newPhoto });
-		} catch (error) {
-			console.error('Upload error:', error);
-			res.status(500).json({ error: 'Upload failed' });
-		}
+		res.json({ success: true, photo: newPhoto });
+	} catch (error) {
+		console.error('Upload error:', error);
+		res.status(500).json({ error: 'Upload failed' });
 	}
-);
+});
 
 // DELETE /api/library/:id
 router.delete('/:id', async (req, res) => {
 	try {
 		const { id } = req.params;
-    // TODO: Get userId from auth token/session
+		// TODO: Get userId from auth token/session
 		const { userId } = req.body;
 
 		if (!userId) return res.status(401).json({ error: 'Unauthorized' });
 
 		// 1. Verify ownership
-		const photo = await db.select()
+		const photo = await db
+			.select()
 			.from(photos)
 			.where(and(eq(photos.id, id), eq(photos.userId, userId)))
 			.get();
@@ -81,7 +81,7 @@ router.delete('/:id', async (req, res) => {
 
 		// 2. Delete file from disk
 		const absolutePath = path.join(process.cwd(), photo.filePath);
-		await fs.unlink(absolutePath).catch(err => console.error('File delete warning:', err));
+		await fs.unlink(absolutePath).catch((err) => console.error('File delete warning:', err));
 
 		// 3. Delete from DB (Cascade will handle submissions if configured, or we delete manually)
 		await db.delete(photos).where(eq(photos.id, id));
