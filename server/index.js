@@ -8,6 +8,7 @@ import { uploadsDir } from './middleware/upload.js';
 import apiRoutes from './routes/api.js';
 import libraryRoutes from './routes/library.js';
 import submissionRoutes from './routes/submissions.js';
+import groupRoutes from './routes/groups.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -42,6 +43,7 @@ app.use('/uploads', express.static(uploadsDir));
 app.use('/api', apiRoutes);
 app.use('/api/library', libraryRoutes);
 app.use('/api/submissions', submissionRoutes);
+app.use('/api/groups', groupRoutes);
 
 // Middleware to attach io to requests for broadcasting
 app.use((req, res, next) => {
