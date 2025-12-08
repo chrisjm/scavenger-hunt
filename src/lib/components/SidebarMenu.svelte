@@ -11,7 +11,6 @@
 	function handleClick(event: Event) {
 		event.preventDefault();
 		event.stopPropagation();
-		console.log('Menu button clicked, current state:', isOpen);
 		onClick();
 	}
 </script>
