@@ -1,6 +1,14 @@
 import { drizzle } from 'drizzle-orm/better-sqlite3';
 import Database from 'better-sqlite3';
-import { tasks } from '../src/lib/server/db/schema.ts';
+import crypto from 'node:crypto';
+import { hash } from '@node-rs/argon2';
+import {
+	tasks,
+	users as playerUsers,
+	user as authUser,
+	groups,
+	userGroups
+} from '../src/lib/server/db/schema.ts';
 
 // Create database connection
 const client = new Database('local.db');
@@ -57,7 +65,7 @@ const sampleTasks = [
 	}
 ];
 
-async function seedTasks() {
+async function seedTasksAndAdmin() {
 	try {
 		console.log('🌱 Seeding tasks...');
 
@@ -65,6 +73,58 @@ async function seedTasks() {
 		for (const task of sampleTasks) {
 			await db.insert(tasks).values(task);
 			console.log(`✅ Added task: ${task.description}`);
+		}
+
+		console.log('🌱 Seeding admin user and test group...');
+
+		const ADMIN_USERNAME = 'chrisjm';
+		const ADMIN_PASSWORD = 'cooperdooper';
+		const TEST_GROUP_NAME = 'test';
+
+		// Check if admin player already exists
+		const existingPlayers = await db
+			.select()
+			.from(playerUsers)
+			.where(playerUsers.name.eq?.(ADMIN_USERNAME) ?? false);
+
+		if (existingPlayers.length === 0) {
+			const playerUserId = crypto.randomUUID();
+			const authUserId = crypto.randomUUID();
+			const groupId = crypto.randomUUID();
+
+			const passwordHash = await hash(ADMIN_PASSWORD);
+
+			// Create player row with isAdmin true
+			await db
+				.insert(playerUsers)
+				.values({ id: playerUserId, name: ADMIN_USERNAME, isAdmin: true });
+
+			// Create auth row
+			await db.insert(authUser).values({
+				id: authUserId,
+				username: ADMIN_USERNAME,
+				passwordHash,
+				playerUserId
+			});
+
+			// Create test group
+			await db.insert(groups).values({
+				id: groupId,
+				name: TEST_GROUP_NAME,
+				description: 'Seeded test group',
+				createdByUserId: playerUserId
+			});
+
+			// Add membership for admin in test group
+			await db.insert(userGroups).values({
+				id: crypto.randomUUID(),
+				userId: playerUserId,
+				groupId
+			});
+
+			console.log('✅ Seeded admin user "chrisjm" and group "test"');
+		} else {
+			console.log('ℹ️ Admin user already exists, skipping admin/group seed');
 		}
 
 		console.log('🎉 Database seeded successfully!');
@@ -75,4 +135,4 @@ async function seedTasks() {
 	}
 }
 
-seedTasks();
+seedTasksAndAdmin();
