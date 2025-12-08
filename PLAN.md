@@ -20,12 +20,13 @@
 - **Group-scoped experience**
   - Make the scavenger hunt experience operate within a selected _group_ context.
   - Users can belong to multiple groups and switch their active group.
-  - Leaderboard, community feed, and high-level stats should be viewable per group.
+  - Leaderboard, community feed, and high-level stats are **always** scoped to the active group (no global view).
 - **Admin-controlled group creation**
   - Only admins can create groups.
   - Non-admin users can join existing groups but cannot create new ones.
-- **Onboarding requirement**
-  - When a user joins the game (first login), they must input at least one group to join before accessing the main experience. Error if they input an invalid group name.
+- **Onboarding requirement (hard block)**
+  - When a user joins the game (first login), they must successfully join at least one valid group (via name/code) before accessing the main experience.
+  - The app hard-blocks the main experience until a valid group membership exists.
 
 ---
 
@@ -66,8 +67,9 @@
   - Normal users have `isAdmin = false`.
 
 - **How admins are designated**
-  - Add an env var `ADMIN_USERNAMES="alice,bob"`.
-  - During login, if `trimmedName` is in that list, set `isAdmin = true` on creation and return it.
+  - Add an env var `ADMIN_USER_IDS="uuid-1,uuid-2"` containing **player user IDs** (UUIDs), not names.
+  - During login / user creation, if the new player's `id` is in that list, set `isAdmin = true` and persist it.
+  - This lets us swap admins by changing the env and restarting, and we can still edit `isAdmin` directly in SQLite if needed.
 
 ### 3.2 New groups tables
 
@@ -75,10 +77,12 @@
   - Represents logical groups that users can join.
   - Proposed schema:
     - `id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID())`
-    - `name: text('name').notNull().unique()`
+    - `name: text('name').notNull()`
     - `description: text('description')` (optional)
     - `createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date())`
     - `createdByUserId: text('created_by_user_id').references(() => users.id)`
+  - **Uniqueness / case-insensitivity**
+    - Enforce a case-insensitive unique constraint (e.g. `unique index on lower(name)`) so `"Family"` and `"family"` cannot both exist.
 
 - **`userGroups` (many-to-many join) table**
   - Connects users to groups.
@@ -99,14 +103,18 @@
 - **Tasks**
   - Tasks remain global; all groups share the same task list.
 
-- **Submissions & scores**
-  - Submissions are still tied to `users` and `tasks` only (no `groupId` on submissions initially).
+- **Submissions & scores (fully group-scoped)**
+  - Submissions are tied to `users`, `tasks`, **and** `groups`.
+  - Schema change: add `groupId` to `submissions`:
+    - `groupId: text('group_id').notNull().references(() => groups.id, { onDelete: 'cascade' })`.
   - A group leaderboard is defined as:
-    - _All valid submissions made by users who are members of that group_.
-  - This means a user in multiple groups contributes their **same total score** to each group they belong to.
+    - _All valid submissions made by users **in that group** for that group's `groupId`_.
+  - A user's score is **per-group**:
+    - Submissions made in one group do **not** count toward any other group's leaderboard.
 
-- **Future extension (optional, not in first pass)**
-  - If we want scores to differ by group, we would add `groupId` to `submissions` and only count submissions made while the user is in that group.
+- **Implications**
+  - Users in multiple groups can submit separately in each group and accumulate separate scores.
+  - There is no global total score reused across groups.
 
 ---
 
@@ -114,10 +122,11 @@
 
 ### 4.1 Auth / login updates
 
-- **Route:** `POST /login` (in `server/routes/api.js`)
+- **Route:** `POST /login` (SvelteKit `/login` endpoint)
   - Extend response payload to include `isAdmin`:
     - `{ userId, userName, isReturningUser, isAdmin }`.
-  - On user creation, set `isAdmin` based on the `ADMIN_USERNAMES` env var (or similar strategy).
+  - On new user creation, set `isAdmin` based on the `ADMIN_USER_IDS` env var (player user UUIDs).
+  - On returning user login, look up the existing player row and return its persisted `isAdmin`.
 
 - **New route:** `GET /api/users/:userId`
   - Returns full user profile needed on the client:
@@ -157,28 +166,27 @@ All routes live in a new groups router (e.g. `server/routes/groups.js`) and get 
     - Decide whether to show the "join group" onboarding.
     - Populate the group selector.
 
-### 4.3 Group-scoped leaderboard & feed
+### 4.3 Group-scoped leaderboard & feed (no global view)
 
 - **Leaderboard: update existing route**
   - Current: `GET /api/submissions/leaderboard` in `server/routes/submissions.js`.
   - New behavior:
-    - Accept optional `groupId` query param: `/api/submissions/leaderboard?groupId=...`.
-    - If `groupId` is provided:
-      - Join `userGroups` and filter to `userGroups.groupId = :groupId`.
-      - Still require `submissions.valid = 1`.
-      - Group and order by `users.name` as today.
-    - If `groupId` is missing:
-      - Either return global leaderboard (current behavior) or require a groupId (decision below). For now, keep backwards-compatible global behavior.
+    - **Require** `groupId` query param: `/api/submissions/leaderboard?groupId=...`.
+    - Join `userGroups` and filter to `userGroups.groupId = :groupId`.
+    - Filter submissions by `submissions.groupId = :groupId` and `submissions.valid = 1`.
+    - Group and order by `users.name` as today.
+  - There is **no global leaderboard**; all leaderboard views are per-group.
 
-- **Feed: add optional group filter**
+- **Feed: group-only filter**
   - Current: `GET /api/submissions` returns all valid matches for feed.
   - New behavior:
-    - Accept optional `groupId` query param.
-    - If provided, join `userGroups` and filter to that `groupId`.
-    - If omitted, default to global feed (backward compatible) or switch the frontend to always send `groupId`.
+    - **Require** `groupId` query param.
+    - Filter by `submissions.groupId = :groupId` and join `userGroups` to ensure the user belongs to that group.
+    - Return only submissions from that group.
+  - There is **no global feed**; all community activity is per-group.
 
 - **Stats endpoints (if added later)**
-  - Any future stats APIs should take an optional `groupId` and mirror this filtering semantics.
+  - Any future stats APIs should **require** a `groupId` and operate strictly within that group.
 
 ---
 

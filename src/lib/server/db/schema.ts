@@ -6,12 +6,14 @@ export const users = sqliteTable('users', {
 		.primaryKey()
 		.$defaultFn(() => crypto.randomUUID()),
 	name: text('name').notNull().unique(),
+	isAdmin: integer('is_admin', { mode: 'boolean' }).notNull().default(false),
 	createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date())
 });
 
 export const usersRelations = relations(users, ({ many }) => ({
 	photos: many(photos),
-	submissions: many(submissions)
+	submissions: many(submissions),
+	groups: many(userGroups)
 }));
 
 export const photos = sqliteTable('photos', {
@@ -51,6 +53,9 @@ export const submissions = sqliteTable('submissions', {
 	userId: text('user_id')
 		.notNull()
 		.references(() => users.id),
+	groupId: text('group_id')
+		.notNull()
+		.references(() => groups.id, { onDelete: 'cascade' }),
 	taskId: integer('task_id')
 		.notNull()
 		.references(() => tasks.id),
@@ -76,6 +81,49 @@ export const submissionsRelations = relations(submissions, ({ one }) => ({
 	user: one(users, {
 		fields: [submissions.userId],
 		references: [users.id]
+	}),
+	group: one(groups, {
+		fields: [submissions.groupId],
+		references: [groups.id]
+	})
+}));
+
+export const groups = sqliteTable('groups', {
+	id: text('id')
+		.primaryKey()
+		.$defaultFn(() => crypto.randomUUID()),
+	name: text('name').notNull(),
+	description: text('description'),
+	createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
+	createdByUserId: text('created_by_user_id').references(() => users.id)
+});
+
+export const userGroups = sqliteTable('user_groups', {
+	id: text('id')
+		.primaryKey()
+		.$defaultFn(() => crypto.randomUUID()),
+	userId: text('user_id')
+		.notNull()
+		.references(() => users.id, { onDelete: 'cascade' }),
+	groupId: text('group_id')
+		.notNull()
+		.references(() => groups.id, { onDelete: 'cascade' }),
+	joinedAt: integer('joined_at', { mode: 'timestamp' }).$defaultFn(() => new Date())
+});
+
+export const groupsRelations = relations(groups, ({ many }) => ({
+	members: many(userGroups),
+	submissions: many(submissions)
+}));
+
+export const userGroupsRelations = relations(userGroups, ({ one }) => ({
+	user: one(users, {
+		fields: [userGroups.userId],
+		references: [users.id]
+	}),
+	group: one(groups, {
+		fields: [userGroups.groupId],
+		references: [groups.id]
 	})
 }));
 
