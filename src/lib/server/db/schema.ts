@@ -79,14 +79,22 @@ export const submissionsRelations = relations(submissions, ({ one }) => ({
 	})
 }));
 
-export const user = sqliteTable('user', { id: text('id').primaryKey() });
+export const user = sqliteTable('user', {
+	id: text('id').primaryKey(),
+	username: text('username').notNull().unique(),
+	passwordHash: text('password_hash').notNull(),
+	playerUserId: text('player_user_id')
+		.notNull()
+		.references(() => users.id, { onDelete: 'cascade' })
+});
 
 export const session = sqliteTable('session', {
 	id: text('id').primaryKey(),
 	userId: text('user_id')
 		.notNull()
 		.references(() => user.id),
-	expiresAt: integer('expires_at', { mode: 'timestamp' }).notNull()
+	// store as epoch ms (number) to satisfy Lucia adapter expectations
+	expiresAt: integer('expires_at').notNull()
 });
 
 export type Session = typeof session.$inferSelect;

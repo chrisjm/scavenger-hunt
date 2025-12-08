@@ -10,6 +10,7 @@
 	let loggingIn = $state(false);
 	let isReturningUser = $state(false);
 	let errorMessage = $state('');
+	let password = $state('');
 
 	// Check if user is already logged in
 	onMount(() => {
@@ -22,8 +23,15 @@
 	});
 
 	async function loginUser() {
-		if (!loginName.trim()) {
+		const trimmedName = loginName.trim();
+
+		if (!trimmedName) {
 			errorMessage = 'Please enter your name';
+			return;
+		}
+
+		if (password.length < 9) {
+			errorMessage = 'Password must be more than 8 characters';
 			return;
 		}
 
@@ -31,11 +39,12 @@
 		loggingIn = true;
 
 		try {
-			const response = await fetch('/api/login', {
+			const response = await fetch('/login', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({
-					name: loginName.trim(),
+					name: trimmedName,
+					password,
 					isReturningUser
 				})
 			});
@@ -58,6 +67,8 @@
 				} else if (response.status === 404) {
 					errorMessage =
 						error.message || 'User not found. Please check your username or create a new account.';
+				} else if (response.status === 400) {
+					errorMessage = error.error || 'Invalid login details. Please check and try again.';
 				} else {
 					errorMessage = 'Login failed: ' + error.error;
 				}
@@ -156,6 +167,24 @@
 				/>
 			</div>
 
+			<div class="mb-6">
+				<label for="password" class="block text-sm font-medium text-gray-700 mb-2">
+					Password (more than 8 characters)
+				</label>
+				<input
+					id="password"
+					type="password"
+					bind:value={password}
+					onkeydown={handleKeydown}
+					placeholder="Enter your password"
+					class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-green-500 focus:ring-0 transition-colors text-lg"
+					class:border-red-300={errorMessage}
+					class:focus:border-red-500={errorMessage}
+					disabled={loggingIn}
+					required
+				/>
+			</div>
+
 			{#if errorMessage}
 				<div class="mb-6 p-3 bg-red-50 border border-red-200 rounded-lg">
 					<p class="text-red-600 text-sm flex items-center gap-2">
@@ -167,7 +196,7 @@
 
 			<button
 				type="submit"
-				disabled={loggingIn || !loginName.trim()}
+				disabled={loggingIn || !loginName.trim() || password.length < 9}
 				class="w-full py-3 px-4 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-semibold rounded-xl transition-all duration-200 transform hover:scale-105 disabled:hover:scale-100 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-2"
 			>
 				{#if loggingIn}
