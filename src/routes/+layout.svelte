@@ -7,6 +7,7 @@
 	import Header from '$lib/components/Header.svelte';
 	import Sidebar from '$lib/components/Sidebar.svelte';
 	import type { GroupSummary } from '$lib/stores/user';
+	import GroupSelector from '$lib/components/GroupSelector.svelte';
 
 	let { children } = $props();
 
@@ -128,6 +129,8 @@
 			sidebarOpen = !sidebarOpen;
 		}}
 		showMenu={!!userId}
+		showGroupSelector={!!userId && userGroups.length > 0}
+		groupSelector={GroupSelector as any}
 	/>
 {/if}
 
