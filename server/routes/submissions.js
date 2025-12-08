@@ -96,6 +96,7 @@ router.get('/', async (req, res) => {
 			.innerJoin(tasks, eq(submissions.taskId, tasks.id))
 			.innerJoin(users, eq(submissions.userId, users.id))
 			.innerJoin(photos, eq(submissions.photoId, photos.id))
+			.where(eq(submissions.aiMatch, 1))
 			.orderBy(desc(submissions.submittedAt));
 
 		res.json(allSubmissions);
@@ -148,6 +149,46 @@ router.get('/leaderboard', async (req, res) => {
 	} catch (error) {
 		console.error('Error fetching leaderboard:', error);
 		res.status(500).json({ error: 'Failed to fetch leaderboard' });
+	}
+});
+
+// DELETE /api/submissions/:id - Delete a user's submission
+router.delete('/:id', async (req, res) => {
+	try {
+		const { id } = req.params;
+		const { userId } = req.body;
+
+		if (!userId) {
+			return res.status(400).json({ error: 'User ID is required' });
+		}
+
+		// First, verify the submission exists and belongs to the user
+		const submission = await db.select().from(submissions).where(eq(submissions.id, id)).get();
+
+		if (!submission) {
+			return res.status(404).json({ error: 'Submission not found' });
+		}
+
+		if (submission.userId !== userId) {
+			return res.status(403).json({ error: 'You can only delete your own submissions' });
+		}
+
+		// Delete the submission
+		await db.delete(submissions).where(eq(submissions.id, id));
+
+		// Broadcast the deletion via socket
+		if (req.io) {
+			req.io.to('scavenger-hunt').emit('submission-deleted', {
+				submissionId: id,
+				taskId: submission.taskId,
+				userId: submission.userId
+			});
+		}
+
+		res.json({ success: true, message: 'Submission deleted successfully' });
+	} catch (error) {
+		console.error('Error deleting submission:', error);
+		res.status(500).json({ error: 'Failed to delete submission' });
 	}
 });
 

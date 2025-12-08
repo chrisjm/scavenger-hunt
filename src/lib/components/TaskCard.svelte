@@ -9,10 +9,11 @@
 	interface Props {
 		task: Task;
 		onOpenSubmission: (task: Task) => void;
+		onOpenCompleted?: (task: Task) => void;
 		isCompleted?: boolean;
 	}
 
-	let { task, onOpenSubmission, isCompleted = false }: Props = $props();
+	let { task, onOpenSubmission, onOpenCompleted, isCompleted = false }: Props = $props();
 
 	function getTaskIcon(description: string): string {
 		if (description.includes('Santa')) return '🎅';
@@ -81,7 +82,13 @@
 		</div>
 
 		<button
-			onclick={() => onOpenSubmission(task)}
+			onclick={() => {
+				if (isCompleted && onOpenCompleted) {
+					onOpenCompleted(task);
+				} else {
+					onOpenSubmission(task);
+				}
+			}}
 			disabled={!task.unlocked}
 			class="w-full rounded-xl py-3 font-semibold transition-all {isCompleted
 				? 'bg-emerald-600 text-white shadow-md hover:bg-emerald-700 hover:shadow-lg active:scale-95'
@@ -90,7 +97,7 @@
 					: 'cursor-not-allowed bg-gray-200 text-gray-400'}"
 		>
 			{#if isCompleted}
-				✅ Completed
+				👁️ View Submission
 			{:else if task.unlocked}
 				Complete Task
 			{:else}

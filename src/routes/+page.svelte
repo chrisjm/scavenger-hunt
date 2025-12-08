@@ -103,6 +103,19 @@
 				loadLeaderboard();
 			}
 		});
+
+		socket.on('submission-deleted', (data: any) => {
+			// Remove submission from the feed
+			submissions = submissions.filter((sub) => sub.id !== data.submissionId);
+
+			// Refresh leaderboard since scores may have changed
+			loadLeaderboard();
+
+			// If it was the current user's submission, refresh their submissions
+			if (data.userId === userId) {
+				loadSubmissions();
+			}
+		});
 	}
 </script>
 
@@ -155,7 +168,7 @@
 	</div>
 
 	<div class="mb-6 md:mb-8">
-		<TaskGrid {tasks} {loading} {userId} {completedTaskIds} />
+		<TaskGrid {tasks} {loading} {userId} {completedTaskIds} {userSubmissions} />
 	</div>
 
 	<TabbedView {submissions} {leaderboard} {leaderboardLoading} />
