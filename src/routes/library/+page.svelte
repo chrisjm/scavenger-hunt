@@ -1,20 +1,27 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { goto } from '$app/navigation';
 	import { Loader, Trash2, Upload } from 'lucide-svelte';
+	import { getUserContext } from '$lib/stores/user';
+
+	// Get user context from layout
+	const userContext = getUserContext();
+	let userId = $derived(userContext.userId);
 
 	let photos = $state<any[]>([]);
 	let loading = $state(true);
 	let uploading = $state(false);
-	let userId = $state<string | null>(null);
 
 	onMount(() => {
-		userId = localStorage.getItem('scavenger-hunt-userId');
-		if (!userId) {
-			goto('/login');
-			return;
+		if (userId) {
+			loadLibrary();
 		}
-		loadLibrary();
+	});
+
+	// Load library when userId becomes available
+	$effect(() => {
+		if (userId) {
+			loadLibrary();
+		}
 	});
 
 	async function loadLibrary() {

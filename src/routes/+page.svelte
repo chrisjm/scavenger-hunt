@@ -1,14 +1,17 @@
 <script lang="ts">
 	import { io } from 'socket.io-client';
 	import type { Socket } from 'socket.io-client';
-	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
 	import StatsGrid from '$lib/components/StatsGrid.svelte';
 	import TaskGrid from '$lib/components/TaskGrid.svelte';
 	import TabbedView from '$lib/components/TabbedView.svelte';
-	import SidebarMenu from '$lib/components/SidebarMenu.svelte';
-	import Sidebar from '$lib/components/Sidebar.svelte';
 	import { TreePine } from 'lucide-svelte';
+	import { getUserContext } from '$lib/stores/user';
+
+	// Get user context from layout
+	const userContext = getUserContext();
+	let userId = $derived(userContext.userId);
+	let userName = $derived(userContext.userName);
 
 	// State
 	let socket: Socket | undefined;
@@ -17,13 +20,6 @@
 	let submissions = $state<any[]>([]);
 	let leaderboard = $state<any[]>([]);
 	let leaderboardLoading = $state(false);
-
-	// User authentication state
-	let userId = $state<string | null>(null);
-	let userName = $state<string | null>(null);
-
-	// Sidebar state
-	let sidebarOpen = $state(false);
 
 	// Derived stats
 	let unlockedTasks = $derived(tasks.filter((task) => task.unlocked));
@@ -36,21 +32,18 @@
 	);
 	let approvedSubmissions = $derived(submissions.filter((sub) => sub.valid));
 
-	// Check authentication and redirect if needed
+	// Load data when component mounts
 	onMount(() => {
-		const storedUserId = localStorage.getItem('scavenger-hunt-userId');
-
-		if (!storedUserId) {
-			goto('/login');
-			return;
-		}
-
-		userId = storedUserId;
-
 		loadTasks();
 		loadSubmissions();
 		loadLeaderboard();
-		connectSocket();
+	});
+
+	// Connect socket when userId is available
+	$effect(() => {
+		if (userId) {
+			connectSocket();
+		}
 	});
 
 	async function loadSubmissions() {
@@ -124,11 +117,6 @@
 </script>
 
 <div class="container mx-auto max-w-4xl p-4 md:p-6">
-	<!-- Hamburger Menu -->
-	{#if userName}
-		<SidebarMenu onClick={() => (sidebarOpen = true)} />
-	{/if}
-
 	<div class="relative mb-6 text-center md:mb-8">
 		<h1
 			class="mb-3 text-3xl font-bold text-gray-800 md:mb-4 md:text-5xl flex items-center justify-center gap-3"
@@ -163,8 +151,3 @@
 
 	<TabbedView {submissions} {leaderboard} {leaderboardLoading} />
 </div>
-
-<!-- Sidebar -->
-{#if userName}
-	<Sidebar isOpen={sidebarOpen} onClose={() => (sidebarOpen = false)} {userName} />
-{/if}

@@ -1,9 +1,12 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
+	import { getUserContext } from '$lib/stores/user';
 
-	let userId = $state<string | null>(null);
-	let userName = $state<string | null>(null);
+	// Get user context from layout
+	const userContext = getUserContext();
+	let userId = $derived(userContext.userId);
+	let userName = $derived(userContext.userName);
 	let newName = $state('');
 	let nameError = $state('');
 	let savingProfile = $state(false);
@@ -11,18 +14,32 @@
 	let nameAvailable = $state<boolean | null>(null);
 	let checkTimeout: ReturnType<typeof setTimeout> | null = null;
 
-	// Check if user is logged in
+	// Load user data when component mounts
 	onMount(() => {
-		const storedUserId = localStorage.getItem('scavenger-hunt-userId');
-
-		if (!storedUserId) {
-			// User is not logged in, redirect to login page
-			goto('/login');
-			return;
+		if (userId) {
+			loadUserData();
 		}
-
-		userId = storedUserId;
 	});
+
+	// Watch for userId changes and load data
+	$effect(() => {
+		if (userId) {
+			loadUserData();
+		}
+	});
+
+	async function loadUserData() {
+		try {
+			const response = await fetch(`/api/users/${userId}`);
+			if (response.ok) {
+				const data = await response.json();
+				// Update context with fresh user name
+				userContext.userName = data.user.name;
+			}
+		} catch (error) {
+			console.error('Failed to load user data:', error);
+		}
+	}
 
 	function validateName(name: string): boolean {
 		if (!name.trim()) {
@@ -125,7 +142,8 @@
 
 			if (response.ok) {
 				const data = await response.json();
-				userName = data.user.name;
+				// Update context with new user name
+				userContext.userName = data.user.name;
 
 				// Show success message
 				nameError = '';

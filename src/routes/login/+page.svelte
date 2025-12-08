@@ -1,6 +1,10 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
+	import { getUserContext } from '$lib/stores/user';
+
+	// Get user context from layout
+	const userContext = getUserContext();
 
 	let loginName = $state('');
 	let loggingIn = $state(false);
@@ -39,8 +43,10 @@
 			if (response.ok) {
 				const data = await response.json();
 
-				// Store user data (temporary until we implement proper session management)
+				// Store user data and update context
 				localStorage.setItem('scavenger-hunt-userId', data.userId);
+				userContext.userId = data.userId;
+				userContext.userName = data.userName;
 
 				// Redirect to main page
 				goto('/');
