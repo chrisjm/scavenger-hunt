@@ -6,6 +6,9 @@
 	import StatsGrid from '$lib/components/StatsGrid.svelte';
 	import TaskGrid from '$lib/components/TaskGrid.svelte';
 	import TabbedView from '$lib/components/TabbedView.svelte';
+	import SidebarMenu from '$lib/components/SidebarMenu.svelte';
+	import Sidebar from '$lib/components/Sidebar.svelte';
+	import { TreePine } from 'lucide-svelte';
 
 	// State
 	let socket: Socket | undefined;
@@ -18,6 +21,9 @@
 	// User authentication state
 	let userId = $state<string | null>(null);
 	let userName = $state<string | null>(null);
+
+	// Sidebar state
+	let sidebarOpen = $state(false);
 
 	// Derived stats
 	let unlockedTasks = $derived(tasks.filter((task) => task.unlocked));
@@ -33,15 +39,13 @@
 	// Check authentication and redirect if needed
 	onMount(() => {
 		const storedUserId = localStorage.getItem('scavenger-hunt-userId');
-		const storedUserName = localStorage.getItem('scavenger-hunt-userName');
 
-		if (!storedUserId || !storedUserName) {
+		if (!storedUserId) {
 			goto('/login');
 			return;
 		}
 
 		userId = storedUserId;
-		userName = storedUserName;
 
 		loadTasks();
 		loadSubmissions();
@@ -120,36 +124,22 @@
 </script>
 
 <div class="container mx-auto max-w-4xl p-4 md:p-6">
-	<div class="relative mb-6 text-center md:mb-8">
-		{#if userName}
-			<div class="absolute right-0 top-0 flex gap-2">
-				<a
-					href="/library"
-					class="flex items-center gap-2 rounded-full border border-gray-200 bg-white px-3 py-2 text-sm shadow-md transition-all hover:shadow-lg"
-					title="My Library"
-				>
-					<span class="text-xl">📸</span>
-					<span class="hidden text-gray-700 sm:inline">Library</span>
-				</a>
-				<a
-					href="/profile"
-					class="flex items-center gap-2 rounded-full border border-gray-200 bg-white px-3 py-2 text-sm shadow-md transition-all hover:shadow-lg"
-					title="Edit Profile"
-				>
-					<div
-						class="flex h-6 w-6 items-center justify-center rounded-full bg-gradient-to-br from-green-400 to-blue-500 text-xs font-bold text-white"
-					>
-						{userName.charAt(0).toUpperCase()}
-					</div>
-					<span class="hidden text-gray-700 sm:inline">{userName}</span>
-				</a>
-			</div>
-		{/if}
+	<!-- Hamburger Menu -->
+	{#if userName}
+		<SidebarMenu onClick={() => (sidebarOpen = true)} />
+	{/if}
 
+	<div class="relative mb-6 text-center md:mb-8">
 		<h1
-			class="mb-3 bg-gradient-to-r from-red-600 via-green-600 to-red-600 bg-clip-text text-3xl font-bold text-transparent md:mb-4 md:text-5xl"
+			class="mb-3 text-3xl font-bold text-gray-800 md:mb-4 md:text-5xl flex items-center justify-center gap-3"
 		>
-			🎄 Scavenger Hunt 🎄
+			<TreePine class="text-green-600" size={40} />
+			<span
+				class="bg-gradient-to-r from-red-600 via-green-600 to-red-600 bg-clip-text text-transparent"
+			>
+				Scavenger Hunt
+			</span>
+			<TreePine class="text-green-600" size={40} />
 		</h1>
 		<p class="mx-auto max-w-2xl px-4 text-lg text-gray-600 md:text-xl">
 			Find festive items, snap a photo, or choose one from your library to complete the challenge!
@@ -173,3 +163,8 @@
 
 	<TabbedView {submissions} {leaderboard} {leaderboardLoading} />
 </div>
+
+<!-- Sidebar -->
+{#if userName}
+	<Sidebar isOpen={sidebarOpen} onClose={() => (sidebarOpen = false)} {userName} />
+{/if}

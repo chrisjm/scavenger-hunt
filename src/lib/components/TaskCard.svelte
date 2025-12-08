@@ -1,4 +1,17 @@
 <script lang="ts">
+	import {
+		User,
+		TreePine,
+		Sparkles,
+		Candy,
+		Snowflake,
+		Gift,
+		Cookie,
+		CheckCircle,
+		Lock,
+		Eye
+	} from 'lucide-svelte';
+
 	interface Task {
 		id: number;
 		description: string;
@@ -15,17 +28,19 @@
 
 	let { task, onOpenSubmission, onOpenCompleted, isCompleted = false }: Props = $props();
 
-	function getTaskIcon(description: string): string {
-		if (description.includes('Santa')) return '🎅';
-		if (description.includes('Tree')) return '🎄';
-		if (description.includes('Lights')) return '✨';
-		if (description.includes('Candy')) return '🍭';
-		if (description.includes('Snowman')) return '⛄';
-		if (description.includes('Reindeer')) return '🦌';
-		if (description.includes('Cookie')) return '🍪';
-		if (description.includes('Stocking')) return '🧦';
-		return '🎁';
+	function getTaskIconType(description: string) {
+		if (description.includes('Santa')) return 'user';
+		if (description.includes('Tree')) return 'tree';
+		if (description.includes('Lights')) return 'sparkles';
+		if (description.includes('Candy')) return 'candy';
+		if (description.includes('Snowman')) return 'snowflake';
+		if (description.includes('Reindeer')) return 'reindeer';
+		if (description.includes('Cookie')) return 'cookie';
+		if (description.includes('Stocking')) return 'stocking';
+		return 'gift';
 	}
+
+	let iconType = $derived(getTaskIconType(task.description));
 </script>
 
 <div
@@ -38,21 +53,17 @@
 	<div class="absolute right-3 top-3">
 		{#if isCompleted}
 			<div
-				class="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-1 text-xs font-semibold text-emerald-700"
+				class="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-1 text-xs font-semibold text-emerald-700 flex items-center gap-1"
 			>
-				✅ Complete
+				<CheckCircle size={12} />
+				Complete
 			</div>
-		{:else if task.unlocked}
+		{:else if !task.unlocked}
 			<div
-				class="rounded-full border border-green-200 bg-green-50 px-2 py-1 text-xs font-semibold text-green-700"
+				class="rounded-full border border-gray-200 bg-gray-100 px-2 py-1 text-xs font-semibold text-gray-500 flex items-center gap-1"
 			>
-				🔓 Open
-			</div>
-		{:else}
-			<div
-				class="rounded-full border border-gray-200 bg-gray-100 px-2 py-1 text-xs font-semibold text-gray-500"
-			>
-				🔒 Locked
+				<Lock size={12} />
+				Locked
 			</div>
 		{/if}
 	</div>
@@ -60,13 +71,31 @@
 	<div class="p-5">
 		<div class="mb-4 flex items-center gap-4">
 			<div
-				class="flex h-14 w-14 items-center justify-center rounded-2xl text-3xl shadow-sm {isCompleted
+				class="flex h-14 w-14 items-center justify-center rounded-2xl shadow-sm {isCompleted
 					? 'bg-emerald-100'
 					: task.unlocked
 						? 'bg-green-100'
 						: 'bg-gray-200 opacity-50'}"
 			>
-				{getTaskIcon(task.description)}
+				{#if iconType === 'user'}
+					<User size={28} class="text-gray-700" />
+				{:else if iconType === 'tree'}
+					<TreePine size={28} class="text-gray-700" />
+				{:else if iconType === 'sparkles'}
+					<Sparkles size={28} class="text-gray-700" />
+				{:else if iconType === 'candy'}
+					<Candy size={28} class="text-gray-700" />
+				{:else if iconType === 'snowflake'}
+					<Snowflake size={28} class="text-gray-700" />
+				{:else if iconType === 'cookie'}
+					<Cookie size={28} class="text-gray-700" />
+				{:else if iconType === 'reindeer'}
+					<span class="text-3xl">🦌</span>
+				{:else if iconType === 'stocking'}
+					<span class="text-3xl">🧦</span>
+				{:else}
+					<Gift size={28} class="text-gray-700" />
+				{/if}
 			</div>
 			<div>
 				<h3 class="text-lg font-bold text-gray-800 leading-tight">{task.description}</h3>
@@ -97,11 +126,17 @@
 					: 'cursor-not-allowed bg-gray-200 text-gray-400'}"
 		>
 			{#if isCompleted}
-				👁️ View Submission
+				<div class="flex items-center justify-center gap-2">
+					<Eye size={16} />
+					View Submission
+				</div>
 			{:else if task.unlocked}
 				Complete Task
 			{:else}
-				Locked
+				<div class="flex items-center justify-center gap-2">
+					<Lock size={16} />
+					Locked
+				</div>
 			{/if}
 		</button>
 	</div>

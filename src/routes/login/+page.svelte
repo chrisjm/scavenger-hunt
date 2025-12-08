@@ -10,9 +10,8 @@
 	// Check if user is already logged in
 	onMount(() => {
 		const storedUserId = localStorage.getItem('scavenger-hunt-userId');
-		const storedUserName = localStorage.getItem('scavenger-hunt-userName');
 
-		if (storedUserId && storedUserName) {
+		if (storedUserId) {
 			// User is already logged in, redirect to main page
 			goto('/');
 		}
@@ -42,7 +41,6 @@
 
 				// Store user data (temporary until we implement proper session management)
 				localStorage.setItem('scavenger-hunt-userId', data.userId);
-				localStorage.setItem('scavenger-hunt-userName', data.userName);
 
 				// Redirect to main page
 				goto('/');

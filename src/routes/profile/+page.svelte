@@ -127,9 +127,6 @@
 				const data = await response.json();
 				userName = data.user.name;
 
-				// Update localStorage
-				// localStorage.setItem('scavenger-hunt-userName', userName);
-
 				// Show success message
 				nameError = '';
 				// Could add a success toast here
@@ -153,7 +150,6 @@
 	function logout() {
 		// Clear localStorage
 		localStorage.removeItem('scavenger-hunt-userId');
-		localStorage.removeItem('scavenger-hunt-userName');
 
 		// Redirect to login
 		goto('/login');
