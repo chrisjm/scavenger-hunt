@@ -155,7 +155,7 @@
 	</div>
 
 	<div class="mb-6 md:mb-8">
-		<TaskGrid {tasks} {loading} {userId} />
+		<TaskGrid {tasks} {loading} {userId} {completedTaskIds} />
 	</div>
 
 	<TabbedView {submissions} {leaderboard} {leaderboardLoading} />

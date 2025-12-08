@@ -9,9 +9,10 @@
 	interface Props {
 		task: Task;
 		onOpenSubmission: (task: Task) => void;
+		isCompleted?: boolean;
 	}
 
-	let { task, onOpenSubmission }: Props = $props();
+	let { task, onOpenSubmission, isCompleted = false }: Props = $props();
 
 	function getTaskIcon(description: string): string {
 		if (description.includes('Santa')) return '🎅';
@@ -27,12 +28,20 @@
 </script>
 
 <div
-	class="group relative overflow-hidden rounded-xl border-2 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg {task.unlocked
-		? 'bg-white border-green-100 hover:border-green-300'
-		: 'bg-gray-50 border-gray-100'}"
+	class="group relative overflow-hidden rounded-xl border-2 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg {isCompleted
+		? 'bg-emerald-50 border-emerald-200 hover:border-emerald-300'
+		: task.unlocked
+			? 'bg-white border-green-100 hover:border-green-300'
+			: 'bg-gray-50 border-gray-100'}"
 >
 	<div class="absolute right-3 top-3">
-		{#if task.unlocked}
+		{#if isCompleted}
+			<div
+				class="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-1 text-xs font-semibold text-emerald-700"
+			>
+				✅ Complete
+			</div>
+		{:else if task.unlocked}
 			<div
 				class="rounded-full border border-green-200 bg-green-50 px-2 py-1 text-xs font-semibold text-green-700"
 			>
@@ -50,9 +59,11 @@
 	<div class="p-5">
 		<div class="mb-4 flex items-center gap-4">
 			<div
-				class="flex h-14 w-14 items-center justify-center rounded-2xl text-3xl shadow-sm {task.unlocked
-					? 'bg-green-100'
-					: 'bg-gray-200 opacity-50'}"
+				class="flex h-14 w-14 items-center justify-center rounded-2xl text-3xl shadow-sm {isCompleted
+					? 'bg-emerald-100'
+					: task.unlocked
+						? 'bg-green-100'
+						: 'bg-gray-200 opacity-50'}"
 			>
 				{getTaskIcon(task.description)}
 			</div>
@@ -72,11 +83,15 @@
 		<button
 			onclick={() => onOpenSubmission(task)}
 			disabled={!task.unlocked}
-			class="w-full rounded-xl py-3 font-semibold transition-all {task.unlocked
-				? 'bg-green-600 text-white shadow-md hover:bg-green-700 hover:shadow-lg active:scale-95'
-				: 'cursor-not-allowed bg-gray-200 text-gray-400'}"
+			class="w-full rounded-xl py-3 font-semibold transition-all {isCompleted
+				? 'bg-emerald-600 text-white shadow-md hover:bg-emerald-700 hover:shadow-lg active:scale-95'
+				: task.unlocked
+					? 'bg-green-600 text-white shadow-md hover:bg-green-700 hover:shadow-lg active:scale-95'
+					: 'cursor-not-allowed bg-gray-200 text-gray-400'}"
 		>
-			{#if task.unlocked}
+			{#if isCompleted}
+				✅ Completed
+			{:else if task.unlocked}
 				Complete Task
 			{:else}
 				Locked

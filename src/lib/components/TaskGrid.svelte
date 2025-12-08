@@ -13,9 +13,10 @@
 		tasks: Task[];
 		loading: boolean;
 		userId: string | null;
+		completedTaskIds?: Set<number>;
 	}
 
-	let { tasks, loading, userId }: Props = $props();
+	let { tasks, loading, userId, completedTaskIds }: Props = $props();
 
 	let showModal = $state(false);
 	let selectedTask = $state<Task | null>(null);
@@ -44,7 +45,11 @@
 {:else}
 	<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
 		{#each tasks as task (task.id)}
-			<TaskCard {task} onOpenSubmission={openSubmission} />
+			<TaskCard
+				{task}
+				onOpenSubmission={openSubmission}
+				isCompleted={completedTaskIds?.has(task.id) ?? false}
+			/>
 		{/each}
 	</div>
 {/if}
