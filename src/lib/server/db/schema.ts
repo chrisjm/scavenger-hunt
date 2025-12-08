@@ -6,8 +6,7 @@ export const users = sqliteTable('users', {
 		.primaryKey()
 		.$defaultFn(() => crypto.randomUUID()),
 	name: text('name').notNull().unique(),
-	createdAt: integer('created_at', { mode: 'timestamp' })
-		.$defaultFn(() => new Date())
+	createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date())
 });
 
 export const usersRelations = relations(users, ({ many }) => ({
@@ -25,8 +24,7 @@ export const photos = sqliteTable('photos', {
 	filePath: text('file_path').notNull(),
 	originalFilename: text('original_filename').notNull(),
 	fileSize: integer('file_size').notNull(),
-	createdAt: integer('created_at', { mode: 'timestamp' })
-		.$defaultFn(() => new Date())
+	createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date())
 });
 
 export const photosRelations = relations(photos, ({ one, many }) => ({
@@ -43,8 +41,7 @@ export const tasks = sqliteTable('tasks', {
 	aiPrompt: text('ai_prompt').notNull(),
 	minConfidence: real('min_confidence').notNull().default(0.7),
 	unlockDate: integer('unlock_date', { mode: 'timestamp' }).notNull(),
-	createdAt: integer('created_at', { mode: 'timestamp' })
-		.$defaultFn(() => new Date())
+	createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date())
 });
 
 export const submissions = sqliteTable('submissions', {
@@ -60,13 +57,11 @@ export const submissions = sqliteTable('submissions', {
 	photoId: text('photo_id')
 		.notNull()
 		.references(() => photos.id, { onDelete: 'cascade' }),
-
 	aiMatch: integer('ai_match', { mode: 'boolean' }),
 	aiConfidence: real('ai_confidence'),
 	aiReasoning: text('ai_reasoning'),
 	valid: integer('valid', { mode: 'boolean' }).default(false),
-	submittedAt: integer('submitted_at', { mode: 'timestamp' })
-		.$defaultFn(() => new Date())
+	submittedAt: integer('submitted_at', { mode: 'timestamp' }).$defaultFn(() => new Date())
 });
 
 export const submissionsRelations = relations(submissions, ({ one }) => ({
@@ -83,3 +78,17 @@ export const submissionsRelations = relations(submissions, ({ one }) => ({
 		references: [users.id]
 	})
 }));
+
+export const user = sqliteTable('user', { id: text('id').primaryKey() });
+
+export const session = sqliteTable('session', {
+	id: text('id').primaryKey(),
+	userId: text('user_id')
+		.notNull()
+		.references(() => user.id),
+	expiresAt: integer('expires_at', { mode: 'timestamp' }).notNull()
+});
+
+export type Session = typeof session.$inferSelect;
+
+export type User = typeof user.$inferSelect;
