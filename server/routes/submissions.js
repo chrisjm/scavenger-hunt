@@ -1,19 +1,19 @@
 import express from 'express';
 import path from 'path';
-import { eq, desc, count } from 'drizzle-orm';
+import { eq, desc, count, and } from 'drizzle-orm';
 import { db, schema } from '../utils/database.js';
 import { validateImageWithAI, isSubmissionValid } from '../utils/ai-validator.js';
 
 const router = express.Router();
-const { tasks, submissions, users, photos } = schema;
+const { tasks, submissions, users, photos, userGroups } = schema;
 
 // POST /api/submissions
 router.post('/', async (req, res) => {
 	try {
-		const { userId, taskId, photoId } = req.body;
+		const { userId, taskId, photoId, groupId } = req.body;
 
 		// 1. Validate inputs
-		if (!userId || !taskId || !photoId) {
+		if (!userId || !taskId || !photoId || !groupId) {
 			return res.status(400).json({ error: 'Missing required fields' });
 		}
 
@@ -21,9 +21,15 @@ router.post('/', async (req, res) => {
 		const photo = await db.select().from(photos).where(eq(photos.id, photoId)).get();
 		const task = await db.select().from(tasks).where(eq(tasks.id, taskId)).get();
 		const user = await db.select().from(users).where(eq(users.id, userId)).get();
+		const membership = await db
+			.select()
+			.from(userGroups)
+			.where(and(eq(userGroups.userId, userId), eq(userGroups.groupId, groupId)))
+			.get();
 
 		if (!photo) return res.status(404).json({ error: 'Photo not found' });
 		if (!task) return res.status(404).json({ error: 'Task not found' });
+		if (!membership) return res.status(403).json({ error: 'User is not a member of this group' });
 
 		// Security check: Ensure user owns the photo they are submitting
 		if (photo.userId !== userId) {
@@ -48,6 +54,7 @@ router.post('/', async (req, res) => {
 			.insert(submissions)
 			.values({
 				userId,
+				groupId,
 				taskId,
 				photoId,
 				aiMatch: aiResponse.match,
@@ -63,6 +70,7 @@ router.post('/', async (req, res) => {
 				...submission,
 				taskDescription: task.description,
 				userName: user.name,
+				groupId,
 				imagePath: photo.filePath
 			});
 		}
@@ -74,13 +82,19 @@ router.post('/', async (req, res) => {
 	}
 });
 
-// GET /api/submissions - Get all submissions for the feed
+// GET /api/submissions - Get submissions for a group feed (group-only)
 router.get('/', async (req, res) => {
 	try {
+		const { groupId } = req.query;
+		if (!groupId || typeof groupId !== 'string') {
+			return res.status(400).json({ error: 'groupId is required' });
+		}
+
 		const allSubmissions = await db
 			.select({
 				id: submissions.id,
 				userId: submissions.userId,
+				groupId: submissions.groupId,
 				taskId: submissions.taskId,
 				photoId: submissions.photoId,
 				aiMatch: submissions.aiMatch,
@@ -96,7 +110,7 @@ router.get('/', async (req, res) => {
 			.innerJoin(tasks, eq(submissions.taskId, tasks.id))
 			.innerJoin(users, eq(submissions.userId, users.id))
 			.innerJoin(photos, eq(submissions.photoId, photos.id))
-			.where(eq(submissions.aiMatch, 1))
+			.where(and(eq(submissions.aiMatch, 1), eq(submissions.groupId, groupId)))
 			.orderBy(desc(submissions.submittedAt));
 
 		res.json(allSubmissions);
@@ -131,9 +145,14 @@ router.get('/user/:userId', async (req, res) => {
 	}
 });
 
-// GET /api/submissions/leaderboard
+// GET /api/submissions/leaderboard - group-only
 router.get('/leaderboard', async (req, res) => {
 	try {
+		const { groupId } = req.query;
+		if (!groupId || typeof groupId !== 'string') {
+			return res.status(400).json({ error: 'groupId is required' });
+		}
+
 		const leaderboard = await db
 			.select({
 				name: users.name,
@@ -141,7 +160,7 @@ router.get('/leaderboard', async (req, res) => {
 			})
 			.from(submissions)
 			.innerJoin(users, eq(submissions.userId, users.id))
-			.where(eq(submissions.valid, 1))
+			.where(and(eq(submissions.valid, 1), eq(submissions.groupId, groupId)))
 			.groupBy(users.name)
 			.orderBy(desc(count(submissions.id)));
 
