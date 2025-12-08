@@ -39,7 +39,12 @@ Instructions:
 - Return confidence as a decimal between 0.0 and 1.0
 - Provide brief, helpful reasoning
 
-Output: Return JSON only with the required format.
+Output: Return JSON only with this exact format:
+{
+  "match": true/false,
+  "confidence": 0.0-1.0,
+  "reasoning": "brief explanation"
+}
 		`.trim();
 
 		const result = await model.generateContent([

@@ -238,27 +238,6 @@ router.get('/tasks', async (req, res) => {
 	}
 });
 
-// Leaderboard endpoint
-router.get('/leaderboard', async (req, res) => {
-	try {
-		const leaderboard = await db
-			.select({
-				name: users.name,
-				score: count(submissions.id)
-			})
-			.from(submissions)
-			.innerJoin(users, eq(submissions.userId, users.id))
-			.where(eq(submissions.valid, 1))
-			.groupBy(users.name)
-			.orderBy(desc(count(submissions.id)));
-
-		res.json(leaderboard);
-	} catch (error) {
-		console.error('Error fetching leaderboard:', error);
-		res.status(500).json({ error: 'Failed to fetch leaderboard' });
-	}
-});
-
 // Update user profile endpoint
 router.put('/users/:userId', async (req, res) => {
 	try {
