@@ -9,6 +9,12 @@ const USERNAME_MIN = 2;
 const USERNAME_MAX = 30;
 const PASSWORD_MIN = 9; // must be > 8
 
+const adminIdsEnv = (process.env.ADMIN_USER_IDS || '')
+	.split(',')
+	.map((id) => id.trim())
+	.filter(Boolean);
+const ADMIN_ID_SET = new Set(adminIdsEnv);
+
 export const POST = async ({ request, cookies }) => {
 	const body = await request.json().catch(() => ({}));
 	const rawName: unknown = body.name;
@@ -56,6 +62,13 @@ export const POST = async ({ request, cookies }) => {
 			return json({ error: 'Incorrect password' }, { status: 400 });
 		}
 
+		// fetch the player row to get isAdmin
+		const [player] = await db
+			.select()
+			.from(playerUsers)
+			.where(eq(playerUsers.id, existingAuthUser.playerUserId))
+			.limit(1);
+
 		const session = await lucia.createSession(existingAuthUser.id, {});
 		const sessionCookie = lucia.createSessionCookie(session.id);
 		cookies.set(sessionCookie.name, sessionCookie.value, {
@@ -66,7 +79,8 @@ export const POST = async ({ request, cookies }) => {
 		return json({
 			userId: existingAuthUser.playerUserId,
 			userName: existingAuthUser.username,
-			isReturningUser: true
+			isReturningUser: true,
+			isAdmin: player?.isAdmin ?? false
 		});
 	}
 
@@ -85,8 +99,11 @@ export const POST = async ({ request, cookies }) => {
 	const playerUserId = crypto.randomUUID();
 	const authUserId = crypto.randomUUID();
 
+	// compute admin flag from env
+	const isAdmin = ADMIN_ID_SET.has(playerUserId);
+
 	// create player row
-	await db.insert(playerUsers).values({ id: playerUserId, name });
+	await db.insert(playerUsers).values({ id: playerUserId, name, isAdmin });
 
 	// create auth row
 	await db.insert(authUser).values({
@@ -106,7 +123,8 @@ export const POST = async ({ request, cookies }) => {
 	return json({
 		userId: playerUserId,
 		userName: name,
-		isReturningUser: false
+		isReturningUser: false,
+		isAdmin
 	});
 };
 

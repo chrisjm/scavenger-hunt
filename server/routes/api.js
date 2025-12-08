@@ -9,7 +9,14 @@ import { resizeImageMiddleware } from '../middleware/imageResize.js';
 const router = express.Router();
 const { tasks, submissions, users } = schema;
 
-// Login endpoint - logs in existing user or creates new user
+// Admin IDs from env (UUIDs)
+const adminIdsEnv = (process.env.ADMIN_USER_IDS || '')
+	.split(',')
+	.map((id) => id.trim())
+	.filter(Boolean);
+const ADMIN_ID_SET = new Set(adminIdsEnv);
+
+// Login endpoint - logs in existing user or creates new user, returning isAdmin
 router.post('/login', async (req, res) => {
 	try {
 		const { name, isReturningUser = false } = req.body;
@@ -32,7 +39,8 @@ router.post('/login', async (req, res) => {
 			return res.json({
 				userId: existingUser[0].id,
 				userName: existingUser[0].name,
-				isReturningUser: true
+				isReturningUser: true,
+				isAdmin: existingUser[0].isAdmin ?? false
 			});
 		}
 
@@ -46,11 +54,17 @@ router.post('/login', async (req, res) => {
 		}
 
 		// Create new user
-		const newUser = await db.insert(users).values({ name: trimmedName }).returning();
+		const userId = crypto.randomUUID();
+		const isAdmin = ADMIN_ID_SET.has(userId);
+		const newUser = await db
+			.insert(users)
+			.values({ id: userId, name: trimmedName, isAdmin })
+			.returning();
 		res.json({
 			userId: newUser[0].id,
 			userName: newUser[0].name,
-			isReturningUser: false
+			isReturningUser: false,
+			isAdmin
 		});
 	} catch (error) {
 		console.error('Login error:', error);
@@ -62,6 +76,21 @@ router.post('/login', async (req, res) => {
 			});
 		}
 		res.status(500).json({ error: 'Login failed' });
+	}
+});
+
+// Get user profile (id, name, isAdmin)
+router.get('/users/:userId', async (req, res) => {
+	try {
+		const { userId } = req.params;
+		const user = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+		if (user.length === 0) {
+			return res.status(404).json({ error: 'User not found' });
+		}
+		res.json({ user: user[0] });
+	} catch (error) {
+		console.error('Error fetching user:', error);
+		res.status(500).json({ error: 'Failed to fetch user' });
 	}
 });
 
