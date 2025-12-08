@@ -7,12 +7,11 @@
 	import TaskGrid from '$lib/components/TaskGrid.svelte';
 	import TabbedView from '$lib/components/TabbedView.svelte';
 
+	// State
 	let socket: Socket | undefined;
-	let submissions = $state<any[]>([]);
-	let selectedFile = $state<File | null>(null);
-	let uploading = $state(false);
 	let loading = $state(true);
 	let tasks = $state<any[]>([]);
+	let submissions = $state<any[]>([]);
 	let leaderboard = $state<any[]>([]);
 	let leaderboardLoading = $state(false);
 
@@ -23,8 +22,11 @@
 	// Derived stats
 	let unlockedTasks = $derived(tasks.filter((task) => task.unlocked));
 	let totalTasks = $derived(tasks.length);
+	let userSubmissions = $derived(submissions.filter((sub) => sub.userId === userId));
+	let approvedUserSubmissions = $derived(userSubmissions.filter((sub) => sub.valid));
+	let completedTaskIds = $derived(new Set(approvedUserSubmissions.map((sub) => sub.taskId)));
 	let completionRate = $derived(
-		totalTasks > 0 ? Math.round((unlockedTasks.length / totalTasks) * 100) : 0
+		unlockedTasks.length > 0 ? Math.round((completedTaskIds.size / unlockedTasks.length) * 100) : 0
 	);
 	let approvedSubmissions = $derived(submissions.filter((sub) => sub.valid));
 
@@ -34,22 +36,30 @@
 		const storedUserName = localStorage.getItem('scavenger-hunt-userName');
 
 		if (!storedUserId || !storedUserName) {
-			// User is not logged in, redirect to login page
 			goto('/login');
 			return;
 		}
 
-		// User is logged in
 		userId = storedUserId;
 		userName = storedUserName;
 
-		// Initialize the app
 		loadTasks();
+		loadSubmissions();
 		loadLeaderboard();
 		connectSocket();
 	});
 
-	// Load tasks from API
+	async function loadSubmissions() {
+		try {
+			const response = await fetch('/api/submissions');
+			if (response.ok) {
+				submissions = await response.json();
+			}
+		} catch (error) {
+			console.error('Failed to load submissions:', error);
+		}
+	}
+
 	async function loadTasks() {
 		try {
 			const response = await fetch('/api/tasks');
@@ -61,35 +71,10 @@
 		}
 	}
 
-	// Connect to socket
-	function connectSocket() {
-		if (!userId) return;
-
-		socket = io();
-		socket.on('connect', () => {
-			console.log('Connected to server');
-			socket?.emit('join-room', userId);
-		});
-
-		socket.on('new-submission', (submission: any) => {
-			submissions = [submission, ...submissions];
-			// Refresh leaderboard when a valid submission comes in
-			if (submission.valid) {
-				loadLeaderboard();
-			}
-		});
-	}
-
-	function handleFileSelect(event: Event) {
-		const target = event.target as HTMLInputElement;
-		selectedFile = target.files?.[0] || null;
-	}
-
-	// Load leaderboard data
 	async function loadLeaderboard() {
 		try {
 			leaderboardLoading = true;
-			const response = await fetch('/api/leaderboard');
+			const response = await fetch('/api/submissions/leaderboard');
 			if (response.ok) {
 				leaderboard = await response.json();
 			}
@@ -100,139 +85,78 @@
 		}
 	}
 
-	async function uploadImage(taskId: number) {
-		if (!selectedFile) {
-			alert('Please select an image first');
-			return;
-		}
+	function connectSocket() {
+		if (!userId) return;
 
-		if (!userId) {
-			alert('Please log in first');
-			goto('/login');
-			return;
-		}
+		socket = io();
+		socket.on('connect', () => {
+			console.log('Connected to server');
+			socket?.emit('join-room', userId);
+		});
 
-		uploading = true;
-		const formData = new FormData();
-		formData.append('image', selectedFile);
-		formData.append('userId', userId);
-		formData.append('taskId', taskId.toString());
+		socket.on('new-submission', (submission: any) => {
+			// Add new submission to the feed
+			submissions = [submission, ...submissions];
 
-		try {
-			const response = await fetch('/api/upload', {
-				method: 'POST',
-				body: formData
-			});
-
-			// Handle non-JSON responses (like network errors)
-			if (!response.ok) {
-				let errorMessage = 'Upload failed';
-
-				try {
-					const result = await response.json();
-					errorMessage = result.error || `Server error (${response.status})`;
-				} catch {
-					// If we can't parse JSON, use status-based messages
-					switch (response.status) {
-						case 400:
-							errorMessage = 'Invalid image file or missing information';
-							break;
-						case 404:
-							errorMessage = 'Task not found or user not found';
-							break;
-						case 413:
-							errorMessage = 'Image file is too large (max 10MB)';
-							break;
-						case 500:
-							errorMessage = 'Server error - please try again';
-							break;
-						default:
-							errorMessage = `Upload failed (Error ${response.status})`;
-					}
-				}
-
-				alert(errorMessage);
-				return;
+			// If valid, refresh leaderboard to show updated scores immediately
+			if (submission.valid) {
+				loadLeaderboard();
 			}
-
-			const result = await response.json();
-
-			if (result.success) {
-				const message = result.submission.valid
-					? `🎉 Great photo! Your submission was accepted!\n\n${result.submission.aiReasoning}`
-					: `📸 Photo uploaded, but it doesn't quite match what we're looking for.\n\n${result.submission.aiReasoning}`;
-
-				alert(message);
-				selectedFile = null;
-				const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
-				if (fileInput) fileInput.value = '';
-			} else {
-				alert('Upload failed: ' + (result.error || 'Unknown error'));
-			}
-		} catch (error) {
-			console.error('Upload error:', error);
-			alert('Network error - please check your connection and try again');
-		} finally {
-			uploading = false;
-		}
+		});
 	}
 </script>
 
-<div class="container mx-auto p-4 md:p-6 max-w-4xl">
-	<!-- Hero Section -->
-	<div class="text-center mb-6 md:mb-8 relative">
-		<!-- Profile Button (top right) -->
+<div class="container mx-auto max-w-4xl p-4 md:p-6">
+	<div class="relative mb-6 text-center md:mb-8">
 		{#if userName}
-			<a
-				href="/profile"
-				class="absolute top-0 right-0 flex items-center gap-2 px-3 py-2 bg-white rounded-full shadow-md hover:shadow-lg transition-all border border-gray-200 text-sm"
-				title="Edit Profile"
-			>
-				<div
-					class="w-6 h-6 bg-gradient-to-br from-green-400 to-blue-500 rounded-full flex items-center justify-center text-white text-xs font-bold"
+			<div class="absolute right-0 top-0 flex gap-2">
+				<a
+					href="/library"
+					class="flex items-center gap-2 rounded-full border border-gray-200 bg-white px-3 py-2 text-sm shadow-md transition-all hover:shadow-lg"
+					title="My Library"
 				>
-					{userName.charAt(0).toUpperCase()}
-				</div>
-				<span class="hidden sm:inline text-gray-700">{userName}</span>
-				<span class="text-gray-400">⚙️</span>
-			</a>
+					<span class="text-xl">📸</span>
+					<span class="hidden text-gray-700 sm:inline">Library</span>
+				</a>
+				<a
+					href="/profile"
+					class="flex items-center gap-2 rounded-full border border-gray-200 bg-white px-3 py-2 text-sm shadow-md transition-all hover:shadow-lg"
+					title="Edit Profile"
+				>
+					<div
+						class="flex h-6 w-6 items-center justify-center rounded-full bg-gradient-to-br from-green-400 to-blue-500 text-xs font-bold text-white"
+					>
+						{userName.charAt(0).toUpperCase()}
+					</div>
+					<span class="hidden text-gray-700 sm:inline">{userName}</span>
+				</a>
+			</div>
 		{/if}
 
 		<h1
-			class="text-3xl md:text-5xl font-bold bg-gradient-to-r from-red-600 via-green-600 to-red-600 bg-clip-text text-transparent mb-3 md:mb-4"
+			class="mb-3 bg-gradient-to-r from-red-600 via-green-600 to-red-600 bg-clip-text text-3xl font-bold text-transparent md:mb-4 md:text-5xl"
 		>
-			🎄 Christmas Scavenger Hunt 🎄
+			🎄 Scavenger Hunt 🎄
 		</h1>
-		<p class="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto px-4">
-			Find festive items around you and share them with the community! Upload photos to complete
-			challenges and see what others have discovered.
+		<p class="mx-auto max-w-2xl px-4 text-lg text-gray-600 md:text-xl">
+			Find festive items, snap a photo, or choose one from your library to complete the challenge!
 		</p>
 	</div>
 
-	<!-- Stats Dashboard -->
 	<div class="mb-6 md:mb-8">
 		<StatsGrid
 			{loading}
 			{totalTasks}
 			unlockedTasks={unlockedTasks.length}
 			{completionRate}
-			approvedSubmissions={approvedSubmissions.length}
-			totalSubmissions={submissions.length}
+			approvedSubmissions={approvedUserSubmissions.length}
+			totalSubmissions={userSubmissions.length}
 		/>
 	</div>
 
-	<!-- Upload Section -->
 	<div class="mb-6 md:mb-8">
-		<TaskGrid
-			{tasks}
-			{loading}
-			{selectedFile}
-			{uploading}
-			onFileSelect={handleFileSelect}
-			onUpload={uploadImage}
-		/>
+		<TaskGrid {tasks} {loading} {userId} />
 	</div>
 
-	<!-- Community Activity -->
 	<TabbedView {submissions} {leaderboard} {leaderboardLoading} />
 </div>
