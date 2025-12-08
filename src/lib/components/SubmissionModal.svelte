@@ -32,11 +32,33 @@
 	async function handleFileSelect(e: Event) {
 		const target = e.target as HTMLInputElement;
 		const file = target.files?.[0];
-		if (!file) return;
+		if (!file) {
+			return;
+		}
 
 		tempFile = file;
 		tempPreview = URL.createObjectURL(file);
 		selectedPhotoId = null; // Clear library selection
+	}
+
+	// Function to trigger camera input
+	function triggerCamera() {
+		const input = document.getElementById('camera-input') as HTMLInputElement;
+		if (input) {
+			input.click();
+		} else {
+			console.error('Camera input not found');
+		}
+	}
+
+	// Function to trigger gallery input
+	function triggerGallery() {
+		const input = document.getElementById('gallery-input') as HTMLInputElement;
+		if (input) {
+			input.click();
+		} else {
+			console.error('Gallery input not found');
+		}
 	}
 
 	// Handle library selection
@@ -116,7 +138,7 @@
 					onclick={() => (activeTab = 'upload')}
 				>
 					<span class="flex items-center justify-center gap-2">
-						<Camera class="h-4 w-4" /> Take Photo / Upload
+						<Camera class="h-4 w-4" /> Camera & Gallery
 					</span>
 				</button>
 				<button
@@ -153,13 +175,39 @@
 									Remove & Retake
 								</button>
 							{:else}
-								<div class="mb-3 rounded-full bg-white p-3 shadow-sm">
-									<Upload class="h-8 w-8 text-green-500" />
+								<button
+									type="button"
+									onclick={triggerCamera}
+									class="mb-3 rounded-full bg-white p-3 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+									aria-label="Take photo with camera"
+								>
+									<Camera class="h-8 w-8 text-green-500" />
+								</button>
+
+								<!-- Two options for photo input -->
+								<div class="grid grid-cols-2 gap-3 mb-3">
+									<button
+										onclick={triggerCamera}
+										type="button"
+										class="rounded-lg bg-green-100 hover:bg-green-200 transition-colors py-3 px-3 text-center"
+									>
+										<Camera class="h-5 w-5 text-green-600 mx-auto mb-1" />
+										<span class="block text-sm font-semibold text-green-700">Camera</span>
+										<span class="text-xs text-green-600">Take new photo</span>
+									</button>
+
+									<button
+										onclick={triggerGallery}
+										type="button"
+										class="rounded-lg bg-blue-100 hover:bg-blue-200 transition-colors py-3 px-3 text-center"
+									>
+										<ImageIcon class="h-5 w-5 text-blue-600 mx-auto mb-1" />
+										<span class="block text-sm font-semibold text-blue-700">Gallery</span>
+										<span class="text-xs text-blue-600">Choose existing</span>
+									</button>
 								</div>
-								<label for="camera-input" class="cursor-pointer text-center">
-									<span class="block text-sm font-semibold text-gray-700">Click to Take Photo</span>
-									<span class="text-xs text-gray-500">or upload from gallery</span>
-								</label>
+
+								<!-- Camera input - forces camera on mobile -->
 								<input
 									id="camera-input"
 									type="file"
@@ -167,6 +215,17 @@
 									capture="environment"
 									class="hidden"
 									onchange={handleFileSelect}
+									multiple={false}
+								/>
+
+								<!-- Gallery input - allows photo library selection -->
+								<input
+									id="gallery-input"
+									type="file"
+									accept="image/*"
+									class="hidden"
+									onchange={handleFileSelect}
+									multiple={false}
 								/>
 							{/if}
 						</div>
