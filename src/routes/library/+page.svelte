@@ -84,7 +84,7 @@
 
 <div class="container mx-auto p-4 max-w-4xl">
 	<div class="flex items-center justify-between mb-6">
-		<h1 class="text-2xl font-bold text-gray-800">My Photo Library</h1>
+		<h1 class="text-xl font-semibold text-gray-800">My Photo Library</h1>
 		<div class="relative">
 			<input
 				type="file"

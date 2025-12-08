@@ -1,0 +1,33 @@
+<script lang="ts">
+	import { TreePine } from 'lucide-svelte';
+	import SidebarMenu from './SidebarMenu.svelte';
+
+	interface Props {
+		sidebarOpen: boolean;
+		onMenuClick: () => void;
+		showMenu?: boolean;
+	}
+
+	let { sidebarOpen, onMenuClick, showMenu = true }: Props = $props();
+</script>
+
+<header class="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm">
+	<div class="flex items-center justify-between px-4 py-3">
+		<!-- Left: App Title -->
+		<div class="flex items-center gap-2">
+			<TreePine class="text-green-600" size={24} />
+			<h1 class="text-lg font-bold text-gray-800 md:text-xl">
+				<span
+					class="bg-gradient-to-r from-red-600 via-green-600 to-red-600 bg-clip-text text-transparent"
+				>
+					Scavenger Hunt
+				</span>
+			</h1>
+		</div>
+
+		<!-- Right: Menu Button (only show if showMenu is true) -->
+		{#if showMenu}
+			<SidebarMenu isOpen={sidebarOpen} onClick={onMenuClick} />
+		{/if}
+	</div>
+</header>

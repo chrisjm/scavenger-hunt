@@ -4,7 +4,7 @@
 	import { onMount, setContext } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
-	import SidebarMenu from '$lib/components/SidebarMenu.svelte';
+	import Header from '$lib/components/Header.svelte';
 	import Sidebar from '$lib/components/Sidebar.svelte';
 
 	let { children } = $props();
@@ -68,14 +68,20 @@
 	<link rel="icon" href={favicon} />
 </svelte:head>
 
-<!-- Sidebar Menu - only show if user is authenticated and not on login page -->
-{#if userId && page.route.id !== '/login'}
-	<SidebarMenu onClick={() => (sidebarOpen = true)} />
+<!-- Header - show on all pages except login -->
+{#if page.route.id !== '/login'}
+	<Header
+		{sidebarOpen}
+		onMenuClick={() => {
+			sidebarOpen = !sidebarOpen;
+		}}
+		showMenu={!!userId}
+	/>
 {/if}
 
 {@render children()}
 
 <!-- Sidebar - only show if user is authenticated -->
-{#if userId && userName}
+{#if userId}
 	<Sidebar isOpen={sidebarOpen} onClose={() => (sidebarOpen = false)} {userName} />
 {/if}

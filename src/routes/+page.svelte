@@ -5,7 +5,6 @@
 	import StatsGrid from '$lib/components/StatsGrid.svelte';
 	import TaskGrid from '$lib/components/TaskGrid.svelte';
 	import TabbedView from '$lib/components/TabbedView.svelte';
-	import { TreePine } from 'lucide-svelte';
 	import { getUserContext } from '$lib/stores/user';
 
 	// Get user context from layout
@@ -118,17 +117,6 @@
 
 <div class="container mx-auto max-w-4xl p-4 md:p-6">
 	<div class="relative mb-6 text-center md:mb-8">
-		<h1
-			class="mb-3 text-3xl font-bold text-gray-800 md:mb-4 md:text-5xl flex items-center justify-center gap-3"
-		>
-			<TreePine class="text-green-600" size={40} />
-			<span
-				class="bg-gradient-to-r from-red-600 via-green-600 to-red-600 bg-clip-text text-transparent"
-			>
-				Scavenger Hunt
-			</span>
-			<TreePine class="text-green-600" size={40} />
-		</h1>
 		<p class="mx-auto max-w-2xl px-4 text-lg text-gray-600 md:text-xl">
 			Find festive items, snap a photo, or choose one from your library to complete the challenge!
 		</p>

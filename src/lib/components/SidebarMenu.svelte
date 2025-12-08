@@ -1,17 +1,30 @@
 <script lang="ts">
-	import { Menu } from 'lucide-svelte';
+	import { Menu, X } from 'lucide-svelte';
 
 	interface Props {
 		onClick: () => void;
+		isOpen?: boolean;
 	}
 
-	let { onClick }: Props = $props();
+	let { onClick, isOpen = false }: Props = $props();
+
+	function handleClick(event: Event) {
+		event.preventDefault();
+		event.stopPropagation();
+		console.log('Menu button clicked, current state:', isOpen);
+		onClick();
+	}
 </script>
 
 <button
-	onclick={onClick}
-	class="fixed top-4 right-4 z-30 flex h-12 w-12 items-center justify-center rounded-full bg-white shadow-lg border border-gray-200 hover:shadow-xl transition-all duration-200 hover:scale-105"
-	title="Open Menu"
+	onclick={handleClick}
+	class="flex h-10 w-10 items-center justify-center rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors duration-200 cursor-pointer"
+	title={isOpen ? 'Close Menu' : 'Open Menu'}
+	type="button"
 >
-	<Menu size={20} class="text-gray-700" />
+	{#if isOpen}
+		<X size={20} class="text-gray-700" />
+	{:else}
+		<Menu size={20} class="text-gray-700" />
+	{/if}
 </button>
