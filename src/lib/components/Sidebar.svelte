@@ -1,6 +1,9 @@
 <script lang="ts">
-	import { User, Camera, LogOut, X, Home } from 'lucide-svelte';
+	import { User, Camera, LogOut, X, Home, ListChecks } from 'lucide-svelte';
 	import { goto } from '$app/navigation';
+	import { getUserContext } from '$lib/stores/user';
+
+	const userContext = getUserContext();
 
 	interface Props {
 		isOpen: boolean;
@@ -21,6 +24,10 @@
 		}
 
 		localStorage.removeItem('scavenger-hunt-userId');
+		userContext.userId = null;
+		userContext.userName = null;
+		userContext.setActiveGroup(null);
+		onClose();
 		goto('/');
 	}
 
@@ -86,6 +93,14 @@
 				>
 					<Home size={20} class="text-gray-600" />
 					<span class="font-medium text-gray-700">Home</span>
+				</button>
+
+				<button
+					onclick={() => handleNavigation('/tasks')}
+					class="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-gray-100 transition-colors text-left"
+				>
+					<ListChecks size={20} class="text-gray-600" />
+					<span class="font-medium text-gray-700">Tasks</span>
 				</button>
 
 				<button
