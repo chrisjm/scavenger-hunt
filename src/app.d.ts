@@ -3,8 +3,13 @@
 declare global {
 	namespace App {
 		interface Locals {
-			user: import('lucia').User | null;
-			session: import('lucia').Session | null;
+			user: {
+				userId: string;
+				authId: string | null;
+				username: string | null;
+				isAdmin: boolean;
+			} | null;
+			// No session object: auth is handled via JWT in auth_token cookie
 		}
 	} // interface Error {}
 	// interface Locals {}
@@ -12,4 +17,4 @@ declare global {
 // interface PageState {}
 
 // interface Platform {}
-export {};
+export { };

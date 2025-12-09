@@ -1,35 +1,34 @@
 import type { Handle } from '@sveltejs/kit';
-import { lucia } from '$lib/server/auth';
+import { verifyAuthToken } from '$lib/server/jwt';
 
 const handleAuth: Handle = async ({ event, resolve }) => {
-	const sessionId = event.cookies.get(lucia.sessionCookieName);
+	const token = event.cookies.get('auth_token');
 
-	if (!sessionId) {
+	if (!token) {
 		event.locals.user = null;
-		event.locals.session = null;
 		return resolve(event);
 	}
 
-	const { session, user } = await lucia.validateSession(sessionId);
+	const payload = await verifyAuthToken(token);
 
-	if (session && session.fresh) {
-		const sessionCookie = lucia.createSessionCookie(session.id);
-		event.cookies.set(sessionCookie.name, sessionCookie.value, {
-			path: '.',
-			...sessionCookie.attributes
+	if (!payload) {
+		// Clear invalid token
+		event.cookies.set('auth_token', '', {
+			path: '/',
+			expires: new Date(0),
+			httpOnly: true
 		});
+		event.locals.user = null;
+		return resolve(event);
 	}
 
-	if (!session) {
-		const sessionCookie = lucia.createBlankSessionCookie();
-		event.cookies.set(sessionCookie.name, sessionCookie.value, {
-			path: '.',
-			...sessionCookie.attributes
-		});
-	}
+	event.locals.user = {
+		userId: payload.userId,
+		authId: payload.authId,
+		username: payload.username,
+		isAdmin: payload.isAdmin
+	};
 
-	event.locals.user = user;
-	event.locals.session = session;
 	return resolve(event);
 };
 
