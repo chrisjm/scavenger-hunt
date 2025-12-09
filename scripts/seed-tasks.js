@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import { drizzle } from 'drizzle-orm/better-sqlite3';
 import Database from 'better-sqlite3';
 import crypto from 'node:crypto';
@@ -10,8 +11,9 @@ import {
 	userGroups
 } from '../src/lib/server/db/schema.ts';
 
-// Create database connection
-const client = new Database('local.db');
+// Create database connection using the same DATABASE_URL as the app
+const dbUrl = process.env.DATABASE_URL || 'local.db';
+const client = new Database(dbUrl);
 const db = drizzle(client);
 
 const sampleTasks = [
