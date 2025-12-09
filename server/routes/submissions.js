@@ -3,14 +3,17 @@ import path from 'path';
 import { eq, desc, count, and } from 'drizzle-orm';
 import { db, schema } from '../utils/database.js';
 import { validateImageWithAI, isSubmissionValid } from '../utils/ai-validator.js';
+import { requireAuth } from '../middleware/auth.js';
 
 const router = express.Router();
+router.use(requireAuth);
 const { tasks, submissions, users, photos, userGroups } = schema;
 
 // POST /api/submissions
 router.post('/', async (req, res) => {
 	try {
-		const { userId, taskId, photoId, groupId } = req.body;
+		const { taskId, photoId, groupId } = req.body;
+		const userId = req.user?.userId;
 
 		// 1. Validate inputs
 		if (!userId || !taskId || !photoId || !groupId) {
@@ -123,7 +126,8 @@ router.get('/', async (req, res) => {
 // GET /api/submissions/user/:userId - Get submissions for a specific user
 router.get('/user/:userId', async (req, res) => {
 	try {
-		const { userId } = req.params;
+		// Enforce that users can only retrieve their own submissions unless expanded later
+		const userId = req.user?.userId;
 
 		const userSubmissions = await db
 			.select({
@@ -175,7 +179,7 @@ router.get('/leaderboard', async (req, res) => {
 router.delete('/:id', async (req, res) => {
 	try {
 		const { id } = req.params;
-		const { userId } = req.body;
+		const userId = req.user?.userId;
 
 		if (!userId) {
 			return res.status(400).json({ error: 'User ID is required' });

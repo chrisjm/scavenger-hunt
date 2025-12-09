@@ -3,17 +3,19 @@ import path from 'path';
 import fs from 'fs/promises';
 import { eq, and, desc } from 'drizzle-orm';
 import { db, schema } from '../utils/database.js';
-import { upload, uploadsDir } from '../middleware/upload.js';
+import { upload } from '../middleware/upload.js';
 import { resizeImageMiddleware } from '../middleware/imageResize.js';
+import { requireAuth } from '../middleware/auth.js';
 
 const router = express.Router();
+router.use(requireAuth);
 const { photos } = schema;
 
-// GET /api/library?userId=[UUID]
+// GET /api/library - library for current authenticated user
 router.get('/', async (req, res) => {
 	try {
-		const { userId } = req.query;
-		if (!userId) return res.status(400).json({ error: 'User ID required' });
+		const userId = req.user?.userId;
+		if (!userId) return res.status(401).json({ error: 'Unauthorized' });
 
 		const userPhotos = await db
 			.select()
@@ -33,7 +35,7 @@ router.post('/upload', upload.single('image'), resizeImageMiddleware(), async (r
 	try {
 		if (!req.file) return res.status(400).json({ error: 'No image provided' });
 
-		const { userId } = req.body;
+		const userId = req.user?.userId;
 		if (!userId) {
 			// Clean up orphan file if request is bad
 			await fs.unlink(req.file.path).catch(() => {});
@@ -65,8 +67,7 @@ router.post('/upload', upload.single('image'), resizeImageMiddleware(), async (r
 router.delete('/:id', async (req, res) => {
 	try {
 		const { id } = req.params;
-		// TODO: Get userId from auth token/session
-		const { userId } = req.body;
+		const userId = req.user?.userId;
 
 		if (!userId) return res.status(401).json({ error: 'Unauthorized' });
 

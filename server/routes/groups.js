@@ -1,8 +1,10 @@
 import express from 'express';
 import { and, eq, sql } from 'drizzle-orm';
 import { db, schema } from '../utils/database.js';
+import { requireAuth } from '../middleware/auth.js';
 
 const router = express.Router();
+router.use(requireAuth);
 const { groups, userGroups, users } = schema;
 
 // Helper: is admin
@@ -28,7 +30,8 @@ router.get('/', async (_req, res) => {
 // POST /api/groups (admin only)
 router.post('/', async (req, res) => {
 	try {
-		const { userId, name, description } = req.body;
+		const { name, description } = req.body;
+		const userId = req.user?.userId;
 		if (!userId || !name) {
 			return res.status(400).json({ error: 'userId and name are required' });
 		}
@@ -80,7 +83,7 @@ router.post('/', async (req, res) => {
 router.post('/:groupId/join', async (req, res) => {
 	try {
 		const { groupId } = req.params;
-		const { userId } = req.body;
+		const userId = req.user?.userId;
 		if (!userId || !groupId) {
 			return res.status(400).json({ error: 'userId and groupId are required' });
 		}
@@ -123,7 +126,8 @@ router.post('/:groupId/join', async (req, res) => {
 // DELETE /api/groups/:groupId/members/:userId - leave group
 router.delete('/:groupId/members/:userId', async (req, res) => {
 	try {
-		const { groupId, userId } = req.params;
+		const { groupId } = req.params;
+		const userId = req.user?.userId;
 		const membership = await db
 			.select()
 			.from(userGroups)
@@ -146,7 +150,7 @@ router.delete('/:groupId/members/:userId', async (req, res) => {
 // GET /api/users/:userId/groups - list groups for a user
 router.get('/users/:userId/groups', async (req, res) => {
 	try {
-		const { userId } = req.params;
+		const userId = req.user?.userId;
 		const rows = await db
 			.select({
 				id: groups.id,

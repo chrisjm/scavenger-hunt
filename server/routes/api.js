@@ -5,6 +5,7 @@ import { db, schema } from '../utils/database.js';
 import { validateImageWithAI, isSubmissionValid } from '../utils/ai-validator.js';
 import { upload, uploadsDir } from '../middleware/upload.js';
 import { resizeImageMiddleware } from '../middleware/imageResize.js';
+import { requireAuth } from '../middleware/auth.js';
 
 const router = express.Router();
 const { tasks, submissions, users } = schema;
@@ -79,10 +80,10 @@ router.post('/login', async (req, res) => {
 	}
 });
 
-// Get user profile (id, name, isAdmin)
-router.get('/users/:userId', async (req, res) => {
+// Get user profile (id, name, isAdmin) for current authenticated user
+router.get('/users/:userId', requireAuth, async (req, res) => {
 	try {
-		const { userId } = req.params;
+		const userId = req.user?.userId;
 		const user = await db.select().from(users).where(eq(users.id, userId)).limit(1);
 		if (user.length === 0) {
 			return res.status(404).json({ error: 'User not found' });
@@ -128,6 +129,7 @@ router.get('/check-name/:name', async (req, res) => {
 // Upload endpoint with image resizing
 router.post(
 	'/upload',
+	requireAuth,
 	(req, res, next) => {
 		upload.single('image')(req, res, (err) => {
 			if (err) {
@@ -160,7 +162,8 @@ router.post(
 				return res.status(400).json({ error: 'No image file provided' });
 			}
 
-			const { userId, taskId } = req.body;
+			const userId = req.user?.userId;
+			const { taskId } = req.body;
 			if (!userId || !taskId) {
 				return res.status(400).json({ error: 'userId and taskId are required' });
 			}
@@ -249,8 +252,8 @@ router.post(
 	}
 );
 
-// Get tasks endpoint
-router.get('/tasks', async (req, res) => {
+// Get tasks endpoint (authenticated)
+router.get('/tasks', requireAuth, async (req, res) => {
 	try {
 		const allTasks = await db.select().from(tasks).orderBy(tasks.unlockDate);
 
@@ -267,10 +270,10 @@ router.get('/tasks', async (req, res) => {
 	}
 });
 
-// Update user profile endpoint
-router.put('/users/:userId', async (req, res) => {
+// Update current authenticated user's profile endpoint
+router.put('/users/:userId', requireAuth, async (req, res) => {
 	try {
-		const { userId } = req.params;
+		const userId = req.user?.userId;
 		const { name } = req.body;
 
 		// Validate input
