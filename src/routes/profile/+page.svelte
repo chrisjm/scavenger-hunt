@@ -178,8 +178,8 @@
 		// Clear localStorage
 		localStorage.removeItem('scavenger-hunt-userId');
 
-		// Redirect to login
-		goto('/login');
+		// Redirect to landing page
+		goto('/');
 	}
 </script>
 

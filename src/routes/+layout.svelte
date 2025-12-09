@@ -56,6 +56,10 @@
 		refreshGroups
 	});
 
+	function isPublicRoute(routeId: string | null) {
+		return routeId === '/' || routeId === '/login' || routeId === '/register';
+	}
+
 	// Check authentication on mount
 	onMount(() => {
 		const storedUserId = localStorage.getItem('scavenger-hunt-userId');
@@ -65,8 +69,8 @@
 			// Fetch user profile and groups from API
 			fetchUserProfile(storedUserId);
 			refreshGroups();
-		} else if (page.route.id !== '/login') {
-			// Redirect to login if not authenticated and not already on login page
+		} else if (!isPublicRoute(page.route.id)) {
+			// Redirect unauthenticated users away from protected routes
 			goto('/login');
 		}
 	});
@@ -111,7 +115,7 @@
 
 	// Reactive check for route changes
 	$effect(() => {
-		if (!userId && page.route.id !== '/login') {
+		if (!userId && !isPublicRoute(page.route.id)) {
 			goto('/login');
 		}
 	});
@@ -121,8 +125,8 @@
 	<link rel="icon" href={favicon} />
 </svelte:head>
 
-<!-- Header - show on all pages except login -->
-{#if page.route.id !== '/login'}
+<!-- Header - show on all pages except auth screens -->
+{#if page.route.id !== '/login' && page.route.id !== '/register'}
 	<Header
 		{sidebarOpen}
 		onMenuClick={() => {

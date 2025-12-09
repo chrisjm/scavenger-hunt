@@ -21,7 +21,7 @@
 		}
 
 		localStorage.removeItem('scavenger-hunt-userId');
-		goto('/login');
+		goto('/');
 	}
 
 	function handleNavigation(path: string) {

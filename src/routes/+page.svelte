@@ -1,311 +1,162 @@
 <script lang="ts">
-	import { io } from 'socket.io-client';
-	import type { Socket } from 'socket.io-client';
-	import { onMount } from 'svelte';
-	import StatsGrid from '$lib/components/StatsGrid.svelte';
-	import TaskGrid from '$lib/components/TaskGrid.svelte';
-	import TabbedView from '$lib/components/TabbedView.svelte';
+	import { goto } from '$app/navigation';
 	import { getUserContext } from '$lib/stores/user';
 
-	// Get user context from layout
 	const userContext = getUserContext();
 	let userId = $derived(userContext.userId);
 	let userName = $derived(userContext.userName);
-	let isAdmin = $derived(userContext.isAdmin);
-	let userGroups = $derived(userContext.userGroups);
-	let activeGroupId = $derived(userContext.activeGroupId);
 
-	// State
-	let socket: Socket | undefined;
-	let loading = $state(true);
-	let tasks = $state<any[]>([]);
-	let submissions = $state<any[]>([]);
-	let leaderboard = $state<any[]>([]);
-	let leaderboardLoading = $state(false);
-	let groupList = $state<any[]>([]);
-	let joinGroupId = $state<string | null>(null);
-	let createName = $state('');
-	let createDescription = $state('');
-	let onboardingError = $state<string | null>(null);
-	let joining = $state(false);
-	let creating = $state(false);
-
-	// Derived stats
-	let unlockedTasks = $derived(tasks.filter((task) => task.unlocked));
-	let totalTasks = $derived(tasks.length);
-	let userSubmissions = $derived(submissions.filter((sub) => sub.userId === userId));
-	let approvedUserSubmissions = $derived(userSubmissions.filter((sub) => sub.valid));
-	let completedTaskIds = $derived(new Set(approvedUserSubmissions.map((sub) => sub.taskId)));
-	let completionRate = $derived(
-		unlockedTasks.length > 0 ? Math.round((completedTaskIds.size / unlockedTasks.length) * 100) : 0
-	);
-	let approvedSubmissions = $derived(submissions.filter((sub) => sub.valid));
-
-	// Load data when component mounts
-	onMount(() => {
-		loadTasks();
-		// group-scoped data will load when activeGroupId is present
-		loadGroupList();
-	});
-
-	// Connect socket when userId is available
-	$effect(() => {
-		if (userId) {
-			connectSocket();
-		}
-	});
-
-	// Reload submissions/leaderboard whenever activeGroupId changes
-	$effect(() => {
-		if (activeGroupId) {
-			loadSubmissions();
-			loadLeaderboard();
-		}
-	});
-
-	async function loadSubmissions() {
-		if (!activeGroupId) return;
-		try {
-			const response = await fetch(`/api/submissions?groupId=${activeGroupId}`);
-			if (response.ok) {
-				submissions = await response.json();
-			}
-		} catch (error) {
-			console.error('Failed to load submissions:', error);
-		}
+	function handleGetStarted() {
+		goto('/login');
 	}
 
-	async function loadTasks() {
-		try {
-			const response = await fetch('/api/tasks');
-			tasks = await response.json();
-		} catch (error) {
-			console.error('Failed to load tasks:', error);
-		} finally {
-			loading = false;
-		}
+	function handleViewTasks() {
+		goto('/tasks');
 	}
 
-	async function loadLeaderboard() {
-		if (!activeGroupId) return;
-		try {
-			leaderboardLoading = true;
-			const response = await fetch(`/api/submissions/leaderboard?groupId=${activeGroupId}`);
-			if (response.ok) {
-				leaderboard = await response.json();
-			}
-		} catch (error) {
-			console.error('Failed to load leaderboard:', error);
-		} finally {
-			leaderboardLoading = false;
-		}
-	}
-
-	function connectSocket() {
-		if (!userId) return;
-
-		socket = io();
-		socket.on('connect', () => {
-			console.log('Connected to server');
-			socket?.emit('join-room', userId);
-		});
-
-		socket.on('new-submission', (submission: any) => {
-			// Ignore submissions from other groups
-			if (submission.groupId !== activeGroupId) return;
-
-			// Add new submission to the feed
-			submissions = [submission, ...submissions];
-
-			// If valid, refresh leaderboard to show updated scores immediately
-			if (submission.valid) {
-				loadLeaderboard();
-			}
-		});
-
-		socket.on('submission-deleted', (data: any) => {
-			// Remove submission from the feed
-			submissions = submissions.filter((sub) => sub.id !== data.submissionId);
-
-			// Refresh leaderboard since scores may have changed
-			loadLeaderboard();
-
-			// If it was the current user's submission, refresh their submissions
-			if (data.userId === userId) {
-				loadSubmissions();
-			}
-		});
-	}
-
-	async function loadGroupList() {
-		try {
-			const response = await fetch('/api/groups');
-			if (response.ok) {
-				groupList = await response.json();
-			}
-		} catch (error) {
-			console.error('Failed to load groups:', error);
-		}
-	}
-
-	async function joinGroup() {
-		if (!userId || !joinGroupId) {
-			onboardingError = 'Select a group to join.';
-			return;
-		}
-		onboardingError = null;
-		joining = true;
-		try {
-			const response = await fetch(`/api/groups/${joinGroupId}/join`, {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ userId })
-			});
-			if (!response.ok) {
-				const error = await response.json().catch(() => ({}));
-				onboardingError = error.error || 'Failed to join group';
-				return;
-			}
-			await userContext.refreshGroups();
-			userContext.setActiveGroup(joinGroupId);
-		} catch (error) {
-			console.error('Failed to join group:', error);
-			onboardingError = 'Failed to join group';
-		} finally {
-			joining = false;
-		}
-	}
-
-	async function createGroup() {
-		if (!userId || !createName.trim()) {
-			onboardingError = 'Enter a group name.';
-			return;
-		}
-		onboardingError = null;
-		creating = true;
-		try {
-			const response = await fetch('/api/groups', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({
-					userId,
-					name: createName.trim(),
-					description: createDescription.trim() || undefined
-				})
-			});
-			if (!response.ok) {
-				const error = await response.json().catch(() => ({}));
-				onboardingError = error.error || 'Failed to create group';
-				return;
-			}
-			const data = await response.json();
-			await userContext.refreshGroups();
-			userContext.setActiveGroup(data.group.id);
-			createName = '';
-			createDescription = '';
-		} catch (error) {
-			console.error('Failed to create group:', error);
-			onboardingError = 'Failed to create group';
-		} finally {
-			creating = false;
-		}
+	function handleRegister() {
+		goto('/register');
 	}
 </script>
 
-{#if !activeGroupId}
-	<div class="container mx-auto max-w-3xl p-4 md:p-6">
-		<div
-			class="rounded-2xl border border-blue-100 bg-gradient-to-br from-white to-blue-50 p-6 shadow-sm"
-		>
-			<h2 class="text-2xl font-bold text-gray-800 mb-4">Join a group to get started</h2>
-			<p class="text-gray-600 mb-4">
-				The scavenger hunt is group-based. Join an existing group or create one if you’re an admin.
+<div
+	class="min-h-screen bg-gradient-to-br from-green-50 via-white to-red-50 flex items-center justify-center p-4"
+>
+	<div class="w-full max-w-4xl mx-auto grid gap-8 md:grid-cols-[3fr,2fr] items-center">
+		<div>
+			<p class="text-sm font-semibold text-green-700 mb-2 tracking-wide">
+				2024 Holiday Photo Scavenger Hunt
+			</p>
+			<h1 class="text-4xl md:text-5xl font-extrabold text-gray-900 mb-4 leading-tight">
+				Find the magic.
+				<span class="text-green-600"> Capture the moment.</span>
+			</h1>
+			<p class="text-gray-600 text-base md:text-lg mb-6 max-w-xl">
+				Join your friends or team for a festive, photo-based scavenger hunt. Unlock daily
+				challenges, earn points, and compete on your group's leaderboard.
 			</p>
 
-			<div class="space-y-4">
-				<div>
-					<label for="group-select" class="block text-sm font-semibold text-gray-700 mb-2">
-						Select a group
-					</label>
-					<select
-						id="group-select"
-						class="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm"
-						bind:value={joinGroupId}
-					>
-						<option value={null}>-- Choose a group --</option>
-						{#each groupList as group}
-							<option value={group.id}>{group.name}</option>
-						{/each}
-					</select>
+			<div class="flex flex-wrap gap-3 mb-6">
+				{#if userId}
 					<button
-						class="mt-3 inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-white text-sm font-semibold shadow-sm hover:bg-blue-700 disabled:opacity-60"
-						onclick={joinGroup}
-						disabled={joining}
+						type="button"
+						onclick={handleViewTasks}
+						class="inline-flex items-center justify-center px-6 py-3 rounded-xl bg-green-600 text-white font-semibold shadow-md hover:bg-green-700 transition-colors"
 					>
-						{joining ? 'Joining…' : 'Join Group'}
+						Go to your tasks
 					</button>
-				</div>
-
-				{#if isAdmin}
-					<div class="border-t border-gray-200 pt-4">
-						<h3 class="text-lg font-semibold text-gray-800 mb-2">Create a new group</h3>
-						<div class="space-y-2">
-							<input
-								class="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm"
-								placeholder="Group name"
-								bind:value={createName}
-							/>
-							<textarea
-								class="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm"
-								placeholder="Description (optional)"
-								rows="2"
-								bind:value={createDescription}
-							></textarea>
-							<button
-								class="inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-white text-sm font-semibold shadow-sm hover:bg-green-700 disabled:opacity-60"
-								onclick={createGroup}
-								disabled={creating}
-							>
-								{creating ? 'Creating…' : 'Create Group'}
-							</button>
-						</div>
-					</div>
-				{/if}
-
-				{#if onboardingError}
-					<div class="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-						{onboardingError}
-					</div>
+				{:else}
+					<button
+						type="button"
+						onclick={handleGetStarted}
+						class="inline-flex items-center justify-center px-6 py-3 rounded-xl bg-green-600 text-white font-semibold shadow-md hover:bg-green-700 transition-colors"
+					>
+						Login to continue
+					</button>
+					<button
+						type="button"
+						onclick={handleRegister}
+						class="inline-flex items-center justify-center px-6 py-3 rounded-xl border-2 border-green-600 text-green-700 font-semibold rounded-xl hover:bg-green-50 transition-colors"
+					>
+						Create a new account
+					</button>
 				{/if}
 			</div>
+
+			<ul class="space-y-2 text-sm text-gray-600">
+				<li>
+					<span class="font-semibold text-gray-800">• Daily prompts</span> – new festive tasks unlock
+					over time.
+				</li>
+				<li>
+					<span class="font-semibold text-gray-800">• Group-based play</span> – every submission scores
+					points for your group.
+				</li>
+				<li>
+					<span class="font-semibold text-gray-800">• Photo-first</span> – upload or select from your
+					library, then let the AI validate your find.
+				</li>
+			</ul>
 		</div>
-	</div>
-{:else}
-	<div class="container mx-auto max-w-4xl p-4 md:p-6">
-		<div class="relative mb-6 text-center md:mb-8">
-			<p class="mx-auto max-w-2xl px-4 text-lg text-gray-600 md:text-xl">
-				Find festive items, snap a photo, or choose one from your library to complete the challenge!
-			</p>
-			{#if activeGroupId}
-				<p class="text-sm text-gray-500 mt-2">Active group: {activeGroupId}</p>
+
+		<div class="bg-white/80 backdrop-blur rounded-2xl shadow-xl p-6 md:p-8 border border-green-100">
+			<div class="flex items-center gap-3 mb-4">
+				<div class="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center text-2xl">
+					🎄
+				</div>
+				<div>
+					<p class="text-xs uppercase tracking-wide text-green-700 font-semibold">How it works</p>
+					<p class="text-sm text-gray-600">3 simple steps to join the hunt</p>
+				</div>
+			</div>
+
+			<ol class="space-y-4 text-sm text-gray-700">
+				<li class="flex gap-3">
+					<span
+						class="flex h-6 w-6 items-center justify-center rounded-full bg-green-600 text-white text-xs font-bold mt-0.5"
+					>
+						1
+					</span>
+					<div>
+						<p class="font-semibold text-gray-900">Sign in or register</p>
+						<p class="text-gray-600">
+							Use your display name and a password to create your player profile.
+						</p>
+					</div>
+				</li>
+				<li class="flex gap-3">
+					<span
+						class="flex h-6 w-6 items-center justify-center rounded-full bg-green-600 text-white text-xs font-bold mt-0.5"
+					>
+						2
+					</span>
+					<div>
+						<p class="font-semibold text-gray-900">Join your group</p>
+						<p class="text-gray-600">
+							Enter the name of your existing group so you appear on the right leaderboard.
+						</p>
+					</div>
+				</li>
+				<li class="flex gap-3">
+					<span
+						class="flex h-6 w-6 items-center justify-center rounded-full bg-green-600 text-white text-xs font-bold mt-0.5"
+					>
+						3
+					</span>
+					<div>
+						<p class="font-semibold text-gray-900">Start completing tasks</p>
+						<p class="text-gray-600">
+							Browse your task list, submit photos, and climb the leaderboard.
+						</p>
+					</div>
+				</li>
+			</ol>
+
+			{#if userId}
+				<div
+					class="mt-6 rounded-xl bg-green-50 border border-green-100 px-4 py-3 text-xs text-green-800"
+				>
+					<span class="font-semibold">Signed in as {userName ?? 'player'}.</span>
+					<button
+						type="button"
+						onclick={handleViewTasks}
+						class="ml-2 underline font-medium hover:text-green-900"
+					>
+						Go to tasks
+					</button>
+				</div>
+			{:else}
+				<div class="mt-6 text-xs text-gray-500">
+					Already have an account?
+					<button
+						type="button"
+						onclick={handleGetStarted}
+						class="ml-1 underline font-medium text-green-700 hover:text-green-900"
+					>
+						Log in
+					</button>
+				</div>
 			{/if}
 		</div>
-
-		<div class="mb-6 md:mb-8">
-			<StatsGrid
-				{loading}
-				{totalTasks}
-				unlockedTasks={unlockedTasks.length}
-				{completionRate}
-				approvedSubmissions={approvedUserSubmissions.length}
-				totalSubmissions={userSubmissions.length}
-			/>
-		</div>
-
-		<div class="mb-6 md:mb-8">
-			<TaskGrid {tasks} {loading} {userId} {completedTaskIds} {userSubmissions} />
-		</div>
-
-		<TabbedView {submissions} {leaderboard} {leaderboardLoading} />
 	</div>
-{/if}
+</div>

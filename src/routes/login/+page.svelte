@@ -8,7 +8,7 @@
 
 	let loginName = $state('');
 	let loggingIn = $state(false);
-	let isReturningUser = $state(false);
+	const isReturningUser = true;
 	let errorMessage = $state('');
 	let password = $state('');
 
@@ -17,8 +17,8 @@
 		const storedUserId = localStorage.getItem('scavenger-hunt-userId');
 
 		if (storedUserId) {
-			// User is already logged in, redirect to main page
-			goto('/');
+			// User is already logged in, go straight to tasks
+			goto('/tasks');
 		}
 	});
 
@@ -56,9 +56,10 @@
 				localStorage.setItem('scavenger-hunt-userId', data.userId);
 				userContext.userId = data.userId;
 				userContext.userName = data.userName;
+				userContext.isAdmin = data.isAdmin ?? false;
 
-				// Redirect to main page
-				goto('/');
+				// Redirect to tasks/dashboard
+				goto('/tasks');
 			} else {
 				const error = await response.json();
 				if (response.status === 409) {
@@ -103,44 +104,10 @@
 			>
 				<span class="text-green-600 text-4xl">🎄</span>
 			</div>
-			<h1 class="text-3xl font-bold text-gray-800 mb-2">
-				{isReturningUser ? 'Welcome Back!' : 'Join the Hunt!'}
-			</h1>
+			<h1 class="text-3xl font-bold text-gray-800 mb-2">Welcome back</h1>
 			<p class="text-gray-600">
-				{isReturningUser
-					? 'Enter your username to continue your scavenger hunt'
-					: 'Choose a unique name to join the Christmas Scavenger Hunt'}
+				Sign in with your scavenger hunt username and password to continue playing.
 			</p>
-		</div>
-
-		<!-- User Type Toggle -->
-		<div class="mb-6">
-			<div class="flex bg-gray-100 rounded-lg p-1">
-				<button
-					type="button"
-					onclick={() => {
-						isReturningUser = false;
-						errorMessage = '';
-					}}
-					class="flex-1 py-3 px-4 rounded-md text-sm font-medium transition-all duration-200 {!isReturningUser
-						? 'bg-white text-green-600 shadow-sm'
-						: 'text-gray-600 hover:text-gray-800'}"
-				>
-					🆕 New User
-				</button>
-				<button
-					type="button"
-					onclick={() => {
-						isReturningUser = true;
-						errorMessage = '';
-					}}
-					class="flex-1 py-3 px-4 rounded-md text-sm font-medium transition-all duration-200 {isReturningUser
-						? 'bg-white text-green-600 shadow-sm'
-						: 'text-gray-600 hover:text-gray-800'}"
-				>
-					🔄 Returning User
-				</button>
-			</div>
 		</div>
 
 		<!-- Login Form -->
@@ -157,7 +124,7 @@
 					type="text"
 					bind:value={loginName}
 					onkeydown={handleKeydown}
-					placeholder={isReturningUser ? 'Enter your username' : 'Choose a unique name'}
+					placeholder="Enter your username"
 					class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-green-500 focus:ring-0 transition-colors text-lg"
 					class:border-red-300={errorMessage}
 					class:focus:border-red-500={errorMessage}
@@ -203,18 +170,24 @@
 					<div
 						class="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"
 					></div>
-					{isReturningUser ? 'Logging in...' : 'Creating account...'}
+					Logging in...
 				{:else}
-					{isReturningUser ? '🔑 Log In' : '🎯 Join Hunt'}
+					🔑 Log In
 				{/if}
 			</button>
 		</form>
 
 		<!-- Back to Home -->
-		<div class="mt-6 text-center">
-			<a href="/" class="text-gray-500 hover:text-gray-700 text-sm transition-colors">
-				← Back to Home
-			</a>
+		<div class="mt-6 text-center text-sm text-gray-600">
+			<p>
+				New to the hunt?
+				<a href="/register" class="font-semibold text-green-700 hover:text-green-900 ml-1">
+					Create an account
+				</a>
+			</p>
+			<p class="mt-3">
+				<a href="/" class="text-gray-500 hover:text-gray-700"> ← Back to landing page </a>
+			</p>
 		</div>
 	</div>
 </div>

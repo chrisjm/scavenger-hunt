@@ -1,6 +1,6 @@
 import express from 'express';
 import path from 'path';
-import { eq, count, desc } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { db, schema } from '../utils/database.js';
 import { validateImageWithAI, isSubmissionValid } from '../utils/ai-validator.js';
 import { upload, uploadsDir } from '../middleware/upload.js';
@@ -8,7 +8,7 @@ import { resizeImageMiddleware } from '../middleware/imageResize.js';
 import { requireAuth } from '../middleware/auth.js';
 
 const router = express.Router();
-const { tasks, submissions, users } = schema;
+const { tasks, submissions, users, groups } = schema;
 
 // Admin IDs from env (UUIDs)
 const adminIdsEnv = (process.env.ADMIN_USER_IDS || '')
@@ -251,6 +251,46 @@ router.post(
 		}
 	}
 );
+
+// Check group existence endpoint (by case-insensitive name)
+router.get('/check-group/:name', async (req, res) => {
+	try {
+		const { name } = req.params;
+
+		if (!name || name.trim().length === 0) {
+			return res.status(400).json({ error: 'Group name is required' });
+		}
+
+		const trimmedName = name.trim();
+
+		if (trimmedName.length < 2 || trimmedName.length > 64) {
+			return res.status(400).json({
+				exists: false,
+				error: 'Group name must be between 2 and 64 characters'
+			});
+		}
+
+		const existingGroup = await db
+			.select()
+			.from(groups)
+			.where(sql`lower(${groups.name}) = lower(${trimmedName})`)
+			.limit(1);
+
+		if (!existingGroup.length) {
+			return res.json({ exists: false, name: trimmedName });
+		}
+
+		const group = existingGroup[0];
+		res.json({
+			exists: true,
+			name: group.name,
+			id: group.id
+		});
+	} catch (error) {
+		console.error('Group check error:', error);
+		res.status(500).json({ error: 'Failed to check group' });
+	}
+});
 
 // Get tasks endpoint (authenticated)
 router.get('/tasks', requireAuth, async (req, res) => {
