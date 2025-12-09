@@ -123,23 +123,95 @@ router.get('/', async (req, res) => {
 	}
 });
 
-// GET /api/submissions/user/:userId - Get submissions for a specific user
+// GET /api/submissions/all - Get submissions for a group
+// - Admins: all submissions in the group
+// - Regular users: only their own submissions in the group
+router.get('/all', async (req, res) => {
+	try {
+		const authUserId = req.user?.userId;
+		const isAdmin = req.user?.isAdmin;
+
+		const { groupId } = req.query;
+		if (!groupId || typeof groupId !== 'string') {
+			return res.status(400).json({ error: 'groupId is required' });
+		}
+
+		const conditions = [eq(submissions.groupId, groupId)];
+		// If not admin, constrain to the authenticated user's submissions
+		if (!isAdmin && authUserId) {
+			conditions.push(eq(submissions.userId, authUserId));
+		}
+
+		const scopedSubmissions = await db
+			.select({
+				id: submissions.id,
+				userId: submissions.userId,
+				groupId: submissions.groupId,
+				taskId: submissions.taskId,
+				photoId: submissions.photoId,
+				aiMatch: submissions.aiMatch,
+				aiConfidence: submissions.aiConfidence,
+				aiReasoning: submissions.aiReasoning,
+				valid: submissions.valid,
+				submittedAt: submissions.submittedAt,
+				taskDescription: tasks.description,
+				userName: users.name,
+				imagePath: photos.filePath
+			})
+			.from(submissions)
+			.innerJoin(tasks, eq(submissions.taskId, tasks.id))
+			.innerJoin(users, eq(submissions.userId, users.id))
+			.innerJoin(photos, eq(submissions.photoId, photos.id))
+			.where(and(...conditions))
+			.orderBy(desc(submissions.submittedAt));
+
+		res.json(scopedSubmissions);
+	} catch (error) {
+		console.error('Error fetching all group submissions:', error);
+		res.status(500).json({ error: 'Failed to fetch all group submissions' });
+	}
+});
+
+// GET /api/submissions/user/:userId - Admin-only: get submissions for a specific user (optionally scoped to a group)
 router.get('/user/:userId', async (req, res) => {
 	try {
-		// Enforce that users can only retrieve their own submissions unless expanded later
-		const userId = req.user?.userId;
+		const isAdmin = req.user?.isAdmin;
+		if (!isAdmin) {
+			return res.status(403).json({ error: 'Forbidden: admin access required' });
+		}
+
+		const { userId } = req.params;
+		const { groupId } = req.query;
+		if (!userId) {
+			return res.status(400).json({ error: 'userId is required' });
+		}
+
+		const conditions = [eq(submissions.userId, userId)];
+		if (groupId && typeof groupId === 'string') {
+			conditions.push(eq(submissions.groupId, groupId));
+		}
 
 		const userSubmissions = await db
 			.select({
 				id: submissions.id,
+				userId: submissions.userId,
+				groupId: submissions.groupId,
 				taskId: submissions.taskId,
+				photoId: submissions.photoId,
+				aiMatch: submissions.aiMatch,
+				aiConfidence: submissions.aiConfidence,
+				aiReasoning: submissions.aiReasoning,
 				valid: submissions.valid,
 				submittedAt: submissions.submittedAt,
-				taskDescription: tasks.description
+				taskDescription: tasks.description,
+				userName: users.name,
+				imagePath: photos.filePath
 			})
 			.from(submissions)
 			.innerJoin(tasks, eq(submissions.taskId, tasks.id))
-			.where(eq(submissions.userId, userId))
+			.innerJoin(users, eq(submissions.userId, users.id))
+			.innerJoin(photos, eq(submissions.photoId, photos.id))
+			.where(and(...conditions))
 			.orderBy(desc(submissions.submittedAt));
 
 		res.json(userSubmissions);

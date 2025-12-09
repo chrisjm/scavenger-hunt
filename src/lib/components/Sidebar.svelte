@@ -112,6 +112,14 @@
 				</button>
 
 				<button
+					onclick={() => handleNavigation('/submissions')}
+					class="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-gray-100 transition-colors text-left"
+				>
+					<ListChecks size={20} class="text-gray-600" />
+					<span class="font-medium text-gray-700">Submissions</span>
+				</button>
+
+				<button
 					onclick={() => handleNavigation('/profile')}
 					class="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-gray-100 transition-colors text-left"
 				>
