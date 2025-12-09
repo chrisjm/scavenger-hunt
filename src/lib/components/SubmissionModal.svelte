@@ -6,11 +6,12 @@
 		show: boolean;
 		task: any;
 		userId: string;
+		groupId: string;
 		onClose: () => void;
 		onSuccess: (result: any) => void;
 	}
 
-	let { show, task, userId, onClose, onSuccess }: Props = $props();
+	let { show, task, userId, groupId, onClose, onSuccess }: Props = $props();
 
 	let activeTab = $state<'upload' | 'library'>('upload');
 	let selectedPhotoId = $state<string | null>(null);
@@ -103,7 +104,8 @@
 				body: JSON.stringify({
 					userId,
 					taskId: task.id,
-					photoId: finalPhotoId
+					photoId: finalPhotoId,
+					groupId
 				})
 			});
 

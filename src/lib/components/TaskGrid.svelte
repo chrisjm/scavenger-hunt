@@ -16,9 +16,17 @@
 		userId: string | null;
 		completedTaskIds?: Set<number>;
 		userSubmissions?: any[];
+		activeGroupId?: string | null;
 	}
 
-	let { tasks, loading, userId, completedTaskIds, userSubmissions = [] }: Props = $props();
+	let {
+		tasks,
+		loading,
+		userId,
+		completedTaskIds,
+		userSubmissions = [],
+		activeGroupId
+	}: Props = $props();
 
 	let showModal = $state(false);
 	let showCompletedModal = $state(false);
@@ -97,11 +105,12 @@
 	</div>
 {/if}
 
-{#if userId && selectedTask}
+{#if userId && selectedTask && activeGroupId}
 	<SubmissionModal
 		show={showModal}
 		task={selectedTask}
 		{userId}
+		groupId={activeGroupId}
 		onClose={() => (showModal = false)}
 		onSuccess={handleSuccess}
 	/>

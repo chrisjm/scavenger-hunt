@@ -360,7 +360,7 @@
 		</div>
 
 		<div class="mb-6 md:mb-8">
-			<TaskGrid {tasks} {loading} {userId} {completedTaskIds} {userSubmissions} />
+			<TaskGrid {tasks} {loading} {userId} {completedTaskIds} {userSubmissions} {activeGroupId} />
 		</div>
 
 		<TabbedView {submissions} {leaderboard} {leaderboardLoading} />
