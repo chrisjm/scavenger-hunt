@@ -133,7 +133,7 @@
 			sidebarOpen = !sidebarOpen;
 		}}
 		showMenu={!!userId}
-		showGroupSelector={!!userId && userGroups.length > 0}
+		showGroupSelector={!!userId && userGroups.length > 0 && !!isAdmin}
 		groupSelector={GroupSelector as any}
 	/>
 {/if}
