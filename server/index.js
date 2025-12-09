@@ -1,5 +1,6 @@
 import 'dotenv/config';
 import express from 'express';
+import cookieParser from 'cookie-parser';
 import { createServer } from 'http';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -9,6 +10,7 @@ import apiRoutes from './routes/api.js';
 import libraryRoutes from './routes/library.js';
 import submissionRoutes from './routes/submissions.js';
 import groupRoutes from './routes/groups.js';
+import authRoutes from './routes/auth.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -34,12 +36,14 @@ const server = createServer(app);
 const io = setupSocketIO(server);
 
 // Middleware
+app.use(cookieParser());
 app.use(express.json());
 
 // Serve uploaded files statically
 app.use('/uploads', express.static(uploadsDir));
 
 // API Routes
+app.use('/api/auth', authRoutes);
 app.use('/api', apiRoutes);
 app.use('/api/library', libraryRoutes);
 app.use('/api/submissions', submissionRoutes);
