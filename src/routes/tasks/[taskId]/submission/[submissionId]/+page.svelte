@@ -54,7 +54,7 @@
 			}
 
 			// Load submissions for the current group and find the one we need
-			const subRes = await fetch(`/api/submissions?groupId=${activeGroupId}`);
+			const subRes = await fetch(`/api/submissions/all?groupId=${activeGroupId}`);
 			if (subRes.ok) {
 				const subs: Submission[] = await subRes.json();
 				submission = subs.find((s) => s.id === submissionId) ?? null;
