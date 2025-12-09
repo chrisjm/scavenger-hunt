@@ -36,7 +36,9 @@
 		<!-- Right: Group selector (desktop) and Menu Button -->
 		<div class="flex items-center gap-3">
 			{#if showGroupSelector && groupSelector}
-				{@render groupSelector()}
+				<div class="hidden md:block">
+					{@render groupSelector()}
+				</div>
 			{/if}
 
 			{#if showMenu}

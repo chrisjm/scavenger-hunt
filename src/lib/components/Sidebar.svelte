@@ -2,8 +2,10 @@
 	import { User, Camera, LogOut, X, Home, ListChecks } from 'lucide-svelte';
 	import { goto } from '$app/navigation';
 	import { getUserContext } from '$lib/stores/user';
+	import GroupSelector from '$lib/components/GroupSelector.svelte';
 
 	const userContext = getUserContext();
+	const isAdmin = $derived(userContext.isAdmin);
 
 	interface Props {
 		isOpen: boolean;
@@ -69,8 +71,8 @@
 
 		<!-- Profile Section -->
 		{#if userName}
-			<div class="p-6 border-b border-gray-200">
-				<div class="flex items-center gap-3 mb-4">
+			<div class="p-6 border-b border-gray-200 space-y-4">
+				<div class="flex items-center gap-3">
 					<div
 						class="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-green-400 to-blue-500 text-lg font-bold text-white"
 					>
@@ -81,6 +83,12 @@
 						<p class="text-sm text-gray-500">Player</p>
 					</div>
 				</div>
+
+				{#if isAdmin}
+					<div class="mt-2">
+						<GroupSelector />
+					</div>
+				{/if}
 			</div>
 		{/if}
 

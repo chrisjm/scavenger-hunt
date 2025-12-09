@@ -343,9 +343,6 @@
 			<p class="mx-auto max-w-2xl px-4 text-lg text-gray-600 md:text-xl">
 				Find festive items, snap a photo, or choose one from your library to complete the challenge!
 			</p>
-			{#if activeGroupId}
-				<p class="text-sm text-gray-500 mt-2">Active group: {activeGroupId}</p>
-			{/if}
 		</div>
 
 		<div class="mb-6 md:mb-8">
