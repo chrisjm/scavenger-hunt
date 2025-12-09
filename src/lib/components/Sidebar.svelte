@@ -10,7 +10,16 @@
 
 	let { isOpen, onClose, userName }: Props = $props();
 
-	function handleLogout() {
+	async function handleLogout() {
+		try {
+			await fetch('/api/auth/logout', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' }
+			});
+		} catch (error) {
+			console.error('Logout failed', error);
+		}
+
 		localStorage.removeItem('scavenger-hunt-userId');
 		goto('/login');
 	}

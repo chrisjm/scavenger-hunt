@@ -165,7 +165,16 @@
 		}
 	}
 
-	function logout() {
+	async function logout() {
+		try {
+			await fetch('/api/auth/logout', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' }
+			});
+		} catch (error) {
+			console.error('Logout failed', error);
+		}
+
 		// Clear localStorage
 		localStorage.removeItem('scavenger-hunt-userId');
 
