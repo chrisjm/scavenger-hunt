@@ -32,8 +32,12 @@ router.post('/login', async (req, res) => {
 			return res.status(400).json({ error: 'Name must be between 2 and 30 characters' });
 		}
 
-		// Check if user already exists
-		const existingUser = await db.select().from(users).where(eq(users.name, trimmedName)).limit(1);
+		// Check if user already exists (case-insensitive)
+		const existingUser = await db
+			.select()
+			.from(users)
+			.where(sql`lower(${users.name}) = lower(${trimmedName})`)
+			.limit(1);
 
 		if (existingUser.length > 0) {
 			// User exists - log them in
@@ -113,8 +117,12 @@ router.get('/check-name/:name', async (req, res) => {
 			});
 		}
 
-		// Check if name exists
-		const existingUser = await db.select().from(users).where(eq(users.name, trimmedName)).limit(1);
+		// Check if name exists (case-insensitive)
+		const existingUser = await db
+			.select()
+			.from(users)
+			.where(sql`lower(${users.name}) = lower(${trimmedName})`)
+			.limit(1);
 
 		res.json({
 			available: existingUser.length === 0,
@@ -332,8 +340,12 @@ router.put('/users/:userId', requireAuth, async (req, res) => {
 			return res.status(404).json({ error: 'User not found' });
 		}
 
-		// Check if the new name is already taken by another user
-		const nameConflict = await db.select().from(users).where(eq(users.name, trimmedName)).limit(1);
+		// Check if the new name is already taken by another user (case-insensitive)
+		const nameConflict = await db
+			.select()
+			.from(users)
+			.where(sql`lower(${users.name}) = lower(${trimmedName})`)
+			.limit(1);
 
 		if (nameConflict.length > 0 && nameConflict[0].id !== userId) {
 			return res.status(409).json({
