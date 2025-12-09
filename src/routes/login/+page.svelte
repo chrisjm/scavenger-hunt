@@ -90,7 +90,7 @@
 </script>
 
 <svelte:head>
-	<title>Login - Christmas Scavenger Hunt</title>
+	<title>Login - Holiday Scavenger Hunt</title>
 </svelte:head>
 
 <div

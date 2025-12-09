@@ -69,7 +69,7 @@
 
 						<div class="flex-1">
 							<h3 class="font-bold text-lg text-gray-800">{entry.name}</h3>
-							<p class="text-sm text-gray-600">Christmas Hunter</p>
+							<p class="text-sm text-gray-600">Holiday Hunter</p>
 						</div>
 
 						<div class="text-right">

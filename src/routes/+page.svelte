@@ -25,7 +25,7 @@
 	<div class="w-full max-w-4xl mx-auto grid gap-8 md:grid-cols-[3fr,2fr] items-center">
 		<div>
 			<p class="text-sm font-semibold text-green-700 mb-2 tracking-wide">
-				2024 Holiday Photo Scavenger Hunt
+				2025 Holiday Photo Scavenger Hunt
 			</p>
 			<h1 class="text-4xl md:text-5xl font-extrabold text-gray-900 mb-4 leading-tight">
 				Find the magic.

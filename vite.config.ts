@@ -16,7 +16,7 @@ export default defineConfig({
 			},
 			includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
 			manifest: {
-				name: 'Christmas Scavenger Hunt',
+				name: 'Holiday Scavenger Hunt',
 				short_name: 'Scavenger Hunt',
 				description: 'Find festive items around you and share them with the community!',
 				theme_color: '#059669',

@@ -26,7 +26,7 @@
 				<p class="text-gray-600">
 					{isReturningUser
 						? 'Enter your username to continue your scavenger hunt'
-						: 'Choose a unique name to join the Christmas Scavenger Hunt'}
+						: 'Choose a unique name to join the Holiday Scavenger Hunt'}
 				</p>
 			</div>
 

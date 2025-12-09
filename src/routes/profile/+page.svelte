@@ -184,7 +184,7 @@
 </script>
 
 <svelte:head>
-	<title>Profile - Christmas Scavenger Hunt</title>
+	<title>Profile - Holiday Scavenger Hunt</title>
 </svelte:head>
 
 <div class="min-h-screen bg-gradient-to-br from-green-50 to-red-50 p-4">
@@ -220,7 +220,7 @@
 				</div>
 				<div class="flex-1">
 					<p class="font-medium text-gray-800 text-lg">{newName.trim() || 'Your Name'}</p>
-					<p class="text-sm text-gray-500">Christmas Scavenger Hunter</p>
+					<p class="text-sm text-gray-500">Holiday Scavenger Hunter</p>
 					<!-- Future: Avatar upload section will go here -->
 				</div>
 			</div>

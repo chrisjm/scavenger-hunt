@@ -99,7 +99,7 @@
 </script>
 
 <svelte:head>
-	<title>Submission Details - Christmas Scavenger Hunt</title>
+	<title>Submission Details - Holiday Scavenger Hunt</title>
 </svelte:head>
 
 <div class="min-h-screen bg-gradient-to-br from-green-50 to-red-50 p-4">

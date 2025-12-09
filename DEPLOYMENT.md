@@ -224,4 +224,4 @@ crontab -e
 - [ ] Firewall configured
 - [ ] Backups scheduled
 
-Your Christmas Scavenger Hunt should now be live! 🎄✨
+Your Holiday Scavenger Hunt should now be live! 🎄✨

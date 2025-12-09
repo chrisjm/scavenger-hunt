@@ -193,7 +193,7 @@
 				</div>
 				<div class="flex-1">
 					<p class="font-medium text-gray-800">{newName.trim() || 'Your Name'}</p>
-					<p class="text-sm text-gray-500">Christmas Scavenger Hunter</p>
+					<p class="text-sm text-gray-500">Holiday Scavenger Hunter</p>
 					<!-- Future: Avatar upload button will go here -->
 				</div>
 			</div>
