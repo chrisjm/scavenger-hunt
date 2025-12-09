@@ -1,7 +1,6 @@
 <script lang="ts">
+	import { goto } from '$app/navigation';
 	import TaskCard from './TaskCard.svelte';
-	import SubmissionModal from './SubmissionModal.svelte';
-	import CompletedTaskModal from './CompletedTaskModal.svelte';
 
 	interface Task {
 		id: number;
@@ -28,62 +27,16 @@
 		activeGroupId
 	}: Props = $props();
 
-	let showModal = $state(false);
-	let showCompletedModal = $state(false);
-	let selectedTask = $state<Task | null>(null);
-	let selectedSubmission = $state<any | null>(null);
-
 	function openSubmission(task: Task) {
-		selectedTask = task;
-		showModal = true;
+		goto(`/tasks/${task.id}/submit`);
 	}
 
 	function openCompletedTask(task: Task) {
-		// Find the user's submission for this task
+		// Find the user's approved submission for this task and navigate to its detail page
 		const submission = userSubmissions.find((sub) => sub.taskId === task.id && sub.valid);
 		if (submission) {
-			selectedTask = task;
-			selectedSubmission = submission;
-			showCompletedModal = true;
+			goto(`/tasks/${task.id}/submission/${submission.id}`);
 		}
-	}
-
-	function handleSuccess(result: any) {
-		showModal = false;
-		// Success alert logic is better handled here than in the modal
-		const message = result.submission.valid
-			? `🎉 SUCCESS!\n\n${result.submission.aiReasoning}`
-			: `❌ Not quite...\n\n${result.submission.aiReasoning}`;
-
-		alert(message);
-	}
-
-	async function handleRemoveSubmission(submissionId: string) {
-		if (!userId) return;
-
-		try {
-			const response = await fetch(`/api/submissions/${submissionId}`, {
-				method: 'DELETE',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ userId })
-			});
-
-			if (!response.ok) {
-				const error = await response.json();
-				throw new Error(error.error || 'Failed to remove submission');
-			}
-
-			// The socket listener will handle updating the UI
-			alert('Submission removed successfully! You can now try again.');
-		} catch (error) {
-			console.error('Error removing submission:', error);
-			alert(error instanceof Error ? error.message : 'Failed to remove submission');
-		}
-	}
-
-	function handleRetryTask(task: Task) {
-		// Open the submission modal for retry
-		openSubmission(task);
 	}
 </script>
 
@@ -103,27 +56,4 @@
 			/>
 		{/each}
 	</div>
-{/if}
-
-{#if userId && selectedTask && activeGroupId}
-	<SubmissionModal
-		show={showModal}
-		task={selectedTask}
-		{userId}
-		groupId={activeGroupId}
-		onClose={() => (showModal = false)}
-		onSuccess={handleSuccess}
-	/>
-{/if}
-
-{#if userId && selectedTask && selectedSubmission}
-	<CompletedTaskModal
-		show={showCompletedModal}
-		task={selectedTask}
-		submission={selectedSubmission}
-		{userId}
-		onClose={() => (showCompletedModal = false)}
-		onRemove={handleRemoveSubmission}
-		onRetry={handleRetryTask}
-	/>
 {/if}
