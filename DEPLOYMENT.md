@@ -43,7 +43,7 @@ cd /var/www/scavenger-hunt
 
 ```bash
 # Clone your repository
-git clone https://github.com/yourusername/scavenger-hunt.git .
+git clone https://github.com/chrisjm/scavenger-hunt.git .
 
 # Install dependencies
 pnpm install
