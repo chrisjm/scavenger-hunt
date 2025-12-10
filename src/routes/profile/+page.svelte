@@ -28,6 +28,13 @@
 		}
 	});
 
+	// Initialize editable name from the current user name
+	$effect(() => {
+		if (userName && !newName) {
+			newName = userName;
+		}
+	});
+
 	async function loadUserData() {
 		try {
 			const response = await fetch(`/api/users/${userId}`);

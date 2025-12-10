@@ -129,6 +129,8 @@
 	$effect(() => {
 		if (!userId && !isPublicRoute(page.route.id)) {
 			goto('/login');
+		} else if (userId && page.route.id === '/') {
+			goto('/tasks');
 		}
 	});
 </script>

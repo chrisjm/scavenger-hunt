@@ -101,14 +101,6 @@
 		<nav class="flex-1 p-6">
 			<div class="space-y-2">
 				<button
-					onclick={() => handleNavigation('/')}
-					class="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-gray-100 transition-colors text-left"
-				>
-					<Home size={20} class="text-gray-600" />
-					<span class="font-medium text-gray-700">Home</span>
-				</button>
-
-				<button
 					onclick={() => handleNavigation('/tasks')}
 					class="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-gray-100 transition-colors text-left"
 				>
