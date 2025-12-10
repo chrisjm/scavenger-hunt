@@ -53,6 +53,15 @@ router.post('/', async (req, res) => {
 		const valid = isSubmissionValid(aiResponse, task);
 
 		// 4. Record Submission
+		await db
+			.delete(submissions)
+			.where(
+				and(
+					and(eq(submissions.userId, userId), eq(submissions.taskId, taskId)),
+					eq(submissions.groupId, groupId)
+				)
+			);
+
 		const [submission] = await db
 			.insert(submissions)
 			.values({
