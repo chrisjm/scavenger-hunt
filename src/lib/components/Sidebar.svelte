@@ -1,11 +1,13 @@
 <script lang="ts">
-	import { User, Camera, LogOut, X, Home, ListChecks } from 'lucide-svelte';
+	import { User, Camera, LogOut, X, ListChecks, Activity } from 'lucide-svelte';
 	import { goto } from '$app/navigation';
 	import { getUserContext } from '$lib/stores/user';
 	import GroupSelector from '$lib/components/GroupSelector.svelte';
 
 	const userContext = getUserContext();
 	const isAdmin = $derived(userContext.isAdmin);
+	const userId = $derived(userContext.userId);
+	const activeGroupId = $derived(userContext.activeGroupId);
 
 	interface Props {
 		isOpen: boolean;
@@ -14,6 +16,8 @@
 	}
 
 	let { isOpen, onClose, userName }: Props = $props();
+	let progressLoading = $state(false);
+	let completionRate = $state(0);
 
 	async function handleLogout() {
 		try {
@@ -37,6 +41,37 @@
 		goto(path);
 		onClose();
 	}
+
+	async function loadProgress() {
+		if (!userId || !activeGroupId) return;
+		progressLoading = true;
+		try {
+			const tasksResponse = await fetch('/api/tasks');
+			const tasks = await tasksResponse.json();
+			const unlockedTasks = tasks.filter((task: any) => task.unlocked);
+
+			const submissionsResponse = await fetch(`/api/submissions?groupId=${activeGroupId}`);
+			const submissions = await submissionsResponse.json();
+			const userSubmissions = submissions.filter(
+				(submission: any) => submission.userId === userId && submission.valid
+			);
+			const completedTaskIds = new Set(userSubmissions.map((submission: any) => submission.taskId));
+			completionRate =
+				unlockedTasks.length > 0
+					? Math.round((completedTaskIds.size / unlockedTasks.length) * 100)
+					: 0;
+		} catch (error) {
+			console.error('Failed to load progress for sidebar:', error);
+		} finally {
+			progressLoading = false;
+		}
+	}
+
+	$effect(() => {
+		if (!isAdmin && isOpen && userId && activeGroupId) {
+			loadProgress();
+		}
+	});
 </script>
 
 <!-- Backdrop -->
@@ -81,11 +116,24 @@
 					<div
 						class="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-green-400 to-blue-500 text-lg font-bold text-white"
 					>
-						{userName.charAt(0).toUpperCase()}
+						{userName.slice(0, 2).toUpperCase()}
 					</div>
-					<div>
+					<div class="flex-1">
 						<h3 class="font-semibold text-gray-800 dark:text-slate-100">{userName}</h3>
-						<p class="text-sm text-gray-500 dark:text-slate-400">Player</p>
+						<div class="mt-1">
+							<div
+								class="flex items-center justify-between text-xs text-gray-500 dark:text-slate-400"
+							>
+								<span>Progress</span>
+								<span>{progressLoading ? '…' : `${completionRate}%`}</span>
+							</div>
+							<div class="mt-1 h-1.5 w-full rounded-full bg-gray-200 dark:bg-slate-700">
+								<div
+									class="h-1.5 rounded-full bg-blue-600 dark:bg-blue-500 transition-all duration-300"
+									style={`width: ${completionRate}%`}
+								></div>
+							</div>
+						</div>
 					</div>
 				</div>
 
@@ -102,33 +150,33 @@
 			<div class="space-y-2">
 				<button
 					onclick={() => handleNavigation('/tasks')}
-					class="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-gray-100 transition-colors text-left"
+					class="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors text-left text-gray-800 dark:text-slate-100"
 				>
-					<ListChecks size={20} class="text-gray-600" />
+					<ListChecks size={20} class="text-gray-600 dark:text-slate-300" />
 					<span class="font-medium text-gray-700">Tasks</span>
 				</button>
 
 				<button
 					onclick={() => handleNavigation('/submissions')}
-					class="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-gray-100 transition-colors text-left"
+					class="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors text-left text-gray-800 dark:text-slate-100"
 				>
-					<ListChecks size={20} class="text-gray-600" />
+					<Activity size={20} class="text-gray-600 dark:text-slate-300" />
 					<span class="font-medium text-gray-700">Submissions</span>
 				</button>
 
 				<button
 					onclick={() => handleNavigation('/profile')}
-					class="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-gray-100 transition-colors text-left"
+					class="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors text-left text-gray-800 dark:text-slate-100"
 				>
-					<User size={20} class="text-gray-600" />
+					<User size={20} class="text-gray-600 dark:text-slate-300" />
 					<span class="font-medium text-gray-700">Edit Profile</span>
 				</button>
 
 				<button
 					onclick={() => handleNavigation('/library')}
-					class="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-gray-100 transition-colors text-left"
+					class="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors text-left text-gray-800 dark:text-slate-100"
 				>
-					<Camera size={20} class="text-gray-600" />
+					<Camera size={20} class="text-gray-600 dark:text-slate-300" />
 					<span class="font-medium text-gray-700">My Library</span>
 				</button>
 			</div>

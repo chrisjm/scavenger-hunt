@@ -6,17 +6,9 @@
 		sidebarOpen: boolean;
 		onMenuClick: () => void;
 		showMenu?: boolean;
-		showGroupSelector?: boolean;
-		groupSelector?: () => any;
 	}
 
-	let {
-		sidebarOpen,
-		onMenuClick,
-		showMenu = true,
-		showGroupSelector = false,
-		groupSelector
-	}: Props = $props();
+	let { sidebarOpen, onMenuClick, showMenu = true }: Props = $props();
 </script>
 
 <header
@@ -37,12 +29,6 @@
 
 		<!-- Right: Group selector (desktop) and Menu Button -->
 		<div class="flex items-center gap-3">
-			{#if showGroupSelector && groupSelector}
-				<div class="hidden md:block">
-					{@render groupSelector()}
-				</div>
-			{/if}
-
 			{#if showMenu}
 				<SidebarMenu isOpen={sidebarOpen} onClick={onMenuClick} />
 			{/if}
