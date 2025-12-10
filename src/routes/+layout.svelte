@@ -133,6 +133,12 @@
 			goto('/tasks');
 		}
 	});
+
+	// Prevent background scroll when sidebar is open
+	$effect(() => {
+		if (typeof window === 'undefined') return;
+		document.body.style.overflow = sidebarOpen ? 'hidden' : '';
+	});
 </script>
 
 <svelte:head>
