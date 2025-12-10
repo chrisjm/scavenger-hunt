@@ -11,6 +11,7 @@
 		Lock,
 		Eye
 	} from 'lucide-svelte';
+	import { formatShortDate } from '$lib/utils/date';
 
 	interface Task {
 		id: number;
@@ -103,10 +104,7 @@
 				</h3>
 				{#if !task.unlocked}
 					<p class="text-xs font-medium text-amber-600 mt-1">
-						Available {new Date(task.unlockDate).toLocaleDateString(undefined, {
-							month: 'short',
-							day: 'numeric'
-						})}
+						Available {formatShortDate(task.unlockDate)}
 					</p>
 				{/if}
 			</div>

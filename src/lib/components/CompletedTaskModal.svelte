@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { X, Trash2, RotateCcw } from 'lucide-svelte';
+	import { formatSubmittedAt } from '$lib/utils/date';
 
 	interface Submission {
 		id: string;
@@ -109,10 +110,7 @@
 							class="mt-3 flex items-center justify-between text-sm text-gray-500 dark:text-slate-400"
 						>
 							<span>Confidence: {Math.round((submission.aiConfidence || 0) * 100)}%</span>
-							<span>
-								Submitted {new Date(submission.submittedAt).toLocaleDateString()} at{' '}
-								{new Date(submission.submittedAt).toLocaleTimeString()}
-							</span>
+							<span>Submitted {formatSubmittedAt(submission.submittedAt)}</span>
 						</div>
 					</div>
 				</div>

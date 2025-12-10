@@ -1,6 +1,7 @@
 <script lang="ts">
 	import SubmissionsFeed from './SubmissionsFeed.svelte';
 	import Leaderboard from './Leaderboard.svelte';
+	import { formatRelativeOrDate } from '$lib/utils/date';
 
 	interface Submission {
 		id: string;
@@ -196,7 +197,7 @@
 												<span class="w-2 h-2 rounded-full bg-blue-400 dark:bg-blue-300"></span>
 												<span>Confidence: {Math.round((submission.aiConfidence || 0) * 100)}%</span>
 											</span>
-											<span>{new Date(submission.submittedAt).toLocaleTimeString()}</span>
+											<span>{formatRelativeOrDate(submission.submittedAt)}</span>
 										</div>
 									</div>
 								</div>
