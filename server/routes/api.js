@@ -10,13 +10,6 @@ import { requireAuth } from '../middleware/auth.js';
 const router = express.Router();
 const { tasks, submissions, users, groups } = schema;
 
-// Admin IDs from env (UUIDs)
-const adminIdsEnv = (process.env.ADMIN_USER_IDS || '')
-	.split(',')
-	.map((id) => id.trim())
-	.filter(Boolean);
-const ADMIN_ID_SET = new Set(adminIdsEnv);
-
 // Login endpoint - logs in existing user or creates new user, returning isAdmin
 router.post('/login', async (req, res) => {
 	try {
@@ -60,7 +53,7 @@ router.post('/login', async (req, res) => {
 
 		// Create new user
 		const userId = crypto.randomUUID();
-		const isAdmin = ADMIN_ID_SET.has(userId);
+		const isAdmin = false;
 		const newUser = await db
 			.insert(users)
 			.values({ id: userId, name: trimmedName, isAdmin })

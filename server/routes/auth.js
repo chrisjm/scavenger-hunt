@@ -12,13 +12,6 @@ const USERNAME_MIN = 2;
 const USERNAME_MAX = 30;
 const PASSWORD_MIN = 9; // must be > 8
 
-// Admin IDs from env (UUIDs)
-const adminIdsEnv = (process.env.ADMIN_USER_IDS || '')
-	.split(',')
-	.map((id) => id.trim())
-	.filter(Boolean);
-const ADMIN_ID_SET = new Set(adminIdsEnv);
-
 // POST /api/auth/login
 router.post('/login', async (req, res) => {
 	try {
@@ -102,10 +95,8 @@ router.post('/login', async (req, res) => {
 		const playerUserId = crypto.randomUUID();
 		const authUserId = crypto.randomUUID();
 
-		// Compute admin flag from env
-		const isAdmin = ADMIN_ID_SET.has(playerUserId);
-
-		// Create player row
+		// Create player row (new users default to non-admin)
+		const isAdmin = false;
 		await db.insert(playerUsers).values({ id: playerUserId, name: trimmedName, isAdmin });
 
 		// Create auth row
