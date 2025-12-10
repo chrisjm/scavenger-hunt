@@ -2,18 +2,12 @@ import 'dotenv/config';
 import express from 'express';
 import cookieParser from 'cookie-parser';
 import { createServer } from 'http';
-import path from 'path';
-import { fileURLToPath } from 'url';
 import { setupSocketIO } from './utils/socket-handler.js';
-import { uploadsDir } from './middleware/upload.js';
 import apiRoutes from './routes/api.js';
 import libraryRoutes from './routes/library.js';
 import submissionRoutes from './routes/submissions.js';
 import groupRoutes from './routes/groups.js';
 import authRoutes from './routes/auth.js';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 // Validate required environment variables
 const requiredEnvVars = ['DATABASE_URL', 'GEMINI_API_KEY'];
@@ -38,9 +32,6 @@ const io = setupSocketIO(server);
 // Middleware
 app.use(cookieParser());
 app.use(express.json());
-
-// Serve uploaded files statically
-app.use('/uploads', express.static(uploadsDir));
 
 // API Routes
 app.use('/api/auth', authRoutes);
@@ -67,7 +58,7 @@ try {
 
 	// Fallback for development - serve a simple message
 	handler = (req, res, next) => {
-		if (req.path.startsWith('/api') || req.path.startsWith('/uploads')) {
+		if (req.path.startsWith('/api')) {
 			return next();
 		}
 		res.status(200).send(`
@@ -105,7 +96,6 @@ server.listen(PORT, HOST, () => {
 		console.log(`💡 On Windows: ipconfig | findstr IPv4`);
 	}
 
-	console.log(`📁 Uploads directory: ${uploadsDir}`);
 	console.log(`🔌 Socket.IO enabled`);
 	console.log(`🤖 AI validation ready`);
 	console.log(`🗄️  Database: ${process.env.DATABASE_URL}`);

@@ -1,9 +1,9 @@
 import express from 'express';
-import path from 'path';
 import { eq, desc, count, and } from 'drizzle-orm';
 import { db, schema } from '../utils/database.js';
 import { validateImageWithAI, isSubmissionValid } from '../utils/ai-validator.js';
 import { requireAuth } from '../middleware/auth.js';
+import { extractKeyFromUrl, fetchObjectBuffer } from '../utils/s3.js';
 
 const router = express.Router();
 router.use(requireAuth);
@@ -39,13 +39,12 @@ router.post('/', async (req, res) => {
 			return res.status(403).json({ error: 'You do not own this photo' });
 		}
 
-		// 3. AI Validation
-		// Construct absolute path for the AI validator
-		const absolutePath = path.join(process.cwd(), photo.filePath);
-
+		// 3. AI Validation (fetch from S3)
+		const photoKey = extractKeyFromUrl(photo.filePath);
 		let aiResponse;
 		try {
-			aiResponse = await validateImageWithAI(absolutePath, task);
+			const photoBuffer = await fetchObjectBuffer(photoKey);
+			aiResponse = await validateImageWithAI(photoBuffer, task);
 		} catch (aiError) {
 			console.error('AI validation failed:', aiError);
 			return res.status(500).json({ error: 'AI validation failed' });

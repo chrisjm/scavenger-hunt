@@ -1,30 +1,11 @@
+// ABOUTME: Handles multipart image uploads using memory storage for downstream processing.
+// ABOUTME: Enforces basic image validation and size limits before resizing/S3 upload.
 import multer from 'multer';
-import path from 'path';
-import fs from 'fs';
-import { fileURLToPath } from 'url';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-// Create uploads directory if it doesn't exist
-const uploadsDir = path.join(__dirname, '../../uploads');
-if (!fs.existsSync(uploadsDir)) {
-	fs.mkdirSync(uploadsDir, { recursive: true });
-}
-
-// Configure multer for file uploads
-const storage = multer.diskStorage({
-	destination: (req, file, cb) => {
-		cb(null, uploadsDir);
-	},
-	filename: (req, file, cb) => {
-		const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-		cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
-	}
-});
+const storage = multer.memoryStorage();
 
 export const upload = multer({
-	storage: storage,
+	storage,
 	limits: {
 		fileSize: 10 * 1024 * 1024 // 10MB limit
 	},
@@ -36,5 +17,3 @@ export const upload = multer({
 		}
 	}
 });
-
-export { uploadsDir };

@@ -1,11 +1,12 @@
 import express from 'express';
-import path from 'path';
+import crypto from 'node:crypto';
 import { eq, sql } from 'drizzle-orm';
 import { db, schema } from '../utils/database.js';
 import { validateImageWithAI, isSubmissionValid } from '../utils/ai-validator.js';
-import { upload, uploadsDir } from '../middleware/upload.js';
+import { upload } from '../middleware/upload.js';
 import { resizeImageMiddleware } from '../middleware/imageResize.js';
 import { requireAuth } from '../middleware/auth.js';
+import { buildObjectKey, uploadBufferToS3 } from '../utils/s3.js';
 
 const router = express.Router();
 const { tasks, submissions, users, groups } = schema;
@@ -159,7 +160,7 @@ router.post(
 	resizeImageMiddleware(),
 	async (req, res) => {
 		try {
-			if (!req.file) {
+			if (!req.file || !req.file.buffer) {
 				return res.status(400).json({ error: 'No image file provided' });
 			}
 
@@ -185,9 +186,17 @@ router.post(
 				return res.status(404).json({ error: 'User not found' });
 			}
 
-			// Validate image with AI
-			const imagePath = path.join(uploadsDir, req.file.filename);
-			const aiResponse = await validateImageWithAI(imagePath, task);
+			// Upload to S3
+			const ext = req.file.mimetype?.split('/')?.[1] || 'jpg';
+			const key = buildObjectKey(`submissions/${Date.now()}-${crypto.randomUUID()}.${ext}`);
+			const imagePath = await uploadBufferToS3({
+				buffer: req.file.buffer,
+				contentType: req.file.mimetype || 'image/jpeg',
+				key
+			});
+
+			// Validate image with AI (use uploaded buffer)
+			const aiResponse = await validateImageWithAI(req.file.buffer, task);
 			const valid = isSubmissionValid(aiResponse, task);
 
 			// Store submission in database
@@ -196,7 +205,7 @@ router.post(
 				id: submissionId,
 				userId,
 				taskId: parseInt(taskId),
-				imagePath: `/uploads/${req.file.filename}`,
+				imagePath,
 				aiMatch: aiResponse.match,
 				aiConfidence: aiResponse.confidence,
 				aiReasoning: aiResponse.reasoning,

@@ -1,11 +1,11 @@
 import express from 'express';
-import path from 'path';
-import fs from 'fs/promises';
+import crypto from 'node:crypto';
 import { eq, and, desc } from 'drizzle-orm';
 import { db, schema } from '../utils/database.js';
 import { upload } from '../middleware/upload.js';
 import { resizeImageMiddleware } from '../middleware/imageResize.js';
 import { requireAuth } from '../middleware/auth.js';
+import { buildObjectKey, deleteFromS3, extractKeyFromUrl, uploadBufferToS3 } from '../utils/s3.js';
 
 const router = express.Router();
 router.use(requireAuth);
@@ -33,17 +33,22 @@ router.get('/', async (req, res) => {
 // POST /api/library/upload
 router.post('/upload', upload.single('image'), resizeImageMiddleware(), async (req, res) => {
 	try {
-		if (!req.file) return res.status(400).json({ error: 'No image provided' });
+		if (!req.file || !req.file.buffer) return res.status(400).json({ error: 'No image provided' });
 
 		const userId = req.user?.userId;
 		if (!userId) {
-			// Clean up orphan file if request is bad
-			await fs.unlink(req.file.path).catch(() => {});
 			return res.status(400).json({ error: 'User ID required' });
 		}
 
+		const ext = req.file.mimetype?.split('/')?.[1] || 'jpg';
+		const key = buildObjectKey(`library/${Date.now()}-${crypto.randomUUID()}.${ext}`);
+		const filePath = await uploadBufferToS3({
+			buffer: req.file.buffer,
+			contentType: req.file.mimetype || 'image/jpeg',
+			key
+		});
+
 		const photoId = crypto.randomUUID();
-		const filePath = `/uploads/${req.file.filename}`;
 
 		const [newPhoto] = await db
 			.insert(photos)
@@ -80,9 +85,9 @@ router.delete('/:id', async (req, res) => {
 
 		if (!photo) return res.status(404).json({ error: 'Photo not found or unauthorized' });
 
-		// 2. Delete file from disk
-		const absolutePath = path.join(process.cwd(), photo.filePath);
-		await fs.unlink(absolutePath).catch((err) => console.error('File delete warning:', err));
+		// 2. Delete file from S3
+		const key = extractKeyFromUrl(photo.filePath);
+		await deleteFromS3(key).catch((err) => console.error('File delete warning:', err));
 
 		// 3. Delete from DB (Cascade will handle submissions if configured, or we delete manually)
 		await db.delete(photos).where(eq(photos.id, id));

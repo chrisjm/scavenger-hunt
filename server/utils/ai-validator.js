@@ -1,3 +1,5 @@
+// ABOUTME: Performs AI validation of images using Gemini given a buffer or path.
+// ABOUTME: Returns match/confidence/reasoning, falling back safely on errors.
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import fs from 'fs';
 
@@ -11,11 +13,11 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 /**
  * Validates an image against a task using Gemini AI
- * @param {string} imagePath - Path to the uploaded image file
+ * @param {string|Buffer} imageSource - File path or in-memory buffer
  * @param {Object} task - Task object with aiPrompt and minConfidence
  * @returns {Promise<{match: boolean, confidence: number, reasoning: string}>}
  */
-export async function validateImageWithAI(imagePath, task) {
+export async function validateImageWithAI(imageSource, task) {
 	try {
 		const model = genAI.getGenerativeModel({
 			model: 'gemini-2.0-flash-exp',
@@ -24,8 +26,8 @@ export async function validateImageWithAI(imagePath, task) {
 			}
 		});
 
-		// Read the image file
-		const imageBuffer = fs.readFileSync(imagePath);
+		const imageBuffer =
+			typeof imageSource === 'string' ? fs.readFileSync(imageSource) : imageSource;
 		const imageBase64 = imageBuffer.toString('base64');
 
 		const prompt = `

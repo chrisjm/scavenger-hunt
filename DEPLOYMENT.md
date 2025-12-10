@@ -33,7 +33,7 @@ sudo apt install certbot python3-certbot-nginx -y
 ```bash
 # Create app directory
 sudo mkdir -p /var/www/scavenger-hunt
-sudo chown $USER:$USER /var/www/scavenger-hunt
+sudo chown nodejs:nodejs /var/www/scavenger-hunt
 cd /var/www/scavenger-hunt
 ```
 
