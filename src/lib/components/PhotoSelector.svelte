@@ -33,13 +33,15 @@
 	});
 </script>
 
-<div class="h-64 overflow-y-auto border border-gray-200 rounded-lg p-2 bg-gray-50">
+<div
+	class="h-64 overflow-y-auto border border-gray-200 rounded-lg p-2 bg-gray-50 dark:border-slate-700 dark:bg-slate-900"
+>
 	{#if loading}
 		<div class="flex h-full items-center justify-center">
-			<Loader class="h-8 w-8 animate-spin text-gray-400" />
+			<Loader class="h-8 w-8 animate-spin text-gray-400 dark:text-slate-400" />
 		</div>
 	{:else if photos.length === 0}
-		<div class="flex h-full flex-col items-center justify-center text-gray-400">
+		<div class="flex h-full flex-col items-center justify-center text-gray-400 dark:text-slate-400">
 			<ImageIcon class="mb-2 h-8 w-8 opacity-50" />
 			<p class="text-sm">No photos in library</p>
 		</div>
@@ -61,7 +63,9 @@
 						loading="lazy"
 					/>
 					{#if selectedPhotoId === photo.id}
-						<div class="absolute inset-0 flex items-center justify-center bg-black/20">
+						<div
+							class="absolute inset-0 flex items-center justify-center bg-black/20 dark:bg-black/40"
+						>
 							<div class="rounded-full bg-green-500 p-1">
 								<svg
 									xmlns="http://www.w3.org/2000/svg"

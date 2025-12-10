@@ -187,10 +187,12 @@
 	<title>Profile - Holiday Scavenger Hunt</title>
 </svelte:head>
 
-<div class="min-h-screen bg-gradient-to-br from-green-50 to-red-50 p-4">
+<div
+	class="min-h-screen bg-gradient-to-br from-green-50 to-red-50 p-4 dark:from-slate-950 dark:to-slate-950"
+>
 	<div class="container mx-auto max-w-2xl">
 		<!-- Header -->
-		<div class="bg-white rounded-2xl shadow-xl p-6 md:p-8 mb-6">
+		<div class="bg-white rounded-2xl shadow-xl p-6 md:p-8 mb-6 dark:bg-slate-900">
 			<div class="flex items-center justify-between mb-6">
 				<div class="flex items-center gap-4">
 					<div
@@ -199,35 +201,40 @@
 						{userName ? userName.charAt(0).toUpperCase() : '?'}
 					</div>
 					<div>
-						<h1 class="text-2xl font-bold text-gray-800">Profile Settings</h1>
-						<p class="text-gray-600">Manage your scavenger hunt profile</p>
+						<h1 class="text-2xl font-bold text-gray-800 dark:text-slate-100">Profile Settings</h1>
+						<p class="text-gray-600 dark:text-slate-400">Manage your scavenger hunt profile</p>
 					</div>
 				</div>
 				<a
 					href="/"
-					class="px-4 py-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors text-sm font-medium"
+					class="px-4 py-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors text-sm font-medium dark:bg-emerald-900/40 dark:text-emerald-200 dark:hover:bg-emerald-900/70"
 				>
 					← Back to Hunt
 				</a>
 			</div>
 
 			<!-- Profile Preview -->
-			<div class="flex items-center gap-4 p-4 bg-gray-50 rounded-xl mb-6">
+			<div class="flex items-center gap-4 p-4 bg-gray-50 rounded-xl mb-6 dark:bg-slate-900">
 				<div
 					class="w-20 h-20 bg-gradient-to-br from-green-400 to-blue-500 rounded-full flex items-center justify-center text-white font-bold text-2xl"
 				>
 					{newName.trim() ? newName.trim().charAt(0).toUpperCase() : '?'}
 				</div>
 				<div class="flex-1">
-					<p class="font-medium text-gray-800 text-lg">{newName.trim() || 'Your Name'}</p>
-					<p class="text-sm text-gray-500">Holiday Scavenger Hunter</p>
+					<p class="font-medium text-gray-800 text-lg dark:text-slate-100">
+						{newName.trim() || 'Your Name'}
+					</p>
+					<p class="text-sm text-gray-500 dark:text-slate-400">Holiday Scavenger Hunter</p>
 					<!-- Future: Avatar upload section will go here -->
 				</div>
 			</div>
 
 			<!-- Name Input -->
 			<div class="mb-6">
-				<label for="profile-name" class="block text-sm font-medium text-gray-700 mb-2">
+				<label
+					for="profile-name"
+					class="block text-sm font-medium text-gray-700 mb-2 dark:text-slate-200"
+				>
 					Display Name
 				</label>
 				<div class="relative">
@@ -237,7 +244,7 @@
 						bind:value={newName}
 						oninput={(e) => handleNameInput(e.currentTarget.value)}
 						placeholder="Choose a unique name"
-						class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-green-500 focus:ring-0 transition-colors text-lg pr-10"
+						class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-green-500 focus:ring-0 transition-colors text-lg pr-10 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
 						class:border-red-300={nameError}
 						class:focus:border-red-500={nameError}
 						class:border-green-300={nameAvailable === true && newName.trim() !== userName}
@@ -301,20 +308,22 @@
 		</div>
 
 		<!-- Account Actions -->
-		<div class="bg-white rounded-2xl shadow-xl p-6 md:p-8">
-			<h2 class="text-xl font-bold text-gray-800 mb-4">Account Actions</h2>
+		<div class="bg-white rounded-2xl shadow-xl p-6 md:p-8 dark:bg-slate-900">
+			<h2 class="text-xl font-bold text-gray-800 mb-4 dark:text-slate-100">Account Actions</h2>
 
 			<div class="space-y-4">
 				<!-- Future: Additional profile settings will go here -->
-				<div class="p-4 border-2 border-dashed border-gray-200 rounded-xl text-center">
-					<p class="text-gray-400 text-sm">🎨 Avatar Upload</p>
-					<p class="text-gray-400 text-xs">Coming Soon!</p>
+				<div
+					class="p-4 border-2 border-dashed border-gray-200 rounded-xl text-center dark:border-slate-700"
+				>
+					<p class="text-gray-400 text-sm dark:text-slate-500">🎨 Avatar Upload</p>
+					<p class="text-gray-400 text-xs dark:text-slate-500">Coming Soon!</p>
 				</div>
 
 				<!-- Logout -->
 				<button
 					onclick={logout}
-					class="w-full px-4 py-3 border-2 border-red-200 text-red-600 rounded-xl font-medium hover:bg-red-50 transition-colors"
+					class="w-full px-4 py-3 border-2 border-red-200 text-red-600 rounded-xl font-medium hover:bg-red-50 transition-colors dark:border-red-500/60 dark:text-red-300 dark:hover:bg-red-950/40"
 				>
 					🚪 Logout
 				</button>

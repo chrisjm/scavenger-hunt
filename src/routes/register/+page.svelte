@@ -215,18 +215,18 @@
 </svelte:head>
 
 <div
-	class="min-h-screen bg-gradient-to-br from-green-50 to-red-50 flex items-center justify-center p-4"
+	class="min-h-screen bg-gradient-to-br from-green-50 to-red-50 dark:from-slate-950 dark:to-slate-950 flex items-center justify-center p-4"
 >
-	<div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 md:p-8">
+	<div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 md:p-8 dark:bg-slate-900">
 		<!-- Header -->
 		<div class="text-center mb-8">
 			<div
-				class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4"
+				class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 dark:bg-emerald-900/40"
 			>
-				<Gift class="w-10 h-10 text-green-600" />
+				<Gift class="w-10 h-10 text-green-600 dark:text-emerald-300" />
 			</div>
-			<h1 class="text-3xl font-bold text-gray-800 mb-2">Create your player</h1>
-			<p class="text-gray-600">
+			<h1 class="text-3xl font-bold text-gray-800 mb-2 dark:text-slate-100">Create your player</h1>
+			<p class="text-gray-600 dark:text-slate-300">
 				Choose a display name, join your group, and you're ready to start the hunt.
 			</p>
 		</div>
@@ -238,7 +238,7 @@
 			}}
 		>
 			<div class="mb-5">
-				<label for="name" class="block text-sm font-medium text-gray-700 mb-2">
+				<label for="name" class="block text-sm font-medium text-gray-700 mb-2 dark:text-slate-200">
 					Display name
 				</label>
 				<input
@@ -248,24 +248,24 @@
 					onkeydown={handleKeydown}
 					onblur={validateNameOnBlur}
 					placeholder="Choose a unique name"
-					class="w-full px-4 py-3 border-2 rounded-xl focus:ring-0 transition-colors text-lg border-gray-200 {nameError
+					class="w-full px-4 py-3 border-2 rounded-xl focus:ring-0 transition-colors text-lg border-gray-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 {nameError
 						? 'border-red-300 focus:border-red-500'
 						: 'focus:border-green-500'}"
 					maxlength="30"
 					required
 				/>
 				{#if nameError}
-					<p class="mt-2 text-sm text-red-600 flex items-center gap-1">
+					<p class="mt-2 text-sm text-red-600 dark:text-red-300 flex items-center gap-1">
 						<CircleAlert class="w-4 h-4" />
 						{nameError}
 					</p>
 				{:else if nameChecking}
-					<p class="mt-2 text-sm text-blue-600 flex items-center gap-1">
+					<p class="mt-2 text-sm text-blue-600 dark:text-blue-400 flex items-center gap-1">
 						<Loader class="w-4 h-4 animate-spin" />
 						Checking name availability...
 					</p>
 				{:else if nameAvailable}
-					<p class="mt-2 text-sm text-green-600 flex items-center gap-1">
+					<p class="mt-2 text-sm text-green-600 dark:text-emerald-300 flex items-center gap-1">
 						<CheckCircle class="w-4 h-4" />
 						Name is available!
 					</p>
@@ -273,7 +273,9 @@
 			</div>
 
 			<div class="mb-5">
-				<label for="group" class="block text-sm font-medium text-gray-700 mb-2"> Group name </label>
+				<label for="group" class="block text-sm font-medium text-gray-700 mb-2 dark:text-slate-200">
+					Group name
+				</label>
 				<input
 					id="group"
 					type="text"
@@ -283,10 +285,10 @@
 					placeholder="Exact name of your group"
 					class="w-full px-4 py-3 border-2 rounded-xl focus:ring-0 transition-colors text-lg border-gray-200 {groupError
 						? 'border-red-300 focus:border-red-500'
-						: 'focus:border-green-500'}"
+						: 'focus:border-green-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100'}"
 					required
 				/>
-				<p class="mt-1 text-xs text-gray-500">
+				<p class="mt-1 text-xs text-gray-500 dark:text-slate-400">
 					Ask your organizer for the exact group name. We'll verify it exists before creating your
 					account.
 				</p>
@@ -309,7 +311,10 @@
 			</div>
 
 			<div class="mb-6">
-				<label for="password" class="block text-sm font-medium text-gray-700 mb-2">
+				<label
+					for="password"
+					class="block text-sm font-medium text-gray-700 mb-2 dark:text-slate-200"
+				>
 					Password (more than 8 characters)
 				</label>
 				<input
@@ -318,14 +323,16 @@
 					bind:value={password}
 					onkeydown={handleKeydown}
 					placeholder="Create a password"
-					class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-green-500 focus:ring-0 transition-colors text-lg"
+					class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-green-500 focus:ring-0 transition-colors text-lg dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
 					required
 				/>
 			</div>
 
 			{#if errorMessage}
-				<div class="mb-6 p-3 bg-red-50 border border-red-200 rounded-lg">
-					<p class="text-red-600 text-sm flex items-center gap-2">
+				<div
+					class="mb-6 p-3 bg-red-50 border border-red-200 rounded-lg dark:bg-red-950/40 dark:border-red-700"
+				>
+					<p class="text-red-600 text-sm flex items-center gap-2 dark:text-red-300">
 						<CircleAlert class="w-4 h-4" />
 						{errorMessage}
 					</p>
@@ -349,13 +356,16 @@
 			</button>
 		</form>
 
-		<div class="mt-6 text-center text-sm text-gray-600">
+		<div class="mt-6 text-center text-sm text-gray-600 dark:text-slate-300">
 			<p>
 				Already have an account?
 				<a href="/login" class="font-semibold text-green-700 hover:text-green-900 ml-1"> Log in </a>
 			</p>
 			<p class="mt-3">
-				<a href="/" class="inline-flex items-center gap-1 text-gray-500 hover:text-gray-700">
+				<a
+					href="/"
+					class="inline-flex items-center gap-1 text-gray-500 hover:text-gray-700 dark:text-slate-400 dark:hover:text-slate-200"
+				>
 					<ArrowLeft class="w-4 h-4" />
 					Back to landing page
 				</a>

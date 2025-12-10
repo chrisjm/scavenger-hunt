@@ -45,22 +45,22 @@
 
 <div
 	class="group relative overflow-hidden rounded-xl border-2 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg {isCompleted
-		? 'bg-emerald-50 border-emerald-200 hover:border-emerald-300'
+		? 'bg-emerald-50 border-emerald-200 hover:border-emerald-300 dark:bg-emerald-900/40 dark:border-emerald-500/60'
 		: task.unlocked
-			? 'bg-white border-green-100 hover:border-green-300'
-			: 'bg-gray-50 border-gray-100'}"
+			? 'bg-white border-green-100 hover:border-green-300 dark:bg-slate-900 dark:border-green-500/40'
+			: 'bg-gray-50 border-gray-100 dark:bg-slate-900/60 dark:border-slate-700'}"
 >
 	<div class="absolute right-3 top-3">
 		{#if isCompleted}
 			<div
-				class="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-1 text-xs font-semibold text-emerald-700 flex items-center gap-1"
+				class="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-1 text-xs font-semibold text-emerald-700 flex items-center gap-1 dark:border-emerald-500/60 dark:bg-emerald-900/40 dark:text-emerald-200"
 			>
 				<CheckCircle size={12} />
 				Complete
 			</div>
 		{:else if !task.unlocked}
 			<div
-				class="rounded-full border border-gray-200 bg-gray-100 px-2 py-1 text-xs font-semibold text-gray-500 flex items-center gap-1"
+				class="rounded-full border border-gray-200 bg-gray-100 px-2 py-1 text-xs font-semibold text-gray-500 flex items-center gap-1 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-400"
 			>
 				<Lock size={12} />
 				Locked
@@ -72,23 +72,23 @@
 		<div class="mb-4 flex items-center gap-4">
 			<div
 				class="flex h-14 w-14 items-center justify-center rounded-2xl shadow-sm {isCompleted
-					? 'bg-emerald-100'
+					? 'bg-emerald-100 dark:bg-emerald-900/50'
 					: task.unlocked
-						? 'bg-green-100'
-						: 'bg-gray-200 opacity-50'}"
+						? 'bg-green-100 dark:bg-green-900/40'
+						: 'bg-gray-200 opacity-50 dark:bg-slate-700 dark:opacity-60'}"
 			>
 				{#if iconType === 'user'}
-					<User size={28} class="text-gray-700" />
+					<User size={28} class="text-gray-700 dark:text-slate-200" />
 				{:else if iconType === 'tree'}
-					<TreePine size={28} class="text-gray-700" />
+					<TreePine size={28} class="text-gray-700 dark:text-slate-200" />
 				{:else if iconType === 'sparkles'}
-					<Sparkles size={28} class="text-gray-700" />
+					<Sparkles size={28} class="text-gray-700 dark:text-slate-200" />
 				{:else if iconType === 'candy'}
-					<Candy size={28} class="text-gray-700" />
+					<Candy size={28} class="text-gray-700 dark:text-slate-200" />
 				{:else if iconType === 'snowflake'}
-					<Snowflake size={28} class="text-gray-700" />
+					<Snowflake size={28} class="text-gray-700 dark:text-slate-200" />
 				{:else if iconType === 'cookie'}
-					<Cookie size={28} class="text-gray-700" />
+					<Cookie size={28} class="text-gray-700 dark:text-slate-200" />
 				{:else if iconType === 'reindeer'}
 					<span class="text-3xl">🦌</span>
 				{:else if iconType === 'stocking'}
@@ -98,7 +98,9 @@
 				{/if}
 			</div>
 			<div>
-				<h3 class="text-lg font-bold text-gray-800 leading-tight">{task.description}</h3>
+				<h3 class="text-lg font-bold text-gray-800 leading-tight dark:text-slate-100">
+					{task.description}
+				</h3>
 				{#if !task.unlocked}
 					<p class="text-xs font-medium text-amber-600 mt-1">
 						Available {new Date(task.unlockDate).toLocaleDateString(undefined, {

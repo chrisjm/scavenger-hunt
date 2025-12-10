@@ -151,7 +151,7 @@
 {#if show}
 	<!-- Modal Backdrop -->
 	<div
-		class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+		class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 dark:bg-black/80"
 		onclick={handleBackdropClick}
 		onkeydown={(e) => e.key === 'Escape' && onClose()}
 		role="dialog"
@@ -161,23 +161,25 @@
 	>
 		<!-- Modal Content -->
 		<div
-			class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 md:p-8 transform transition-all"
+			class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 md:p-8 transform transition-all dark:bg-slate-900"
 			role="document"
 		>
 			<!-- Header -->
 			<div class="flex items-center gap-3 mb-6">
 				<div
-					class="w-12 h-12 bg-gradient-to-br from-blue-100 to-purple-100 rounded-full flex items-center justify-center"
+					class="w-12 h-12 bg-gradient-to-br from-blue-100 to-purple-100 rounded-full flex items-center justify-center dark:from-blue-900 dark:to-purple-900"
 				>
 					<span class="text-2xl">👤</span>
 				</div>
 				<div class="flex-1">
-					<h2 id="profile-title" class="text-xl font-bold text-gray-800">Profile Settings</h2>
-					<p class="text-sm text-gray-600">Update your display name</p>
+					<h2 id="profile-title" class="text-xl font-bold text-gray-800 dark:text-slate-100">
+						Profile Settings
+					</h2>
+					<p class="text-sm text-gray-600 dark:text-slate-400">Update your display name</p>
 				</div>
 				<button
 					onclick={onClose}
-					class="w-8 h-8 rounded-full hover:bg-gray-100 flex items-center justify-center transition-colors"
+					class="w-8 h-8 rounded-full hover:bg-gray-100 flex items-center justify-center transition-colors dark:hover:bg-slate-800"
 					aria-label="Close modal"
 				>
 					<span class="text-gray-400 text-xl">×</span>
@@ -185,22 +187,27 @@
 			</div>
 
 			<!-- Profile Preview (Future Avatar Support) -->
-			<div class="flex items-center gap-4 p-4 bg-gray-50 rounded-xl mb-6">
+			<div class="flex items-center gap-4 p-4 bg-gray-50 rounded-xl mb-6 dark:bg-slate-900">
 				<div
 					class="w-16 h-16 bg-gradient-to-br from-green-400 to-blue-500 rounded-full flex items-center justify-center text-white font-bold text-xl"
 				>
 					{newName.trim() ? newName.trim().charAt(0).toUpperCase() : '?'}
 				</div>
 				<div class="flex-1">
-					<p class="font-medium text-gray-800">{newName.trim() || 'Your Name'}</p>
-					<p class="text-sm text-gray-500">Holiday Scavenger Hunter</p>
+					<p class="font-medium text-gray-800 dark:text-slate-100">
+						{newName.trim() || 'Your Name'}
+					</p>
+					<p class="text-sm text-gray-500 dark:text-slate-400">Holiday Scavenger Hunter</p>
 					<!-- Future: Avatar upload button will go here -->
 				</div>
 			</div>
 
 			<!-- Name Input -->
 			<div class="mb-6">
-				<label for="profile-name" class="block text-sm font-medium text-gray-700 mb-2">
+				<label
+					for="profile-name"
+					class="block text-sm font-medium text-gray-700 mb-2 dark:text-slate-200"
+				>
 					Display Name
 				</label>
 				<div class="relative">
@@ -211,7 +218,7 @@
 						onkeydown={handleKeydown}
 						oninput={(e) => handleNameInput(e.currentTarget.value)}
 						placeholder="Choose a unique name"
-						class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-green-500 focus:ring-0 transition-colors text-lg pr-10"
+						class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-green-500 focus:ring-0 transition-colors text-lg pr-10 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
 						class:border-red-300={nameError}
 						class:focus:border-red-500={nameError}
 						class:border-green-300={nameAvailable === true && newName.trim() !== currentName}
@@ -265,7 +272,7 @@
 				<button
 					onclick={onClose}
 					disabled={saving}
-					class="flex-1 px-6 py-3 border-2 border-gray-200 text-gray-700 rounded-xl font-medium hover:bg-gray-50 transition-colors disabled:opacity-50"
+					class="flex-1 px-6 py-3 border-2 border-gray-200 text-gray-700 rounded-xl font-medium hover:bg-gray-50 transition-colors disabled:opacity-50 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800"
 				>
 					Cancel
 				</button>

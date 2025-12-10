@@ -42,7 +42,7 @@
 <!-- Backdrop -->
 {#if isOpen}
 	<button
-		class="fixed inset-0 bg-black bg-opacity-50 z-40 transition-opacity cursor-default"
+		class="fixed inset-0 bg-black bg-opacity-50 z-40 transition-opacity cursor-default dark:bg-black/70"
 		onclick={onClose}
 		onkeydown={(e) => {
 			if (e.key === 'Escape') {
@@ -56,22 +56,27 @@
 
 <!-- Sidebar -->
 <div
-	class="fixed top-0 right-0 h-full w-80 bg-white shadow-xl transform transition-transform duration-300 ease-in-out z-50 {isOpen
+	class="fixed top-0 right-0 h-full w-80 bg-white shadow-xl transform transition-transform duration-300 ease-in-out z-50 dark:bg-slate-900 {isOpen
 		? 'translate-x-0'
 		: 'translate-x-full'}"
 >
 	<div class="flex flex-col h-full">
 		<!-- Header -->
-		<div class="flex items-center justify-between p-6 border-b border-gray-200">
-			<h2 class="text-xl font-bold text-gray-800">Menu</h2>
-			<button onclick={onClose} class="p-2 rounded-lg hover:bg-gray-100 transition-colors">
-				<X size={20} class="text-gray-600" />
+		<div
+			class="flex items-center justify-between p-6 border-b border-gray-200 dark:border-slate-800"
+		>
+			<h2 class="text-xl font-bold text-gray-800 dark:text-slate-100">Menu</h2>
+			<button
+				onclick={onClose}
+				class="p-2 rounded-lg hover:bg-gray-100 transition-colors dark:hover:bg-slate-800"
+			>
+				<X size={20} class="text-gray-600 dark:text-slate-300" />
 			</button>
 		</div>
 
 		<!-- Profile Section -->
 		{#if userName}
-			<div class="p-6 border-b border-gray-200 space-y-4">
+			<div class="p-6 border-b border-gray-200 space-y-4 dark:border-slate-800">
 				<div class="flex items-center gap-3">
 					<div
 						class="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-green-400 to-blue-500 text-lg font-bold text-white"
@@ -79,8 +84,8 @@
 						{userName.charAt(0).toUpperCase()}
 					</div>
 					<div>
-						<h3 class="font-semibold text-gray-800">{userName}</h3>
-						<p class="text-sm text-gray-500">Player</p>
+						<h3 class="font-semibold text-gray-800 dark:text-slate-100">{userName}</h3>
+						<p class="text-sm text-gray-500 dark:text-slate-400">Player</p>
 					</div>
 				</div>
 

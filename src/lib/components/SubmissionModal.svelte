@@ -125,18 +125,20 @@
 </script>
 
 {#if show && task}
-	<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-		<div class="w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-2xl">
+	<div
+		class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm dark:bg-black/80"
+	>
+		<div class="w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-slate-900">
 			<div class="bg-gradient-to-r from-green-600 to-emerald-600 p-4 text-white">
 				<h3 class="text-lg font-bold">Submit Entry</h3>
 				<p class="opacity-90 text-sm">Task: {task.description}</p>
 			</div>
 
-			<div class="flex border-b border-gray-100">
+			<div class="flex border-b border-gray-100 dark:border-slate-700">
 				<button
 					class="flex-1 py-3 text-sm font-medium transition-colors {activeTab === 'upload'
-						? 'border-b-2 border-green-500 text-green-600 bg-green-50/50'
-						: 'text-gray-500 hover:bg-gray-50'}"
+						? 'border-b-2 border-green-500 text-green-600 bg-green-50/50 dark:text-emerald-300 dark:bg-emerald-900/30'
+						: 'text-gray-500 hover:bg-gray-50 dark:text-slate-400 dark:hover:bg-slate-800'}"
 					onclick={() => (activeTab = 'upload')}
 				>
 					<span class="flex items-center justify-center gap-2">
@@ -145,8 +147,8 @@
 				</button>
 				<button
 					class="flex-1 py-3 text-sm font-medium transition-colors {activeTab === 'library'
-						? 'border-b-2 border-green-500 text-green-600 bg-green-50/50'
-						: 'text-gray-500 hover:bg-gray-50'}"
+						? 'border-b-2 border-green-500 text-green-600 bg-green-50/50 dark:text-emerald-300 dark:bg-emerald-900/30'
+						: 'text-gray-500 hover:bg-gray-50 dark:text-slate-400 dark:hover:bg-slate-800'}"
 					onclick={() => (activeTab = 'library')}
 				>
 					<span class="flex items-center justify-center gap-2">
@@ -159,7 +161,7 @@
 				{#if activeTab === 'upload'}
 					<div class="space-y-4">
 						<div
-							class="relative flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-300 bg-gray-50 p-6 transition-colors hover:border-green-400 hover:bg-green-50"
+							class="relative flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-300 bg-gray-50 p-6 transition-colors hover:border-green-400 hover:bg-green-50 dark:border-slate-700 dark:bg-slate-900 dark:hover:bg-slate-800"
 						>
 							{#if tempPreview}
 								<img
@@ -180,7 +182,7 @@
 								<button
 									type="button"
 									onclick={triggerCamera}
-									class="mb-3 rounded-full bg-white p-3 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+									class="mb-3 rounded-full bg-white p-3 shadow-sm hover:shadow-md transition-shadow cursor-pointer dark:bg-slate-900"
 									aria-label="Take photo with camera"
 								>
 									<Camera class="h-8 w-8 text-green-500" />
@@ -191,7 +193,7 @@
 									<button
 										onclick={triggerCamera}
 										type="button"
-										class="rounded-lg bg-green-100 hover:bg-green-200 transition-colors py-3 px-3 text-center"
+										class="rounded-lg bg-green-100 hover:bg-green-200 transition-colors py-3 px-3 text-center dark:bg-emerald-900/40 dark:hover:bg-emerald-900/70"
 									>
 										<Camera class="h-5 w-5 text-green-600 mx-auto mb-1" />
 										<span class="block text-sm font-semibold text-green-700">Camera</span>
@@ -201,7 +203,7 @@
 									<button
 										onclick={triggerGallery}
 										type="button"
-										class="rounded-lg bg-blue-100 hover:bg-blue-200 transition-colors py-3 px-3 text-center"
+										class="rounded-lg bg-blue-100 hover:bg-blue-200 transition-colors py-3 px-3 text-center dark:bg-blue-900/40 dark:hover:bg-blue-900/70"
 									>
 										<ImageIcon class="h-5 w-5 text-blue-600 mx-auto mb-1" />
 										<span class="block text-sm font-semibold text-blue-700">Gallery</span>
@@ -240,7 +242,7 @@
 					<button
 						onclick={onClose}
 						disabled={submitting}
-						class="flex-1 rounded-xl border border-gray-200 py-3 font-medium text-gray-600 transition-colors hover:bg-gray-50 disabled:opacity-50"
+						class="flex-1 rounded-xl border border-gray-200 py-3 font-medium text-gray-600 transition-colors hover:bg-gray-50 disabled:opacity-50 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800"
 					>
 						Cancel
 					</button>

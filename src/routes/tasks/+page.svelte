@@ -250,116 +250,134 @@
 	}
 </script>
 
-{#if !activeGroupId}
-	<div class="container mx-auto max-w-3xl p-4 md:p-6">
-		<div
-			class="rounded-2xl border border-blue-100 bg-gradient-to-br from-white to-blue-50 p-6 shadow-sm"
-		>
-			<h2 class="text-2xl font-bold text-gray-800 mb-4">Join a group to get started</h2>
-			<p class="text-gray-600 mb-4">
-				The scavenger hunt is group-based. Join an existing group or create one if you’re an admin.
-			</p>
+<div
+	class="min-h-screen bg-gradient-to-br from-green-50 via-white to-red-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950"
+>
+	{#if !activeGroupId}
+		<div class="container mx-auto max-w-3xl p-4 md:p-6">
+			<div
+				class="rounded-2xl border border-blue-100 bg-gradient-to-br from-white to-blue-50 p-6 shadow-sm dark:border-slate-700 dark:from-slate-900 dark:to-slate-900"
+			>
+				<h2 class="text-2xl font-bold text-gray-800 mb-4 dark:text-slate-100">
+					Join a group to get started
+				</h2>
+				<p class="text-gray-600 mb-4 dark:text-slate-300">
+					The scavenger hunt is group-based. Join an existing group or create one if you’re an
+					admin.
+				</p>
 
-			<div class="space-y-4">
-				{#if !isAdmin}
-					<div>
-						<label for="group-name" class="block text-sm font-semibold text-gray-700 mb-2">
-							Enter your group name
-						</label>
-						<input
-							id="group-name"
-							type="text"
-							class="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm"
-							placeholder="Exact name of your group"
-							bind:value={joinGroupName}
-						/>
-						<button
-							class="mt-3 inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-white text-sm font-semibold shadow-sm hover:bg-blue-700 disabled:opacity-60"
-							onclick={joinGroup}
-							disabled={joining}
-						>
-							{joining ? 'Joining…' : 'Join Group'}
-						</button>
-					</div>
-				{:else}
-					<div>
-						<label for="group-select" class="block text-sm font-semibold text-gray-700 mb-2">
-							Select active group
-						</label>
-						<select
-							id="group-select"
-							class="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm"
-							bind:value={joinGroupId}
-						>
-							<option value={null}>-- Choose a group --</option>
-							{#each groupList as group}
-								<option value={group.id}>{group.name}</option>
-							{/each}
-						</select>
-						<button
-							class="mt-3 inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-white text-sm font-semibold shadow-sm hover:bg-blue-700 disabled:opacity-60"
-							onclick={joinGroup}
-							disabled={joining}
-						>
-							Use this group
-						</button>
-					</div>
-					<div class="border-t border-gray-200 pt-4 mt-4">
-						<h3 class="text-lg font-semibold text-gray-800 mb-2">Create a new group</h3>
-						<div class="space-y-2">
-							<input
-								class="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm"
-								placeholder="Group name"
-								bind:value={createName}
-							/>
-							<textarea
-								class="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm"
-								placeholder="Description (optional)"
-								rows="2"
-								bind:value={createDescription}
-							></textarea>
-							<button
-								class="inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-white text-sm font-semibold shadow-sm hover:bg-green-700 disabled:opacity-60"
-								onclick={createGroup}
-								disabled={creating}
+				<div class="space-y-4">
+					{#if !isAdmin}
+						<div>
+							<label
+								for="group-name"
+								class="block text-sm font-semibold text-gray-700 mb-2 dark:text-slate-200"
 							>
-								{creating ? 'Creating…' : 'Create Group'}
+								Enter your group name
+							</label>
+							<input
+								id="group-name"
+								type="text"
+								class="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+								placeholder="Exact name of your group"
+								bind:value={joinGroupName}
+							/>
+							<button
+								class="mt-3 inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-white text-sm font-semibold shadow-sm hover:bg-blue-700 disabled:opacity-60"
+								onclick={joinGroup}
+								disabled={joining}
+							>
+								{joining ? 'Joining…' : 'Join Group'}
 							</button>
 						</div>
-					</div>
-				{/if}
+					{:else}
+						<div>
+							<label
+								for="group-select"
+								class="block text-sm font-semibold text-gray-700 mb-2 dark:text-slate-200"
+							>
+								Select active group
+							</label>
+							<select
+								id="group-select"
+								class="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+								bind:value={joinGroupId}
+							>
+								<option value="">-- Choose a group --</option>
+								{#each groupList as group}
+									<option value={group.id}>{group.name}</option>
+								{/each}
+							</select>
+							<button
+								class="mt-3 inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-white text-sm font-semibold shadow-sm hover:bg-blue-700 disabled:opacity-60"
+								onclick={joinGroup}
+								disabled={joining}
+							>
+								Use this group
+							</button>
+						</div>
+						<div class="border-t border-gray-200 pt-4 mt-4 dark:border-slate-700">
+							<h3 class="text-lg font-semibold text-gray-800 mb-2 dark:text-slate-100">
+								Create a new group
+							</h3>
+							<div class="space-y-2">
+								<input
+									class="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+									placeholder="Group name"
+									bind:value={createName}
+								/>
+								<textarea
+									class="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+									placeholder="Description (optional)"
+									rows="2"
+									bind:value={createDescription}
+								></textarea>
+								<button
+									class="inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-white text-sm font-semibold shadow-sm hover:bg-green-700 disabled:opacity-60"
+									onclick={createGroup}
+									disabled={creating}
+								>
+									{creating ? 'Creating…' : 'Create Group'}
+								</button>
+							</div>
+						</div>
+					{/if}
 
-				{#if onboardingError}
-					<div class="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-						{onboardingError}
-					</div>
-				{/if}
+					{#if onboardingError}
+						<div
+							class="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-700 dark:bg-red-950/40 dark:text-red-300"
+						>
+							{onboardingError}
+						</div>
+					{/if}
+				</div>
 			</div>
 		</div>
-	</div>
-{:else}
-	<div class="container mx-auto max-w-4xl p-4 md:p-6">
-		<div class="relative mb-6 text-center md:mb-8">
-			<p class="mx-auto max-w-2xl px-4 text-lg text-gray-600 md:text-xl">
-				Find festive items, snap a photo, or choose one from your library to complete the challenge!
-			</p>
-		</div>
+	{:else}
+		<div class="container mx-auto max-w-4xl p-4 md:p-6">
+			<div class="relative mb-6 text-center md:mb-8">
+				<p class="mx-auto max-w-2xl px-4 text-lg text-gray-600 md:text-xl dark:text-slate-300">
+					Find festive items, snap a photo, or choose one from your library to complete the
+					challenge!
+				</p>
+			</div>
 
-		<div class="mb-6 md:mb-8">
-			<StatsGrid
-				{loading}
-				{totalTasks}
-				unlockedTasks={unlockedTasks.length}
-				{completionRate}
-				approvedSubmissions={approvedUserSubmissions.length}
-				totalSubmissions={userSubmissions.length}
-			/>
-		</div>
+			<div class="mb-6 md:mb-8">
+				<StatsGrid
+					{loading}
+					{totalTasks}
+					unlockedTasks={unlockedTasks.length}
+					{completionRate}
+					approvedSubmissions={approvedUserSubmissions.length}
+					totalSubmissions={userSubmissions.length}
+				/>
+			</div>
 
-		<div class="mb-6 md:mb-8">
-			<TaskGrid {tasks} {loading} {userId} {completedTaskIds} {userSubmissions} {activeGroupId} />
-		</div>
+			<div class="mb-6 md:mb-8">
+				<TaskGrid {tasks} {loading} {userId} {completedTaskIds} {userSubmissions} {activeGroupId} />
+			</div>
 
-		<TabbedView {submissions} {leaderboard} {leaderboardLoading} />
-	</div>
-{/if}
+			<TabbedView {submissions} {leaderboard} {leaderboardLoading} />
+		</div>
+	{/if}
+</div>

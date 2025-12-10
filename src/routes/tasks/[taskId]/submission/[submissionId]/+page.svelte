@@ -102,25 +102,31 @@
 	<title>Submission Details - Holiday Scavenger Hunt</title>
 </svelte:head>
 
-<div class="min-h-screen bg-gradient-to-br from-green-50 to-red-50 p-4">
+<div
+	class="min-h-screen bg-gradient-to-br from-green-50 to-red-50 p-4 dark:from-slate-950 dark:to-slate-950"
+>
 	<div class="container mx-auto max-w-3xl">
 		{#if loading}
 			<div class="py-12 text-center">
-				<div class="mx-auto h-8 w-8 animate-spin rounded-full border-b-2 border-green-600"></div>
-				<p class="mt-2 text-gray-500">Loading submission...</p>
+				<div
+					class="mx-auto h-8 w-8 animate-spin rounded-full border-b-2 border-green-600 dark:border-green-500"
+				></div>
+				<p class="mt-2 text-gray-500 dark:text-slate-400">Loading submission...</p>
 			</div>
 		{:else if task && submission}
-			<div class="overflow-hidden rounded-2xl bg-white shadow-2xl">
+			<div
+				class="overflow-hidden rounded-2xl bg-white dark:bg-slate-900 shadow-2xl dark:shadow-slate-800"
+			>
 				<div class="bg-gradient-to-r from-emerald-600 to-green-600 p-4 text-white">
 					<div class="flex items-center justify-between">
 						<div>
-							<h1 class="text-lg font-bold">✅ Completed Task</h1>
-							<p class="opacity-90 text-sm mt-1">{task.description}</p>
+							<h1 class="text-lg font-bold dark:text-slate-200">✅ Completed Task</h1>
+							<p class="opacity-90 text-sm mt-1 dark:text-slate-400">{task.description}</p>
 						</div>
 						<button
 							type="button"
 							onclick={() => goto('/tasks')}
-							class="rounded-full px-3 py-1 text-sm font-medium bg-white/10 hover:bg-white/20"
+							class="rounded-full px-3 py-1 text-sm font-medium bg-white/10 dark:bg-slate-900/10 hover:bg-white/20 dark:hover:bg-slate-900/20"
 						>
 							← Back to tasks
 						</button>
@@ -129,14 +135,18 @@
 
 				<div class="p-6">
 					<div class="mb-6">
-						<h2 class="mb-3 text-sm font-semibold text-gray-700 uppercase tracking-wide">
+						<h2
+							class="mb-3 text-sm font-semibold text-gray-700 uppercase tracking-wide dark:text-slate-200"
+						>
 							Your Submission
 						</h2>
-						<div class="relative overflow-hidden rounded-xl border-2 border-gray-200">
+						<div
+							class="relative overflow-hidden rounded-xl border-2 border-gray-200 dark:border-slate-700"
+						>
 							<img
 								src={submission.imagePath}
 								alt="Your submission"
-								class="w-full max-h-96 object-contain bg-gray-50"
+								class="w-full max-h-96 object-contain bg-gray-50 dark:bg-slate-900"
 							/>
 							<div class="absolute top-3 right-3">
 								<div
@@ -151,14 +161,18 @@
 					</div>
 
 					<div class="mb-6">
-						<h2 class="mb-3 text-sm font-semibold text-gray-700 uppercase tracking-wide">
+						<h2
+							class="mb-3 text-sm font-semibold text-gray-700 uppercase tracking-wide dark:text-slate-200"
+						>
 							AI Judge Feedback
 						</h2>
-						<div class="rounded-lg bg-gray-50 p-4">
-							<p class="text-gray-700 leading-relaxed">
+						<div class="rounded-lg bg-gray-50 p-4 dark:bg-slate-900">
+							<p class="text-gray-700 leading-relaxed dark:text-slate-200">
 								<span class="font-medium">"{submission.aiReasoning}"</span>
 							</p>
-							<div class="mt-3 flex items-center justify-between text-sm text-gray-500">
+							<div
+								class="mt-3 flex items-center justify-between text-sm text-gray-500 dark:text-slate-400"
+							>
 								<span>Confidence: {Math.round((submission.aiConfidence || 0) * 100)}%</span>
 								<span>
 									Submitted {new Date(submission.submittedAt).toLocaleDateString()} at
@@ -168,18 +182,18 @@
 						</div>
 					</div>
 
-					<div class="flex gap-3">
+					<div class="mt-4 flex items-center justify-end gap-3">
 						<button
 							onclick={handleRemove}
 							disabled={removing}
-							class="flex flex-1 items-center justify-center gap-2 rounded-xl border-2 border-red-200 bg-red-50 py-3 font-semibold text-red-700 transition-all hover:border-red-300 hover:bg-red-100 disabled:opacity-50"
+							class="inline-flex items-center justify-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-medium text-red-700 transition-colors hover:bg-red-100 hover:border-red-300 disabled:opacity-60 dark:border-red-500/60 dark:bg-red-950/40 dark:text-red-200 dark:hover:bg-red-900/60"
 						>
 							<Trash2 class="h-4 w-4" />
-							{removing ? 'Removing...' : 'Remove Submission'}
+							{removing ? 'Removing…' : 'Remove'}
 						</button>
 						<button
 							onclick={handleRetry}
-							class="flex flex-1 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 py-3 font-semibold text-white shadow-md transition-all hover:scale-[1.02] hover:shadow-lg"
+							class="inline-flex items-center justify-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-medium text-blue-700 transition-colors hover:bg-blue-100 hover:border-blue-300 dark:border-blue-500/60 dark:bg-slate-900/40 dark:text-blue-200 dark:hover:bg-slate-800/80"
 						>
 							<RotateCcw class="h-4 w-4" />
 							Try Again

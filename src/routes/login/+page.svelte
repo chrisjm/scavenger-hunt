@@ -94,18 +94,18 @@
 </svelte:head>
 
 <div
-	class="min-h-screen bg-gradient-to-br from-green-50 to-red-50 flex items-center justify-center p-4"
+	class="min-h-screen bg-gradient-to-br from-green-50 to-red-50 dark:from-slate-950 dark:to-slate-950 flex items-center justify-center p-4"
 >
-	<div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 md:p-8">
+	<div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 md:p-8 dark:bg-slate-900">
 		<!-- Header -->
 		<div class="text-center mb-8">
 			<div
-				class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4"
+				class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 dark:bg-emerald-900/40"
 			>
-				<span class="text-green-600 text-4xl">🎄</span>
+				<span class="text-green-600 text-4xl dark:text-emerald-300">🎄</span>
 			</div>
-			<h1 class="text-3xl font-bold text-gray-800 mb-2">Welcome back</h1>
-			<p class="text-gray-600">
+			<h1 class="text-3xl font-bold text-gray-800 mb-2 dark:text-slate-100">Welcome back</h1>
+			<p class="text-gray-600 dark:text-slate-300">
 				Sign in with your scavenger hunt username and password to continue playing.
 			</p>
 		</div>
@@ -118,14 +118,16 @@
 			}}
 		>
 			<div class="mb-6">
-				<label for="name" class="block text-sm font-medium text-gray-700 mb-2"> Your Name </label>
+				<label for="name" class="block text-sm font-medium text-gray-700 mb-2 dark:text-slate-200">
+					Your Name
+				</label>
 				<input
 					id="name"
 					type="text"
 					bind:value={loginName}
 					onkeydown={handleKeydown}
 					placeholder="Enter your username"
-					class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-green-500 focus:ring-0 transition-colors text-lg"
+					class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-green-500 focus:ring-0 transition-colors text-lg dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
 					class:border-red-300={errorMessage}
 					class:focus:border-red-500={errorMessage}
 					disabled={loggingIn}
@@ -135,7 +137,10 @@
 			</div>
 
 			<div class="mb-6">
-				<label for="password" class="block text-sm font-medium text-gray-700 mb-2">
+				<label
+					for="password"
+					class="block text-sm font-medium text-gray-700 mb-2 dark:text-slate-200"
+				>
 					Password (more than 8 characters)
 				</label>
 				<input
@@ -153,8 +158,10 @@
 			</div>
 
 			{#if errorMessage}
-				<div class="mb-6 p-3 bg-red-50 border border-red-200 rounded-lg">
-					<p class="text-red-600 text-sm flex items-center gap-2">
+				<div
+					class="mb-6 p-3 bg-red-50 border border-red-200 rounded-lg dark:bg-red-950/40 dark:border-red-700"
+				>
+					<p class="text-red-600 text-sm flex items-center gap-2 dark:text-red-300">
 						<span>⚠️</span>
 						{errorMessage}
 					</p>
@@ -178,7 +185,7 @@
 		</form>
 
 		<!-- Back to Home -->
-		<div class="mt-6 text-center text-sm text-gray-600">
+		<div class="mt-6 text-center text-sm text-gray-600 dark:text-slate-300">
 			<p>
 				New to the hunt?
 				<a href="/register" class="font-semibold text-green-700 hover:text-green-900 ml-1">
@@ -186,7 +193,12 @@
 				</a>
 			</p>
 			<p class="mt-3">
-				<a href="/" class="text-gray-500 hover:text-gray-700"> ← Back to landing page </a>
+				<a
+					href="/"
+					class="text-gray-500 hover:text-gray-700 dark:text-slate-400 dark:hover:text-slate-200"
+				>
+					← Back to landing page
+				</a>
 			</p>
 		</div>
 	</div>

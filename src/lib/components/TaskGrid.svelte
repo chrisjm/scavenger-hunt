@@ -43,7 +43,7 @@
 {#if loading}
 	<div class="py-12 text-center">
 		<div class="mx-auto h-8 w-8 animate-spin rounded-full border-b-2 border-green-600"></div>
-		<p class="mt-2 text-gray-500">Loading tasks...</p>
+		<p class="mt-2 text-gray-500 dark:text-slate-400">Loading tasks...</p>
 	</div>
 {:else}
 	<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
