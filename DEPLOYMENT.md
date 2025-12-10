@@ -151,32 +151,7 @@ pm2 stop scavenger-hunt
 pm2 monit
 ```
 
-## 5. Deployment Script (Optional)
-
-Create `deploy.sh`:
-
-```bash
-#!/bin/bash
-echo "🚀 Deploying Scavenger Hunt..."
-
-# Pull latest changes
-git pull origin main
-
-# Install dependencies
-pnpm install
-
-# Build application
-pnpm build
-
-# Restart with PM2
-pm2 restart scavenger-hunt
-
-echo "✅ Deployment complete!"
-```
-
-Make executable: `chmod +x deploy.sh`
-
-## 6. Firewall Configuration
+## 5. Firewall Configuration
 
 ```bash
 # Allow SSH, HTTP, and HTTPS
@@ -185,7 +160,7 @@ sudo ufw allow 'Nginx Full'
 sudo ufw enable
 ```
 
-## 7. Monitoring & Maintenance
+## 6. Monitoring & Maintenance
 
 ### Log Locations
 
@@ -202,11 +177,6 @@ sudo ufw enable
 ### Backup Database
 
 ```bash
-# Create backup script
-echo "#!/bin/bash
-cp /var/www/scavenger-hunt/local.db /var/www/scavenger-hunt/backups/local-\$(date +%Y%m%d-%H%M%S).db" > backup.sh
-chmod +x backup.sh
-
 # Run daily via cron
 crontab -e
 # Add: 0 2 * * * /var/www/scavenger-hunt/backup.sh
