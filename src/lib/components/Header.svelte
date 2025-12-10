@@ -1,5 +1,7 @@
 <script lang="ts">
 	import { TreePine } from 'lucide-svelte';
+	import { goto } from '$app/navigation';
+	import { getUserContext } from '$lib/stores/user';
 	import SidebarMenu from './SidebarMenu.svelte';
 
 	interface Props {
@@ -8,7 +10,18 @@
 		showMenu?: boolean;
 	}
 
+	const userContext = getUserContext();
+	const userId = $derived(userContext.userId);
+
 	let { sidebarOpen, onMenuClick, showMenu = true }: Props = $props();
+
+	function handleLogoClick() {
+		if (userId) {
+			goto('/tasks');
+		} else {
+			goto('/');
+		}
+	}
 </script>
 
 <header
@@ -16,7 +29,11 @@
 >
 	<div class="flex items-center justify-between px-4 py-3">
 		<!-- Left: App Title -->
-		<div class="flex items-center gap-2">
+		<button
+			onclick={handleLogoClick}
+			type="button"
+			class="flex items-center gap-2 focus:outline-none"
+		>
 			<TreePine class="text-green-600" size={24} />
 			<h1 class="text-lg font-bold text-gray-800 md:text-xl dark:text-slate-100">
 				<span
@@ -25,7 +42,7 @@
 					Scavenger Hunt
 				</span>
 			</h1>
-		</div>
+		</button>
 
 		<!-- Right: Group selector (desktop) and Menu Button -->
 		<div class="flex items-center gap-3">
