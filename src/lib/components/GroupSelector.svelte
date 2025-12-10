@@ -4,7 +4,6 @@
 	const userContext = getUserContext();
 	const userGroups = $derived(userContext.userGroups);
 	const activeGroupId = $derived(userContext.activeGroupId);
-	const isAdmin = $derived(userContext.isAdmin);
 
 	// Local selector value (string), kept in sync with activeGroupId
 	let selectorValue = $state<string>('');
@@ -40,11 +39,4 @@
 			{/if}
 		</select>
 	</div>
-	{#if isAdmin}
-		<div
-			class="inline-flex items-center gap-1 rounded-lg border border-dashed border-gray-300 px-2 py-1 text-xs text-gray-600 dark:border-slate-600 dark:text-slate-300 dark:bg-slate-900/40"
-		>
-			<span class="text-gray-500 dark:text-slate-300">Admin</span>
-		</div>
-	{/if}
 </div>
