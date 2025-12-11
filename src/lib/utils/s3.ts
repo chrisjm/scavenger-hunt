@@ -8,17 +8,15 @@ import {
   GetObjectCommand
 } from '@aws-sdk/client-s3';
 import { Readable } from 'stream';
+import {
+  AWS_REGION as AWS_REGION_ENV,
+  S3_BUCKET as S3_BUCKET_ENV,
+  S3_PREFIX as S3_PREFIX_ENV
+} from '$env/static/private';
 
-const requiredEnv = ['AWS_ACCESS_KEY_ID', 'AWS_SECRET_ACCESS_KEY', 'AWS_REGION', 'S3_BUCKET'] as const;
-const missing = requiredEnv.filter((key) => !process.env[key]);
-
-if (missing.length) {
-  throw new Error(`Missing required S3 env vars: ${missing.join(', ')}`);
-}
-
-const S3_BUCKET = process.env.S3_BUCKET as string;
-const S3_PREFIX = process.env.S3_PREFIX || '';
-const S3_REGION = process.env.AWS_REGION as string;
+const S3_BUCKET = S3_BUCKET_ENV;
+const S3_REGION = AWS_REGION_ENV;
+const S3_PREFIX = S3_PREFIX_ENV ?? '';
 
 const s3 = new S3Client({ region: S3_REGION });
 

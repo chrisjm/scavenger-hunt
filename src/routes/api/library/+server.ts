@@ -3,13 +3,11 @@
 
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { and, desc, eq } from 'drizzle-orm';
+import { desc, eq } from 'drizzle-orm';
 import sharp from 'sharp';
 import { db, schema } from '$lib/server/db';
 import {
   buildObjectKey,
-  deleteFromS3,
-  extractKeyFromUrl,
   uploadBufferToS3
 } from '$lib/utils/s3';
 
@@ -82,6 +80,7 @@ export const GET: RequestHandler = async ({ locals }) => {
 // POST /api/library/upload
 export const POST: RequestHandler = async ({ locals, request }) => {
   try {
+    console.log('Library upload: start');
     const authUser = locals.user;
     if (!authUser) {
       return json({ error: 'Unauthorized' }, { status: 401 });
@@ -91,6 +90,9 @@ export const POST: RequestHandler = async ({ locals, request }) => {
     const file = formData.get('image');
 
     if (!(file instanceof File)) {
+      console.warn('Library upload: no file in formData', {
+        formDataKeys: Array.from(formData.keys())
+      });
       return json({ error: 'No image provided' }, { status: 400 });
     }
 
@@ -100,7 +102,14 @@ export const POST: RequestHandler = async ({ locals, request }) => {
     }
 
     const arrayBuffer = await file.arrayBuffer();
-    let buffer = Buffer.from(arrayBuffer);
+    let buffer = Buffer.from(arrayBuffer) as Buffer<ArrayBufferLike> | Buffer<ArrayBuffer>;
+
+    console.log('Library upload: received file', {
+      userId,
+      fileName: file.name,
+      fileType: file.type,
+      fileSize: buffer.length
+    });
 
     // Basic file size limit (10MB) and type check similar to multer config
     if (buffer.length > 10 * 1024 * 1024) {
@@ -118,18 +127,29 @@ export const POST: RequestHandler = async ({ locals, request }) => {
     }
 
     // Resize image similarly to imageResize middleware
-    buffer = await resizeImageBuffer(buffer).catch((err) => {
+    try {
+      buffer = await resizeImageBuffer(buffer);
+      console.log('Library upload: resized image', { resizedSize: buffer.length });
+    } catch (err) {
       console.error('Server-side image resize failed (SvelteKit):', err);
-      return buffer;
-    });
+      // keep original buffer unchanged
+    }
 
     const ext = file.type.split('/')[1] || 'jpg';
     const key = buildObjectKey(`library/${Date.now()}-${crypto.randomUUID()}.${ext}`);
-    const filePath = await uploadBufferToS3({
-      buffer,
-      contentType: file.type || 'image/jpeg',
-      key
-    });
+
+    let filePath: string;
+    try {
+      filePath = await uploadBufferToS3({
+        buffer,
+        contentType: file.type || 'image/jpeg',
+        key
+      });
+      console.log('Library upload: uploaded to S3', { key, filePath });
+    } catch (err) {
+      console.error('Library upload: S3 upload failed', err);
+      throw err;
+    }
 
     const { photos } = schema;
     const photoId = crypto.randomUUID();
@@ -145,46 +165,11 @@ export const POST: RequestHandler = async ({ locals, request }) => {
       })
       .returning();
 
+    console.log('Library upload: DB insert complete', { photoId, userId });
+
     return json({ success: true, photo: newPhoto });
   } catch (error) {
     console.error('Upload error (SvelteKit library):', error);
     return json({ error: 'Upload failed' }, { status: 500 });
-  }
-};
-
-// DELETE /api/library/:id
-export const DELETE: RequestHandler = async ({ params, locals }) => {
-  try {
-    const authUser = locals.user;
-    if (!authUser) {
-      return json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const { id } = params;
-    const userId = authUser.userId;
-    const { photos } = schema;
-
-    // 1. Verify ownership
-    const photo = await db
-      .select()
-      .from(photos)
-      .where(and(eq(photos.id, id), eq(photos.userId, userId)))
-      .get();
-
-    if (!photo) {
-      return json({ error: 'Photo not found or unauthorized' }, { status: 404 });
-    }
-
-    // 2. Delete file from S3
-    const key = extractKeyFromUrl(photo.filePath);
-    await deleteFromS3(key).catch((err) => console.error('File delete warning:', err));
-
-    // 3. Delete from DB
-    await db.delete(photos).where(eq(photos.id, id));
-
-    return json({ success: true });
-  } catch (error) {
-    console.error('Delete error (SvelteKit library):', error);
-    return json({ error: 'Delete failed' }, { status: 500 });
   }
 };
