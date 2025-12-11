@@ -137,11 +137,9 @@
 					</div>
 				</div>
 
-				{#if isAdmin}
-					<div class="mt-2">
-						<GroupSelector />
-					</div>
-				{/if}
+				<div class="mt-2">
+					<GroupSelector />
+				</div>
 			</div>
 		{/if}
 

@@ -6,7 +6,13 @@
 	import { page } from '$app/state';
 	import Header from '$lib/components/Header.svelte';
 	import Sidebar from '$lib/components/Sidebar.svelte';
-	import type { GroupSummary } from '$lib/stores/user';
+	import {
+		type GroupSummary,
+		userGroupsStore,
+		activeGroupIdStore,
+		setActiveGroup as setActiveGroupStore,
+		resetGroupStores
+	} from '$lib/stores/user';
 
 	let { children } = $props();
 
@@ -46,13 +52,14 @@
 		},
 		setActiveGroup(id: string | null) {
 			activeGroupId = id;
-			if (id) {
-				localStorage.setItem('scavenger-hunt-activeGroupId', id);
-			} else {
-				localStorage.removeItem('scavenger-hunt-activeGroupId');
-			}
+			setActiveGroupStore(id);
 		},
-		refreshGroups
+		refreshGroups,
+		resetGroups() {
+			resetGroupStores();
+			activeGroupId = null;
+			userGroups = [];
+		}
 	});
 
 	function isPublicRoute(routeId: string | null) {
@@ -61,6 +68,13 @@
 
 	// Check authentication on mount
 	onMount(() => {
+		const unsubGroups = userGroupsStore.subscribe((groups) => {
+			userGroups = groups;
+		});
+		const unsubActive = activeGroupIdStore.subscribe((id) => {
+			activeGroupId = id;
+		});
+
 		const storedUserId = localStorage.getItem('scavenger-hunt-userId');
 
 		if (storedUserId) {
@@ -83,6 +97,8 @@
 
 		return () => {
 			media.removeEventListener('change', applyTheme);
+			unsubGroups();
+			unsubActive();
 		};
 	});
 
@@ -106,17 +122,19 @@
 			if (response.ok) {
 				const groups = await response.json();
 				userGroups = groups;
+				userGroupsStore.set(groups);
 				// Resolve active group: prefer stored if still valid, else first available
 				const storedActive = localStorage.getItem('scavenger-hunt-activeGroupId');
 				const validStored = groups.find((g: GroupSummary) => g.id === storedActive);
 				if (validStored) {
 					activeGroupId = validStored.id;
+					setActiveGroupStore(validStored.id);
 				} else if (groups.length > 0) {
 					activeGroupId = groups[0].id;
-					localStorage.setItem('scavenger-hunt-activeGroupId', groups[0].id);
+					setActiveGroupStore(groups[0].id);
 				} else {
 					activeGroupId = null;
-					localStorage.removeItem('scavenger-hunt-activeGroupId');
+					setActiveGroupStore(null);
 				}
 			}
 		} catch (error) {
