@@ -136,15 +136,4 @@ export const user = sqliteTable('user', {
 		.references(() => users.id, { onDelete: 'cascade' })
 });
 
-export const session = sqliteTable('session', {
-	id: text('id').primaryKey(),
-	userId: text('user_id')
-		.notNull()
-		.references(() => user.id),
-	// store as epoch ms (number) to satisfy Lucia adapter expectations
-	expiresAt: integer('expires_at').notNull()
-});
-
-export type Session = typeof session.$inferSelect;
-
 export type User = typeof user.$inferSelect;
