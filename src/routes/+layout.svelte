@@ -144,9 +144,27 @@
 
 	// Reactive check for route changes
 	$effect(() => {
-		if (!userId && !isPublicRoute(page.route.id)) {
+		const routeId = page.route.id;
+
+		if (!userId && !isPublicRoute(routeId)) {
 			goto('/login');
-		} else if (userId && page.route.id === '/') {
+			return;
+		}
+
+		// Force group selection when authenticated but no active group
+		if (userId && !activeGroupId && routeId !== '/groups/select') {
+			goto('/groups/select');
+			return;
+		}
+
+		// If active group is ready but user is on selection page, send to tasks (non-admins only)
+		if (userId && activeGroupId && routeId === '/groups/select' && isAdmin === false) {
+			goto('/tasks');
+			return;
+		}
+
+		// Authenticated and on landing -> tasks
+		if (userId && routeId === '/') {
 			goto('/tasks');
 		}
 	});

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { User, Camera, LogOut, X, ListChecks, Activity } from 'lucide-svelte';
+	import { User, Camera, LogOut, X, ListChecks, Activity, Settings } from 'lucide-svelte';
 	import { goto } from '$app/navigation';
 	import { getUserContext } from '$lib/stores/user';
 	import GroupSelector from '$lib/components/GroupSelector.svelte';
@@ -67,8 +67,15 @@
 		}
 	}
 
+	// Recompute progress when user/group changes or when the drawer opens
 	$effect(() => {
-		if (!isAdmin && isOpen && userId && activeGroupId) {
+		if (userId && activeGroupId) {
+			loadProgress();
+		}
+	});
+
+	$effect(() => {
+		if (isOpen && userId && activeGroupId) {
 			loadProgress();
 		}
 	});
@@ -177,6 +184,16 @@
 					<Camera size={20} class="text-gray-600 dark:text-slate-300" />
 					<span class="font-medium text-gray-700 dark:text-slate-300">My Library</span>
 				</button>
+
+				{#if isAdmin}
+					<button
+						onclick={() => handleNavigation('/groups/select')}
+						class="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors text-left text-gray-800 dark:text-slate-100"
+					>
+						<Settings size={20} class="text-gray-600 dark:text-slate-300" />
+						<span class="font-medium text-gray-700 dark:text-slate-300">Manage Groups</span>
+					</button>
+				{/if}
 			</div>
 		</nav>
 
