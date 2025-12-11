@@ -3,10 +3,10 @@
 
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { and, count, desc, eq } from 'drizzle-orm';
+import { and, count, eq, desc } from 'drizzle-orm';
 import { db, schema } from '$lib/server/db';
-import { extractKeyFromUrl, fetchObjectBuffer } from '../../../../server/utils/s3.js';
-import { validateImageWithAI, isSubmissionValid } from '../../../../server/utils/ai-validator.js';
+import { extractKeyFromUrl, fetchObjectBuffer } from '$lib/utils/s3';
+import { validateImageWithAI, isSubmissionValid } from '$lib/utils/aiValidator';
 
 // POST /api/submissions
 export const POST: RequestHandler = async ({ request, locals }) => {
