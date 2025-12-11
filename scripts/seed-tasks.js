@@ -1,6 +1,6 @@
 import 'dotenv/config';
-import { drizzle } from 'drizzle-orm/better-sqlite3';
-import Database from 'better-sqlite3';
+import { drizzle } from 'drizzle-orm/libsql';
+import { createClient } from '@libsql/client';
 import crypto from 'node:crypto';
 import { hash } from '@node-rs/argon2';
 import {
@@ -13,7 +13,10 @@ import {
 
 // Create database connection using the same DATABASE_URL as the app
 const dbUrl = process.env.DATABASE_URL || 'local.db';
-const client = new Database(dbUrl);
+const client = createClient({
+	url: dbUrl,
+	authToken: process.env.DATABASE_AUTH_TOKEN
+});
 const db = drizzle(client);
 
 const sampleTasks = [
