@@ -61,8 +61,8 @@ export async function validateSessionToken(token: string) {
   if (!session) return null;
 
   const now = Date.now();
-  const createdAt = session.createdAt instanceof Date ? session.createdAt.getTime() : new Date(session.createdAt).getTime();
-  if (now - createdAt >= SESSION_TTL_MS) {
+  const createdAt = session.createdAt instanceof Date ? session.createdAt : new Date(session.createdAt);
+  if (now - createdAt.getTime() >= SESSION_TTL_MS) {
     await deleteSession(session.id);
     return null;
   }
