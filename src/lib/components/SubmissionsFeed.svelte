@@ -29,12 +29,12 @@
 		</div>
 		<div>
 			<p class="text-xs uppercase tracking-[0.18em] text-slate-500">Live feed</p>
-			<h2 class="text-2xl font-semibold text-white">Submissions</h2>
+			<h2 class="text-2xl font-semibold text-gray-900 dark:text-white">Submissions</h2>
 		</div>
 		{#if submissions.length > 0}
 			<div class="ml-auto">
 				<div
-					class="bg-blue-500/10 text-blue-100 text-xs font-semibold px-3 py-1 rounded-full border border-blue-500/30"
+					class="bg-blue-500/10 text-blue-800 text-xs font-semibold px-3 py-1 rounded-full border border-blue-500/30 dark:text-blue-100"
 				>
 					{submissions.length} submission{submissions.length === 1 ? '' : 's'}
 				</div>

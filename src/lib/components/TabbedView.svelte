@@ -54,7 +54,9 @@
 				>
 					📡 Feed
 					{#if submissions.length > 0}
-						<span class="ml-1 text-xs">({submissions.length})</span>
+						<span class="ml-1 text-xs text-gray-600 dark:text-slate-200"
+							>({submissions.length})</span
+						>
 					{/if}
 				</button>
 				<button
@@ -66,7 +68,9 @@
 				>
 					🏆 Board
 					{#if leaderboard.length > 0}
-						<span class="ml-1 text-xs">({leaderboard.length})</span>
+						<span class="ml-1 text-xs text-gray-600 dark:text-slate-200"
+							>({leaderboard.length})</span
+						>
 					{/if}
 				</button>
 			</div>

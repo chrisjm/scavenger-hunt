@@ -201,10 +201,10 @@
 		<div class="p-6 border-t border-gray-200">
 			<button
 				onclick={handleLogout}
-				class="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-red-50 transition-colors text-left group"
+				class="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-red-50 transition-colors text-left group dark:hover:bg-red-950/40"
 			>
-				<LogOut size={20} class="text-red-600" />
-				<span class="font-medium text-red-600">Logout</span>
+				<LogOut size={20} class="text-red-600 dark:text-red-200" />
+				<span class="font-medium text-red-600 dark:text-red-200">Logout</span>
 			</button>
 		</div>
 	</div>

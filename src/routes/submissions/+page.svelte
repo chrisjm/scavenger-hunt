@@ -54,8 +54,12 @@
 	<div class="max-w-5xl mx-auto px-4 py-8 md:py-12">
 		<div class="mb-6 md:mb-8 flex items-center justify-between gap-4">
 			<div>
-				<h1 class="text-3xl md:text-4xl font-bold tracking-tight text-slate-200">Submissions</h1>
-				<p class="mt-2 text-sm md:text-base text-slate-400">
+				<h1
+					class="text-3xl md:text-4xl font-bold tracking-tight text-slate-900 dark:text-slate-200"
+				>
+					Submissions
+				</h1>
+				<p class="mt-2 text-sm md:text-base text-slate-600 dark:text-slate-400">
 					All submissions for your active group, including both approved and rejected attempts.
 				</p>
 			</div>
