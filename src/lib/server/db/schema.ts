@@ -137,3 +137,12 @@ export const user = sqliteTable('user', {
 });
 
 export type User = typeof user.$inferSelect;
+
+export const sessions = sqliteTable('session', {
+	id: text('id').primaryKey(),
+	userId: text('user_id')
+		.notNull()
+		.references(() => user.id, { onDelete: 'cascade' }),
+	secretHash: text('secret_hash').notNull(),
+	createdAt: integer('created_at', { mode: 'timestamp' }).notNull()
+});
