@@ -75,17 +75,6 @@ router.post('/', async (req, res) => {
 			})
 			.returning();
 
-		// 5. Broadcast (Socket.io)
-		if (req.io) {
-			req.io.to('scavenger-hunt').emit('new-submission', {
-				...submission,
-				taskDescription: task.description,
-				userName: user.name,
-				groupId,
-				imagePath: photo.filePath
-			});
-		}
-
 		res.json({ success: true, submission });
 	} catch (error) {
 		console.error('Submission error:', error);
@@ -278,15 +267,6 @@ router.delete('/:id', async (req, res) => {
 
 		// Delete the submission
 		await db.delete(submissions).where(eq(submissions.id, id));
-
-		// Broadcast the deletion via socket
-		if (req.io) {
-			req.io.to('scavenger-hunt').emit('submission-deleted', {
-				submissionId: id,
-				taskId: submission.taskId,
-				userId: submission.userId
-			});
-		}
 
 		res.json({ success: true, message: 'Submission deleted successfully' });
 	} catch (error) {

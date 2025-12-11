@@ -1,6 +1,4 @@
 <script lang="ts">
-	import { io } from 'socket.io-client';
-	import type { Socket } from 'socket.io-client';
 	import { onMount } from 'svelte';
 	import StatsGrid from '$lib/components/StatsGrid.svelte';
 	import TaskGrid from '$lib/components/TaskGrid.svelte';
@@ -16,7 +14,6 @@
 	let activeGroupId = $derived(userContext.activeGroupId);
 
 	// State
-	let socket: Socket | undefined;
 	let loading = $state(true);
 	let tasks = $state<any[]>([]);
 	let submissions = $state<any[]>([]);
@@ -38,13 +35,6 @@
 	// Load data when component mounts
 	onMount(() => {
 		loadTasks();
-	});
-
-	// Connect socket when userId is available
-	$effect(() => {
-		if (userId) {
-			connectSocket();
-		}
 	});
 
 	// Reload submissions/leaderboard whenever activeGroupId changes
@@ -91,42 +81,6 @@
 		} finally {
 			leaderboardLoading = false;
 		}
-	}
-
-	function connectSocket() {
-		if (!userId) return;
-
-		socket = io();
-		socket.on('connect', () => {
-			console.log('Connected to server');
-			socket?.emit('join-room', userId);
-		});
-
-		socket.on('new-submission', (submission: any) => {
-			// Ignore submissions from other groups
-			if (submission.groupId !== activeGroupId) return;
-
-			// Add new submission to the feed
-			submissions = [submission, ...submissions];
-
-			// If valid, refresh leaderboard to show updated scores immediately
-			if (submission.valid) {
-				loadLeaderboard();
-			}
-		});
-
-		socket.on('submission-deleted', (data: any) => {
-			// Remove submission from the feed
-			submissions = submissions.filter((sub) => sub.id !== data.submissionId);
-
-			// Refresh leaderboard since scores may have changed
-			loadLeaderboard();
-
-			// If it was the current user's submission, refresh their submissions
-			if (data.userId === userId) {
-				loadSubmissions();
-			}
-		});
 	}
 </script>
 

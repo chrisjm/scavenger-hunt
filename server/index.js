@@ -1,8 +1,6 @@
 import 'dotenv/config';
 import express from 'express';
 import cookieParser from 'cookie-parser';
-import { createServer } from 'http';
-import { setupSocketIO } from './utils/socket-handler.js';
 import apiRoutes from './routes/api.js';
 import libraryRoutes from './routes/library.js';
 import submissionRoutes from './routes/submissions.js';
@@ -24,10 +22,6 @@ if (missingEnvVars.length > 0) {
 }
 
 const app = express();
-const server = createServer(app);
-
-// Setup Socket.IO
-const io = setupSocketIO(server);
 
 // Middleware
 app.use(cookieParser());
@@ -39,12 +33,6 @@ app.use('/api', apiRoutes);
 app.use('/api/library', libraryRoutes);
 app.use('/api/submissions', submissionRoutes);
 app.use('/api/groups', groupRoutes);
-
-// Middleware to attach io to requests for broadcasting
-app.use((req, res, next) => {
-	req.io = io;
-	next();
-});
 
 // SvelteKit handler (only after build)
 let handler;
@@ -84,7 +72,7 @@ app.use(handler);
 const PORT = process.env.PORT || 3000;
 const HOST = process.env.HOST || 'localhost';
 
-server.listen(PORT, HOST, () => {
+app.listen(PORT, HOST, () => {
 	console.log(`🚀 Server running on http://${HOST}:${PORT}`);
 
 	// If binding to all interfaces, show network info
@@ -96,7 +84,6 @@ server.listen(PORT, HOST, () => {
 		console.log(`💡 On Windows: ipconfig | findstr IPv4`);
 	}
 
-	console.log(`🔌 Socket.IO enabled`);
 	console.log(`🤖 AI validation ready`);
 	console.log(`🗄️  Database: ${process.env.DATABASE_URL}`);
 	console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);

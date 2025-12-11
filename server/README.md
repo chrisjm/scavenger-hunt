@@ -13,8 +13,7 @@ server/
 │   └── upload.js         # File upload configuration
 └── utils/
     ├── ai-validator.js   # Gemini AI validation logic
-    ├── database.js       # Database connection and schema
-    └── socket-handler.js # Socket.IO setup and handlers
+    └── database.js       # Database connection and schema
 ```
 
 ## Key Features
@@ -23,7 +22,6 @@ server/
 - **Clean API Routes**: All endpoints organized in `/routes/api.js`
 - **Reusable Utilities**: AI validation and database logic in `/utils/`
 - **Middleware**: File upload handling in `/middleware/`
-- **Socket.IO Integration**: Real-time communication setup
 - **Development Mode**: Graceful fallback when SvelteKit build is missing
 
 ## Usage
