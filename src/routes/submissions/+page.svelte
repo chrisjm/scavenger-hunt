@@ -48,7 +48,9 @@
 	});
 </script>
 
-<div class="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white">
+<div
+	class="min-h-screen bg-gradient-to-br from-green-50 via-white to-red-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950"
+>
 	<div class="max-w-5xl mx-auto px-4 py-8 md:py-12">
 		<div class="mb-6 md:mb-8 flex items-center justify-between gap-4">
 			<div>

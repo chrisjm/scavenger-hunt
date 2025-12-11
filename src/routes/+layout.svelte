@@ -23,6 +23,7 @@
 	let userGroups = $state<GroupSummary[]>([]);
 	let activeGroupId = $state<string | null>(null);
 	let sidebarOpen = $state(false);
+	let hydrated = $state(false);
 
 	// Set context so child components can access user state
 	setContext('user', {
@@ -75,17 +76,26 @@
 			activeGroupId = id;
 		});
 
-		const storedUserId = localStorage.getItem('scavenger-hunt-userId');
+		let isMounted = true;
+		const init = async () => {
+			const storedUserId = localStorage.getItem('scavenger-hunt-userId');
 
-		if (storedUserId) {
-			userId = storedUserId;
-			// Fetch user profile and groups from API
-			fetchUserProfile(storedUserId);
-			refreshGroups();
-		} else if (!isPublicRoute(page.route.id)) {
-			// Redirect unauthenticated users away from protected routes
-			goto('/login');
-		}
+			if (storedUserId) {
+				userId = storedUserId;
+				// Fetch user profile and groups from API
+				fetchUserProfile(storedUserId);
+				await refreshGroups();
+			} else if (!isPublicRoute(page.route.id)) {
+				// Redirect unauthenticated users away from protected routes
+				goto('/login');
+			}
+
+			if (isMounted) {
+				hydrated = true;
+			}
+		};
+
+		init();
 
 		const media = window.matchMedia('(prefers-color-scheme: dark)');
 		const applyTheme = () => {
@@ -96,6 +106,7 @@
 		media.addEventListener('change', applyTheme);
 
 		return () => {
+			isMounted = false;
 			media.removeEventListener('change', applyTheme);
 			unsubGroups();
 			unsubActive();
@@ -144,6 +155,7 @@
 
 	// Reactive check for route changes
 	$effect(() => {
+		if (!hydrated) return;
 		const routeId = page.route.id;
 
 		if (!userId && !isPublicRoute(routeId)) {
