@@ -14,7 +14,7 @@
 		resetGroupStores
 	} from '$lib/stores/user';
 
-	let { children } = $props();
+	let { children, data } = $props();
 
 	// Global user state
 	let userId = $state<string | null>(null);
@@ -177,6 +177,29 @@
 </script>
 
 <svelte:head>
+	<title>{data?.seo?.title ?? 'Scavenger Hunt'}</title>
+	<meta
+		name="description"
+		content={data?.seo?.description ??
+			'Group-based scavenger hunt platform for teams, tasks and leaderboards.'}
+	/>
+	<meta property="og:type" content={data?.seo?.type ?? 'website'} />
+	<meta property="og:site_name" content={data?.seo?.siteName ?? 'Scavenger Hunt'} />
+	{#if data?.seo?.url}
+		<link rel="canonical" href={data.seo.url} />
+		<meta property="og:url" content={data.seo.url} />
+	{/if}
+	{#if data?.seo?.image}
+		<meta property="og:image" content={data.seo.image} />
+		<meta name="twitter:image" content={data.seo.image} />
+	{/if}
+	<meta name="twitter:card" content="summary_large_image" />
+	<meta name="twitter:title" content={data?.seo?.title ?? 'Scavenger Hunt'} />
+	<meta
+		name="twitter:description"
+		content={data?.seo?.description ??
+			'Group-based scavenger hunt platform for teams, tasks and leaderboards.'}
+	/>
 	<link rel="icon" href={favicon} />
 </svelte:head>
 
