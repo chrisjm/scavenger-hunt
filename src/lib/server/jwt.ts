@@ -1,13 +1,14 @@
 import { SignJWT, jwtVerify } from 'jose';
 import type { JWTPayload } from 'jose';
-import { env } from '$env/dynamic/private';
 
-if (!env.JWT_SECRET) {
+const JWT_SECRET = process.env.JWT_SECRET;
+
+if (!JWT_SECRET) {
   throw new Error('JWT_SECRET is not set in environment variables.');
 }
 
 const encoder = new TextEncoder();
-const secretKey = encoder.encode(env.JWT_SECRET);
+const secretKey = encoder.encode(JWT_SECRET);
 const ISSUER = 'scavenger-hunt';
 
 export interface AuthTokenPayload {
