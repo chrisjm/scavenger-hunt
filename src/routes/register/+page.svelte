@@ -147,6 +147,9 @@
 				if (!joinRes.ok) {
 					// Non-fatal; user can still join from tasks page
 					console.error('Failed to join group during registration');
+				} else {
+					await userContext.refreshGroups();
+					userContext.setActiveGroup(groupId);
 				}
 			} catch (e) {
 				console.error('Error joining group during registration', e);

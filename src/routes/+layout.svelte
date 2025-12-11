@@ -164,7 +164,7 @@
 		}
 
 		// Force group selection when authenticated but no active group
-		if (userId && !activeGroupId && routeId !== '/groups/select') {
+		if (userId && !activeGroupId && routeId !== '/groups/select' && routeId !== '/register') {
 			goto('/groups/select');
 			return;
 		}
