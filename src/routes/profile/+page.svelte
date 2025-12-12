@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
 	import { onMount } from 'svelte';
 	import { getUserContext } from '$lib/stores/user';
 
@@ -183,7 +184,7 @@
 		}
 
 		// Redirect to landing page
-		goto('/');
+		goto(resolve('/'));
 	}
 </script>
 
@@ -210,7 +211,7 @@
 					</div>
 				</div>
 				<a
-					href="/"
+					href={resolve('/')}
 					class="px-4 py-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors text-sm font-medium dark:bg-emerald-900/40 dark:text-emerald-200 dark:hover:bg-emerald-900/70"
 				>
 					← Back to Hunt

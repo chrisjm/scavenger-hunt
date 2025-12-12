@@ -7,7 +7,12 @@
 	const userContext = getUserContext();
 	let userId = $derived(userContext.userId);
 
-	let photos = $state<any[]>([]);
+	interface Photo {
+		id: string;
+		filePath: string;
+	}
+
+	let photos = $state<Photo[]>([]);
 	let loading = $state(true);
 	let uploading = $state(false);
 
@@ -56,6 +61,7 @@
 				alert('Upload failed');
 			}
 		} catch (error) {
+			console.error(error);
 			alert('Network error');
 		} finally {
 			uploading = false;
@@ -77,6 +83,7 @@
 				photos = photos.filter((p) => p.id !== photoId);
 			}
 		} catch (error) {
+			console.error(error);
 			alert('Failed to delete');
 		}
 	}

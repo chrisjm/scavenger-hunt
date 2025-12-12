@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import { onMount } from 'svelte';
 	import { Trash2, RotateCcw } from 'lucide-svelte';
@@ -22,7 +23,14 @@
 		imagePath: string;
 	}
 
-	let task: any = $state(null);
+	interface Task {
+		id: number;
+		description: string;
+		unlocked: boolean;
+		unlockDate: string;
+	}
+
+	let task = $state<Task | null>(null);
 	let submission: Submission | null = $state(null);
 	let loading = $state(true);
 	let removing = $state(false);
@@ -37,7 +45,7 @@
 		const taskId = Number(taskIdParam);
 
 		if (!Number.isFinite(taskId) || !submissionId) {
-			goto('/tasks');
+			goto(resolve('/tasks'));
 			return;
 		}
 
@@ -45,12 +53,12 @@
 			// Load all tasks and find the one we need
 			const taskRes = await fetch('/api/tasks');
 			if (taskRes.ok) {
-				const tasks = await taskRes.json();
-				task = tasks.find((t: any) => t.id === taskId) ?? null;
+				const tasks = (await taskRes.json()) as Task[];
+				task = tasks.find((t) => t.id === taskId) ?? null;
 			}
 
 			if (!activeGroupId) {
-				goto('/tasks');
+				goto(resolve('/tasks'));
 				return;
 			}
 
@@ -84,7 +92,7 @@
 			}
 
 			alert('Submission removed successfully! You can now try again.');
-			goto('/tasks');
+			goto(resolve('/tasks'));
 		} catch (error) {
 			console.error('Failed to remove submission:', error);
 			alert(error instanceof Error ? error.message : 'Failed to remove submission');
@@ -95,7 +103,7 @@
 
 	function handleRetry() {
 		const taskIdParam = page.params.taskId;
-		goto(`/tasks/${taskIdParam}/submit`);
+		goto(resolve(`/tasks/${taskIdParam}/submit`));
 	}
 </script>
 
@@ -126,7 +134,7 @@
 						</div>
 						<button
 							type="button"
-							onclick={() => goto('/tasks')}
+							onclick={() => goto(resolve('/tasks'))}
 							class="rounded-full px-3 py-1 text-sm font-medium bg-white/10 dark:bg-slate-900/10 hover:bg-white/20 dark:hover:bg-slate-900/20"
 						>
 							← Back to tasks
@@ -204,7 +212,7 @@
 				<p class="text-gray-500">Submission not found.</p>
 				<button
 					class="mt-4 inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-white text-sm font-semibold shadow-sm hover:bg-green-700"
-					onclick={() => goto('/tasks')}
+					onclick={() => goto(resolve('/tasks'))}
 				>
 					← Back to tasks
 				</button>

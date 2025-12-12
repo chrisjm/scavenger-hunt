@@ -92,7 +92,7 @@ Output: Return JSON only with this exact format:
 			aiResponse.confidence = Math.max(0, Math.min(1, aiResponse.confidence));
 
 			return aiResponse as AiValidationResult;
-		} catch (parseError) {
+		} catch {
 			console.error('Failed to parse AI response:', text);
 			throw new Error('AI returned invalid JSON response');
 		}

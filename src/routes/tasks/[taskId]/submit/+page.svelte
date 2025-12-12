@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import { onMount } from 'svelte';
 	import { Camera, Image as ImageIcon, Loader } from 'lucide-svelte';
@@ -10,7 +11,18 @@
 	let userId = $derived(userContext.userId);
 	let activeGroupId = $derived(userContext.activeGroupId);
 
-	let task: any = $state(null);
+	interface Task {
+		id: number;
+		description: string;
+		unlocked: boolean;
+		unlockDate: string;
+	}
+
+	interface PhotoSummary {
+		id: string;
+	}
+
+	let task = $state<Task | null>(null);
 	let loadingTask = $state(true);
 
 	let activeTab = $state<'upload' | 'library'>('upload');
@@ -37,22 +49,22 @@
 		const taskIdParam = page.params.taskId;
 		const taskId = Number(taskIdParam);
 		if (!Number.isFinite(taskId)) {
-			goto('/tasks');
+			goto(resolve('/tasks'));
 			return;
 		}
 
 		try {
 			const response = await fetch('/api/tasks');
 			if (response.ok) {
-				const tasks = await response.json();
-				task = tasks.find((t: any) => t.id === taskId) ?? null;
+				const tasks = (await response.json()) as Task[];
+				task = tasks.find((t) => t.id === taskId) ?? null;
 				if (!task) {
-					goto('/tasks');
+					goto(resolve('/tasks'));
 				}
 			}
 		} catch (error) {
 			console.error('Failed to load task:', error);
-			goto('/tasks');
+			goto(resolve('/tasks'));
 		} finally {
 			loadingTask = false;
 		}
@@ -61,7 +73,7 @@
 	// Redirect back to tasks if user or group is missing
 	$effect(() => {
 		if (!userId || !activeGroupId) {
-			goto('/tasks');
+			goto(resolve('/tasks'));
 		}
 	});
 
@@ -95,7 +107,7 @@
 	}
 
 	// Handle library selection
-	function handleLibrarySelect(photo: any) {
+	function handleLibrarySelect(photo: PhotoSummary) {
 		selectedPhotoId = photo.id;
 		tempFile = null; // Clear file upload
 		tempPreview = null;
@@ -148,9 +160,9 @@
 
 			const submission = result.submission;
 			if (submission?.id) {
-				goto(`/tasks/${task.id}/submission/${submission.id}`);
+				goto(resolve(`/tasks/${task.id}/submission/${submission.id}`));
 			} else {
-				goto('/tasks');
+				goto(resolve('/tasks'));
 			}
 		} catch (error) {
 			console.error(error);
@@ -286,7 +298,7 @@
 					<div class="mt-6 flex gap-3">
 						<button
 							type="button"
-							onclick={() => goto('/tasks')}
+							onclick={() => goto(resolve('/tasks'))}
 							disabled={submitting}
 							class="flex-1 rounded-xl border border-gray-200 py-3 font-medium text-gray-600 transition-colors hover:bg-gray-50 disabled:opacity-50 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800"
 						>
@@ -315,7 +327,7 @@
 				<p class="text-gray-500 dark:text-slate-400">Task not found.</p>
 				<button
 					class="mt-4 inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-white text-sm font-semibold shadow-sm hover:bg-green-700"
-					onclick={() => goto('/tasks')}
+					onclick={() => goto(resolve('/tasks'))}
 				>
 					← Back to tasks
 				</button>

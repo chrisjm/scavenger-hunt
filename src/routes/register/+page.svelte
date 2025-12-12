@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
 	import { Gift, ArrowLeft, CircleAlert, Loader, CheckCircle } from 'lucide-svelte';
 	import { getUserContext } from '$lib/stores/user';
 	import { debounce } from '$lib/utils/debounce';
@@ -162,7 +163,7 @@
 			}
 
 			// Go to main tasks view
-			goto('/tasks');
+			goto(resolve('/tasks'));
 		} catch (error) {
 			console.error('Registration error:', error);
 			errorMessage = 'Registration failed. Please try again.';
@@ -363,11 +364,13 @@
 		<div class="mt-6 text-center text-sm text-gray-600 dark:text-slate-300">
 			<p>
 				Already have an account?
-				<a href="/login" class="font-semibold text-green-700 hover:text-green-900 ml-1"> Log in </a>
+				<a href={resolve('/login')} class="font-semibold text-green-700 hover:text-green-900 ml-1">
+					Log in
+				</a>
 			</p>
 			<p class="mt-3">
 				<a
-					href="/"
+					href={resolve('/')}
 					class="inline-flex items-center gap-1 text-gray-500 hover:text-gray-700 dark:text-slate-400 dark:hover:text-slate-200"
 				>
 					<ArrowLeft class="w-4 h-4" />

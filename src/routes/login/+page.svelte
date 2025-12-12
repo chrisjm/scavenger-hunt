@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import { onMount } from 'svelte';
+	import { resolve } from '$app/paths';
 	import { getUserContext } from '$lib/stores/user';
 
 	// Get user context from layout
@@ -48,7 +48,7 @@
 				userContext.isAdmin = data.isAdmin ?? false;
 
 				// Redirect to tasks/dashboard
-				goto('/tasks');
+				goto(resolve('/tasks'));
 			} else {
 				const error = await response.json();
 				if (response.status === 409) {
@@ -177,13 +177,16 @@
 		<div class="mt-6 text-center text-sm text-gray-600 dark:text-slate-300">
 			<p>
 				New to the hunt?
-				<a href="/register" class="font-semibold text-green-700 hover:text-green-900 ml-1">
+				<a
+					href={resolve('/register')}
+					class="font-semibold text-green-700 hover:text-green-900 ml-1"
+				>
 					Create an account
 				</a>
 			</p>
 			<p class="mt-3">
 				<a
-					href="/"
+					href={resolve('/')}
 					class="text-gray-500 hover:text-gray-700 dark:text-slate-400 dark:hover:text-slate-200"
 				>
 					← Back to landing page

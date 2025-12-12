@@ -1,5 +1,4 @@
 <script lang="ts">
-	import SubmissionsFeed from './SubmissionsFeed.svelte';
 	import Leaderboard from './Leaderboard.svelte';
 	import { formatRelativeOrDate } from '$lib/utils/date';
 

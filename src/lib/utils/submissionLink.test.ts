@@ -11,7 +11,7 @@ describe('buildSubmissionLink', () => {
 	});
 
 	it('coerces taskId from string to path segment', () => {
-		const url = buildSubmissionLink({ taskId: '7' as any, id: 'id-1' });
+		const url = buildSubmissionLink({ taskId: '7', id: 'id-1' });
 		expect(url).toBe('/tasks/7/submission/id-1');
 	});
 });

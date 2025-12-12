@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { TreePine } from 'lucide-svelte';
 	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
 	import { getUserContext } from '$lib/stores/user';
 	import SidebarMenu from './SidebarMenu.svelte';
 
@@ -17,9 +18,9 @@
 
 	function handleLogoClick() {
 		if (userId) {
-			goto('/tasks');
+			goto(resolve('/tasks'));
 		} else {
-			goto('/');
+			goto(resolve('/'));
 		}
 	}
 </script>

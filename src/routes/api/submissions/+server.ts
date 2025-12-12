@@ -36,12 +36,11 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 			return json({ error: 'Missing required fields' }, { status: 400 });
 		}
 
-		const { tasks, submissions, userProfiles, photos, userGroups } = schema;
+		const { tasks, submissions, photos, userGroups } = schema;
 
 		// 2. Fetch context (Photo & Task & membership)
 		const photo = await db.select().from(photos).where(eq(photos.id, photoId)).get();
 		const task = await db.select().from(tasks).where(eq(tasks.id, taskId)).get();
-		const user = await db.select().from(userProfiles).where(eq(userProfiles.id, userId)).get();
 		const membership = await db
 			.select()
 			.from(userGroups)

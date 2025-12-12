@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
 	import { getUserContext } from '$lib/stores/user';
 
 	const userContext = getUserContext();
@@ -7,15 +8,15 @@
 	let userName = $derived(userContext.userName);
 
 	function handleGetStarted() {
-		goto('/login');
+		goto(resolve('/login'));
 	}
 
 	function handleViewTasks() {
-		goto('/tasks');
+		goto(resolve('/tasks'));
 	}
 
 	function handleRegister() {
-		goto('/register');
+		goto(resolve('/register'));
 	}
 </script>
 

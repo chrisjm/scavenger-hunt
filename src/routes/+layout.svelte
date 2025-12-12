@@ -3,6 +3,7 @@
 	import favicon from '$lib/assets/favicon.svg';
 	import { onMount, setContext } from 'svelte';
 	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import Header from '$lib/components/Header.svelte';
 	import Sidebar from '$lib/components/Sidebar.svelte';
@@ -87,12 +88,12 @@
 					isAdmin = data.user.isAdmin ?? false;
 					await refreshGroups();
 				} else if (!isPublicRoute(page.route.id)) {
-					goto('/login');
+					goto(resolve('/login'));
 				}
 			} catch (e) {
 				console.error('Failed to hydrate session user:', e);
 				if (!isPublicRoute(page.route.id)) {
-					goto('/login');
+					goto(resolve('/login'));
 				}
 			}
 
@@ -118,19 +119,6 @@
 			unsubActive();
 		};
 	});
-
-	async function fetchUserProfile(id: string) {
-		try {
-			const response = await fetch(`/api/users/${id}`);
-			if (response.ok) {
-				const data = await response.json();
-				userName = data.user.name;
-				isAdmin = data.user.isAdmin ?? false;
-			}
-		} catch (error) {
-			console.error('Failed to fetch user profile:', error);
-		}
-	}
 
 	async function refreshGroups() {
 		if (!userId) return;
@@ -165,25 +153,25 @@
 		const routeId = page.route.id;
 
 		if (!userId && !isPublicRoute(routeId)) {
-			goto('/login');
+			goto(resolve('/login'));
 			return;
 		}
 
 		// Force group selection when authenticated but no active group
 		if (userId && !activeGroupId && routeId !== '/groups/select' && routeId !== '/register') {
-			goto('/groups/select');
+			goto(resolve('/groups/select'));
 			return;
 		}
 
 		// If active group is ready but user is on selection page, send to tasks (non-admins only)
 		if (userId && activeGroupId && routeId === '/groups/select' && isAdmin === false) {
-			goto('/tasks');
+			goto(resolve('/tasks'));
 			return;
 		}
 
 		// Authenticated and on landing -> tasks
 		if (userId && routeId === '/') {
-			goto('/tasks');
+			goto(resolve('/tasks'));
 		}
 	});
 

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
 	import { buildSubmissionLink } from '$lib/utils/submissionLink';
 	import { formatRelativeOrDate } from '$lib/utils/date';
 
@@ -22,7 +23,7 @@
 </script>
 
 <a
-	href={buildSubmissionLink(submission)}
+	href={resolve(buildSubmissionLink(submission))}
 	class="block group border-2 rounded-xl p-5 transition-all duration-300 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-green-500 focus-visible:ring-offset-transparent {submission.valid
 		? 'border-green-200 bg-gradient-to-r from-green-50 to-emerald-50 hover:border-green-300 dark:border-emerald-500/60 dark:from-emerald-900 dark:to-emerald-800'
 		: 'border-red-200 bg-gradient-to-r from-red-50 to-pink-50 hover:border-red-300 dark:border-red-500/60 dark:from-rose-900 dark:to-rose-800'}"

@@ -62,7 +62,10 @@ export async function fetchObjectBuffer(key: string): Promise<Buffer> {
 	const stream = res.Body as Readable | undefined;
 	if (!stream) return Buffer.alloc(0);
 
-	const readable = stream instanceof Readable ? stream : Readable.from(stream as any);
+	const readable =
+		stream instanceof Readable
+			? stream
+			: Readable.from(stream as unknown as AsyncIterable<Uint8Array> | Iterable<Uint8Array>);
 	const chunks: Buffer[] = [];
 	for await (const chunk of readable) {
 		chunks.push(typeof chunk === 'string' ? Buffer.from(chunk) : Buffer.from(chunk));

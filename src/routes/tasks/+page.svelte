@@ -8,16 +8,38 @@
 	// Get user context from layout
 	const userContext = getUserContext();
 	let userId = $derived(userContext.userId);
-	let userName = $derived(userContext.userName);
-	let isAdmin = $derived(userContext.isAdmin);
-	let userGroups = $derived(userContext.userGroups);
 	let activeGroupId = $derived(userContext.activeGroupId);
+
+	interface Task {
+		id: number;
+		description: string;
+		unlocked: boolean;
+		unlockDate: string;
+	}
+
+	interface Submission {
+		id: string;
+		userId: string;
+		taskId: number;
+		valid: boolean;
+		userName: string;
+		taskDescription: string;
+		imagePath: string;
+		aiReasoning: string;
+		aiConfidence: number;
+		submittedAt: string;
+	}
+
+	interface LeaderboardEntry {
+		name: string;
+		score: number;
+	}
 
 	// State
 	let loading = $state(true);
-	let tasks = $state<any[]>([]);
-	let submissions = $state<any[]>([]);
-	let leaderboard = $state<any[]>([]);
+	let tasks = $state<Task[]>([]);
+	let submissions = $state<Submission[]>([]);
+	let leaderboard = $state<LeaderboardEntry[]>([]);
 	let leaderboardLoading = $state(false);
 	// Group selection handled on /groups/select
 
@@ -30,7 +52,6 @@
 	let completionRate = $derived(
 		unlockedTasks.length > 0 ? Math.round((completedTaskIds.size / unlockedTasks.length) * 100) : 0
 	);
-	let approvedSubmissions = $derived(submissions.filter((sub) => sub.valid));
 
 	// Load data when component mounts
 	onMount(() => {

@@ -2,13 +2,29 @@
 	import { Camera, Image as ImageIcon, Loader, Upload } from 'lucide-svelte';
 	import PhotoSelector from './PhotoSelector.svelte';
 
+	interface Task {
+		id: number;
+		description: string;
+	}
+
+	interface PhotoSummary {
+		id: string;
+	}
+
+	interface SubmissionSuccessResult {
+		submission?: {
+			id?: string;
+		};
+		[key: string]: unknown;
+	}
+
 	interface Props {
 		show: boolean;
-		task: any;
+		task: Task;
 		userId: string;
 		groupId: string;
 		onClose: () => void;
-		onSuccess: (result: any) => void;
+		onSuccess: (result: SubmissionSuccessResult) => void;
 	}
 
 	let { show, task, userId, groupId, onClose, onSuccess }: Props = $props();
@@ -63,7 +79,7 @@
 	}
 
 	// Handle library selection
-	function handleLibrarySelect(photo: any) {
+	function handleLibrarySelect(photo: PhotoSummary) {
 		selectedPhotoId = photo.id;
 		tempFile = null; // Clear file upload
 		tempPreview = null;

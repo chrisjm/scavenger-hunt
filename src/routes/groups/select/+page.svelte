@@ -7,7 +7,12 @@
 	const isAdmin = $derived(userContext.isAdmin);
 	const activeGroupId = $derived(userContext.activeGroupId);
 
-	let groupList = $state<any[]>([]);
+	interface GroupSummary {
+		id: string;
+		name: string;
+	}
+
+	let groupList = $state<GroupSummary[]>([]);
 	let joinGroupId = $state<string | null>(null); // admin dropdown
 	let joinGroupName = $state(''); // non-admin text entry
 	let createName = $state('');
@@ -208,7 +213,7 @@
 							bind:value={joinGroupId}
 						>
 							<option value="">-- Choose a group --</option>
-							{#each groupList as group}
+							{#each groupList as group (group.id)}
 								<option value={group.id}>{group.name}</option>
 							{/each}
 						</select>

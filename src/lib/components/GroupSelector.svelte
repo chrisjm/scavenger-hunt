@@ -6,16 +6,13 @@
 	const activeGroupId = $derived(userContext.activeGroupId);
 
 	// Local selector value (string), kept in sync with activeGroupId
-	let selectorValue = $state<string>('');
-
-	$effect(() => {
-		selectorValue = activeGroupId ?? '';
-	});
+	let selectorValue = $derived(activeGroupId ?? '');
 
 	function handleChange(event: Event) {
 		const target = event.target as HTMLSelectElement;
 		const value = target.value || null;
 		userContext.setActiveGroup(value);
+		selectorValue = value ?? '';
 	}
 </script>
 
@@ -33,7 +30,7 @@
 			{#if userGroups.length === 0}
 				<option value={null}>No groups</option>
 			{:else}
-				{#each userGroups as group}
+				{#each userGroups as group (group.id)}
 					<option value={group.id}>{group.name}</option>
 				{/each}
 			{/if}

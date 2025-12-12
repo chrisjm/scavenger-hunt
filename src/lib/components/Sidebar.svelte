@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { User, Camera, LogOut, X, ListChecks, Activity, Settings } from 'lucide-svelte';
 	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
 	import { getUserContext } from '$lib/stores/user';
 	import GroupSelector from '$lib/components/GroupSelector.svelte';
 
@@ -19,6 +20,16 @@
 	let progressLoading = $state(false);
 	let completionRate = $state(0);
 
+	interface TaskSummary {
+		unlocked: boolean;
+	}
+
+	interface SubmissionSummary {
+		userId: string;
+		valid: boolean;
+		taskId: number;
+	}
+
 	async function handleLogout() {
 		try {
 			await fetch('/api/auth/logout', {
@@ -32,11 +43,11 @@
 		userContext.userName = null;
 		userContext.setActiveGroup(null);
 		onClose();
-		goto('/');
+		goto(resolve('/'));
 	}
 
 	function handleNavigation(path: string) {
-		goto(path);
+		goto(resolve(path));
 		onClose();
 	}
 
@@ -45,15 +56,15 @@
 		progressLoading = true;
 		try {
 			const tasksResponse = await fetch('/api/tasks');
-			const tasks = await tasksResponse.json();
-			const unlockedTasks = tasks.filter((task: any) => task.unlocked);
+			const tasks = (await tasksResponse.json()) as TaskSummary[];
+			const unlockedTasks = tasks.filter((task) => task.unlocked);
 
 			const submissionsResponse = await fetch(`/api/submissions?groupId=${activeGroupId}`);
-			const submissions = await submissionsResponse.json();
+			const submissions = (await submissionsResponse.json()) as SubmissionSummary[];
 			const userSubmissions = submissions.filter(
-				(submission: any) => submission.userId === userId && submission.valid
+				(submission) => submission.userId === userId && submission.valid
 			);
-			const completedTaskIds = new Set(userSubmissions.map((submission: any) => submission.taskId));
+			const completedTaskIds = new Set(userSubmissions.map((submission) => submission.taskId));
 			completionRate =
 				unlockedTasks.length > 0
 					? Math.round((completedTaskIds.size / unlockedTasks.length) * 100)

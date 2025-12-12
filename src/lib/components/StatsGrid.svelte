@@ -30,6 +30,7 @@
 				<span class="text-sm font-medium text-gray-600 dark:text-slate-300">Progress</span>
 			</div>
 			<div class="text-2xl font-bold text-blue-600 dark:text-blue-400">{completionRate}%</div>
+			<div class="mt-1 text-xs text-gray-500 dark:text-slate-400">{unlockedTasks} unlocked</div>
 			<div class="w-full bg-gray-200 rounded-full h-2 mt-1 dark:bg-slate-700">
 				<div
 					class="bg-blue-600 h-2 rounded-full transition-all duration-500 dark:bg-blue-500"

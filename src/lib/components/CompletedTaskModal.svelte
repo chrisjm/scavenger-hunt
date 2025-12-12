@@ -14,17 +14,21 @@
 		imagePath: string;
 	}
 
-	interface Props {
-		show: boolean;
-		task: any;
-		submission: Submission | null;
-		userId: string;
-		onClose: () => void;
-		onRemove: (submissionId: string) => void;
-		onRetry: (task: any) => void;
+	interface Task {
+		id: number;
+		description: string;
 	}
 
-	let { show, task, submission, userId, onClose, onRemove, onRetry }: Props = $props();
+	interface Props {
+		show: boolean;
+		task: Task;
+		submission: Submission | null;
+		onClose: () => void;
+		onRemove: (submissionId: string) => void;
+		onRetry: (task: Task) => void;
+	}
+
+	let { show, task, submission, onClose, onRemove, onRetry }: Props = $props();
 
 	let removing = $state(false);
 

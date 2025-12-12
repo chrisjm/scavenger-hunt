@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
 	import TaskCard from './TaskCard.svelte';
 
 	interface Task {
@@ -12,30 +13,27 @@
 	interface Props {
 		tasks: Task[];
 		loading: boolean;
-		userId: string | null;
 		completedTaskIds?: Set<number>;
-		userSubmissions?: any[];
-		activeGroupId?: string | null;
+		userSubmissions?: SubmissionSummary[];
 	}
 
-	let {
-		tasks,
-		loading,
-		userId,
-		completedTaskIds,
-		userSubmissions = [],
-		activeGroupId
-	}: Props = $props();
+	interface SubmissionSummary {
+		id: string;
+		taskId: number;
+		valid: boolean;
+	}
+
+	let { tasks, loading, completedTaskIds, userSubmissions = [] }: Props = $props();
 
 	function openSubmission(task: Task) {
-		goto(`/tasks/${task.id}/submit`);
+		goto(resolve(`/tasks/${task.id}/submit`));
 	}
 
 	function openCompletedTask(task: Task) {
 		// Find the user's approved submission for this task and navigate to its detail page
 		const submission = userSubmissions.find((sub) => sub.taskId === task.id && sub.valid);
 		if (submission) {
-			goto(`/tasks/${task.id}/submission/${submission.id}`);
+			goto(resolve(`/tasks/${task.id}/submission/${submission.id}`));
 		}
 	}
 </script>

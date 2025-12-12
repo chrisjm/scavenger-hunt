@@ -9,7 +9,19 @@
 	const isAdmin = $derived(userContext.isAdmin);
 	const activeGroupId = $derived(userContext.activeGroupId);
 
-	let submissions = $state<any[]>([]);
+	interface Submission {
+		id: string;
+		userName: string;
+		taskDescription: string;
+		imagePath: string;
+		valid: boolean;
+		aiReasoning: string;
+		aiConfidence: number;
+		submittedAt: string;
+		taskId: number;
+	}
+
+	let submissions = $state<Submission[]>([]);
 	let loading = $state(false);
 	let error = $state<string | null>(null);
 
