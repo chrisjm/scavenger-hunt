@@ -3,6 +3,9 @@ export interface SubmissionLinkParams {
 	taskId: number | string;
 }
 
-export function buildSubmissionLink({ id, taskId }: SubmissionLinkParams): string {
+export function buildSubmissionLink({
+	id,
+	taskId
+}: SubmissionLinkParams): `/tasks/${string}/submission/${string}` {
 	return `/tasks/${taskId}/submission/${id}`;
 }

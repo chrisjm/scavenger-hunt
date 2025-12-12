@@ -136,7 +136,7 @@
 			</div>
 
 			<div class="mb-6 md:mb-8">
-				<TaskGrid {tasks} {loading} {userId} {completedTaskIds} {userSubmissions} {activeGroupId} />
+				<TaskGrid {tasks} {loading} {completedTaskIds} {userSubmissions} />
 			</div>
 
 			<TabbedView {submissions} {leaderboard} {leaderboardLoading} />

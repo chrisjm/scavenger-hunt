@@ -8,15 +8,11 @@ import {
 	GetObjectCommand
 } from '@aws-sdk/client-s3';
 import { Readable } from 'stream';
-import {
-	AWS_REGION as AWS_REGION_ENV,
-	S3_BUCKET as S3_BUCKET_ENV,
-	S3_PREFIX as S3_PREFIX_ENV
-} from '$env/static/private';
+import { env } from '$env/dynamic/private';
 
-const S3_BUCKET = S3_BUCKET_ENV;
-const S3_REGION = AWS_REGION_ENV;
-const S3_PREFIX = S3_PREFIX_ENV ?? '';
+const S3_BUCKET = env.S3_BUCKET || process.env.S3_BUCKET || '';
+const S3_REGION = env.AWS_REGION || process.env.AWS_REGION || 'us-east-1';
+const S3_PREFIX = env.S3_PREFIX || process.env.S3_PREFIX || '';
 
 const s3 = new S3Client({ region: S3_REGION });
 

@@ -3,7 +3,9 @@
 
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import fs from 'fs';
-import { GEMINI_API_KEY } from '$env/static/private';
+import { env } from '$env/dynamic/private';
+
+const GEMINI_API_KEY = env.GEMINI_API_KEY;
 
 if (!GEMINI_API_KEY) {
 	throw new Error(

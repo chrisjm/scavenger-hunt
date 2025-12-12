@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
-	import { buildSubmissionLink } from '$lib/utils/submissionLink';
 	import { formatRelativeOrDate } from '$lib/utils/date';
+	import { buildSubmissionLink } from '$lib/utils/submissionLink';
 
 	interface Submission {
 		id: string;
