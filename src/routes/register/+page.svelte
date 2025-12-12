@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import { onMount } from 'svelte';
 	import { Gift, ArrowLeft, CircleAlert, Loader, CheckCircle } from 'lucide-svelte';
 	import { getUserContext } from '$lib/stores/user';
 	import { debounce } from '$lib/utils/debounce';
@@ -205,10 +204,6 @@
 		groupChecking = true;
 		runGroupCheck(trimmedGroup);
 	}
-
-	onMount(() => {
-		// Auth hydration/redirect is handled globally via session cookie.
-	});
 
 	function handleKeydown(event: KeyboardEvent) {
 		if (event.key === 'Enter' && !loggingIn) {

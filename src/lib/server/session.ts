@@ -52,11 +52,25 @@ export async function validateSessionToken(token: string) {
   if (parts.length !== 2) return null;
 
   const [sessionId, secret] = parts;
-  const [session] = await db
-    .select()
-    .from(schema.sessions)
-    .where(eq(schema.sessions.id, sessionId))
-    .limit(1);
+  let session:
+    | {
+      id: string;
+      userId: string;
+      secretHash: string;
+      createdAt: Date | number;
+    }
+    | undefined;
+
+  try {
+    [session] = await db
+      .select()
+      .from(schema.sessions)
+      .where(eq(schema.sessions.id, sessionId))
+      .limit(1);
+  } catch (error) {
+    console.error('validateSessionToken failed to query sessions table:', error);
+    return null;
+  }
 
   if (!session) return null;
 

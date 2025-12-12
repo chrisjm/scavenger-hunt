@@ -1,7 +1,7 @@
 import path from 'node:path';
 import { drizzle } from 'drizzle-orm/libsql';
 import { createClient } from '@libsql/client';
-import { DATABASE_URL } from '$env/static/private';
+import { env } from '$env/dynamic/private';
 import * as schema from '$lib/server/db/schema';
 
 function normalizeDatabaseUrl(url: string): string {
@@ -20,13 +20,16 @@ function normalizeDatabaseUrl(url: string): string {
 	return `file:${absolutePath}`;
 }
 
-if (!DATABASE_URL) {
+const databaseUrl = env.DATABASE_URL;
+const databaseAuthToken = env.DATABASE_AUTH_TOKEN;
+
+if (!databaseUrl) {
 	throw new Error('DATABASE_URL is not set in environment variables.');
 }
 
 const client = createClient({
-	url: normalizeDatabaseUrl(DATABASE_URL),
-	authToken: process.env.DATABASE_AUTH_TOKEN
+	url: normalizeDatabaseUrl(databaseUrl),
+	...(databaseAuthToken ? { authToken: databaseAuthToken } : {})
 });
 export const db = drizzle(client, { schema });
 export { schema };
