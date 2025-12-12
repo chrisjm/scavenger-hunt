@@ -25,8 +25,7 @@ const databaseUrl = env.DATABASE_URL || process.env.DATABASE_URL;
 const databaseAuthToken = env.DATABASE_AUTH_TOKEN || process.env.DATABASE_AUTH_TOKEN;
 
 const effectiveUrl =
-	databaseUrl ||
-	(isCI ? `file:${path.join(process.cwd(), '.svelte-kit/ci-placeholder.db')}` : '');
+	databaseUrl || (isCI ? `file:${path.join(process.cwd(), '.svelte-kit/ci-placeholder.db')}` : '');
 
 if (!effectiveUrl) {
 	throw new Error('DATABASE_URL is not set in environment variables.');
