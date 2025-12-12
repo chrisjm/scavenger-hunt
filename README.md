@@ -42,7 +42,7 @@ Key variables (see `.env.example` for the full list):
 - `DATABASE_AUTH_TOKEN` – Turso auth token (required for remote Turso)
 - `GEMINI_API_KEY` – Google Gemini API key
 - `JWT_SECRET` – long random string for signing tokens
-- `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION` – AWS credentials for S3
+- `APP_AWS_ACCESS_KEY_ID`, `APP_AWS_SECRET_ACCESS_KEY`, `APP_AWS_REGION` – AWS credentials for S3
 - `S3_BUCKET`, `S3_PREFIX` – bucket name and key prefix for uploads
 
 You can run the setup script to help with initial configuration:
