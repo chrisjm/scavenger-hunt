@@ -1,5 +1,7 @@
 # Scavenger Hunt
 
+[![CI](https://github.com/chrisjm/scavenger-hunt/actions/workflows/ci.yml/badge.svg)](https://github.com/chrisjm/scavenger-hunt/actions/workflows/ci.yml)
+
 Serverless SvelteKit application for running group-based scavenger hunts. The app is deployed on Netlify and uses Turso (libsql) as the primary database, with Drizzle ORM for schema and migrations.
 
 ## Tech stack
