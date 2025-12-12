@@ -5,15 +5,20 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import fs from 'fs';
 import { env } from '$env/dynamic/private';
 
-const GEMINI_API_KEY = env.GEMINI_API_KEY;
+const isCI = process.env.CI === 'true';
+const GEMINI_API_KEY = env.GEMINI_API_KEY || process.env.GEMINI_API_KEY;
 
-if (!GEMINI_API_KEY) {
+if (!GEMINI_API_KEY && !isCI) {
 	throw new Error(
 		'GEMINI_API_KEY is not set in environment variables. Make sure to set it in your .env file.'
 	);
 }
 
-const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
+if (!GEMINI_API_KEY && isCI) {
+	console.warn('GEMINI_API_KEY not set in CI; AI validation is disabled during build.');
+}
+
+const genAI = GEMINI_API_KEY ? new GoogleGenerativeAI(GEMINI_API_KEY) : null;
 
 export interface AiValidationResult {
 	match: boolean;
@@ -35,6 +40,9 @@ export async function validateImageWithAI(
 	imageSource: string | Buffer,
 	task: TaskLike
 ): Promise<AiValidationResult> {
+	if (!genAI) {
+		throw new Error('GEMINI_API_KEY is not configured; AI validation is unavailable.');
+	}
 	try {
 		const model = genAI.getGenerativeModel({
 			model: 'gemini-2.0-flash-exp',
