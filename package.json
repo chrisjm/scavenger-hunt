@@ -61,6 +61,7 @@
 		"cookie-parser": "^1.4.7",
 		"date-fns": "^4.1.0",
 		"dotenv": "^17.2.3",
+		"just-debounce": "^1.1.0",
 		"libsql": "^0.5.22",
 		"lucide-svelte": "^0.556.0",
 		"multer": "^2.0.2",

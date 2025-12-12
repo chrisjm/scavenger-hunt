@@ -3,7 +3,7 @@
 	import { resolve } from '$app/paths';
 	import { Gift, ArrowLeft, CircleAlert, Loader, CheckCircle } from 'lucide-svelte';
 	import { getUserContext } from '$lib/stores/user';
-	import { debounce } from '$lib/utils/debounce';
+	import debounce from 'just-debounce';
 
 	// Get user context from layout
 	const userContext = getUserContext();
