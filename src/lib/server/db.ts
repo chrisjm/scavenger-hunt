@@ -20,15 +20,24 @@ function normalizeDatabaseUrl(url: string): string {
 	return `file:${absolutePath}`;
 }
 
-const databaseUrl = env.DATABASE_URL;
-const databaseAuthToken = env.DATABASE_AUTH_TOKEN;
+const isCI = process.env.CI === 'true';
+const databaseUrl = env.DATABASE_URL || process.env.DATABASE_URL;
+const databaseAuthToken = env.DATABASE_AUTH_TOKEN || process.env.DATABASE_AUTH_TOKEN;
 
-if (!databaseUrl) {
+const effectiveUrl =
+	databaseUrl ||
+	(isCI ? `file:${path.join(process.cwd(), '.svelte-kit/ci-placeholder.db')}` : '');
+
+if (!effectiveUrl) {
 	throw new Error('DATABASE_URL is not set in environment variables.');
 }
 
+if (!databaseUrl && isCI) {
+	console.warn('DATABASE_URL not set in CI; using local file placeholder for build analysis.');
+}
+
 const client = createClient({
-	url: normalizeDatabaseUrl(databaseUrl),
+	url: normalizeDatabaseUrl(effectiveUrl),
 	...(databaseAuthToken ? { authToken: databaseAuthToken } : {})
 });
 export const db = drizzle(client, { schema });
