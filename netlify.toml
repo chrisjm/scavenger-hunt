@@ -1,26 +1,3 @@
 [build]
   command = "pnpm build"
   publish = "build"
-
-[build.environment]
-  NODE_VERSION = "20"
-  # --- Required secrets for runtime ---
-  DATABASE_URL = ""
-  DATABASE_AUTH_TOKEN = ""
-  GEMINI_API_KEY = ""
-  JWT_SECRET = ""
-  # --- S3 / object storage (if using uploads) ---
-  AWS_ACCESS_KEY_ID = ""
-  AWS_SECRET_ACCESS_KEY = ""
-  AWS_REGION = ""
-  S3_BUCKET = ""
-  S3_PREFIX = ""
-
-[functions]
-  node_bundler = "esbuild"
-  included_files = ["drizzle/**", "src/lib/server/**"]
-
-[[redirects]]
-  from = "/*"
-  to = "/.netlify/functions/server"
-  status = 200
