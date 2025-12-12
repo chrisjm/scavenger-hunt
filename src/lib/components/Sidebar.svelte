@@ -30,6 +30,8 @@
 		taskId: number;
 	}
 
+	type SidebarRoute = '/tasks' | '/submissions' | '/profile' | '/library' | '/groups/select';
+
 	async function handleLogout() {
 		try {
 			await fetch('/api/auth/logout', {
@@ -46,7 +48,7 @@
 		goto(resolve('/'));
 	}
 
-	function handleNavigation(path: string) {
+	function handleNavigation(path: SidebarRoute) {
 		goto(resolve(path));
 		onClose();
 	}
