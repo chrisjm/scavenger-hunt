@@ -6,24 +6,24 @@ export type AnyFunction = (...args: any[]) => any;
  * execution until `delay` ms have elapsed since the last call.
  */
 export function debounce<F extends AnyFunction>(fn: F, delay: number) {
-  let timeout: ReturnType<typeof setTimeout> | null = null;
+	let timeout: ReturnType<typeof setTimeout> | null = null;
 
-  const debounced = (...args: Parameters<F>): void => {
-    if (timeout) {
-      clearTimeout(timeout);
-    }
+	const debounced = (...args: Parameters<F>): void => {
+		if (timeout) {
+			clearTimeout(timeout);
+		}
 
-    timeout = setTimeout(() => {
-      fn(...args);
-    }, delay);
-  };
+		timeout = setTimeout(() => {
+			fn(...args);
+		}, delay);
+	};
 
-  debounced.cancel = () => {
-    if (timeout) {
-      clearTimeout(timeout);
-      timeout = null;
-    }
-  };
+	debounced.cancel = () => {
+		if (timeout) {
+			clearTimeout(timeout);
+			timeout = null;
+		}
+	};
 
-  return debounced as F & { cancel: () => void };
+	return debounced as F & { cancel: () => void };
 }
