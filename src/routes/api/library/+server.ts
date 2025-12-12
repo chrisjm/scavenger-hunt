@@ -8,6 +8,8 @@ import sharp from 'sharp';
 import { db, schema } from '$lib/server/db';
 import { buildObjectKey, uploadBufferToS3 } from '$lib/utils/s3';
 
+const S3_DEBUG = process.env.S3_DEBUG === 'true' || process.env.APP_DEBUG_S3 === 'true';
+
 const RESIZE_CONFIG = {
 	maxWidth: 800,
 	maxHeight: 800,
@@ -144,7 +146,23 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 			});
 			console.log('Library upload: uploaded to S3', { key, filePath });
 		} catch (err) {
-			console.error('Library upload: S3 upload failed', err);
+			if (S3_DEBUG) {
+				const e = err as {
+					name?: string;
+					message?: string;
+					$metadata?: { requestId?: string; extendedRequestId?: string; httpStatusCode?: number };
+				};
+				console.error('Library upload: S3 upload failed (details)', {
+					name: e?.name,
+					message: e?.message,
+					httpStatusCode: e?.$metadata?.httpStatusCode,
+					requestId: e?.$metadata?.requestId,
+					extendedRequestId: e?.$metadata?.extendedRequestId,
+					key
+				});
+			} else {
+				console.error('Library upload: S3 upload failed');
+			}
 			throw err;
 		}
 
@@ -167,6 +185,13 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 		return json({ success: true, photo: newPhoto });
 	} catch (error) {
 		console.error('Upload error (SvelteKit library):', error);
+		if (S3_DEBUG) {
+			const e = error as { name?: string; message?: string };
+			return json(
+				{ error: 'Upload failed', debug: { name: e?.name, message: e?.message } },
+				{ status: 500 }
+			);
+		}
 		return json({ error: 'Upload failed' }, { status: 500 });
 	}
 };

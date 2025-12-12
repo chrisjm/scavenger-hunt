@@ -18,6 +18,12 @@ const S3_REGION =
 	process.env.AWS_REGION ||
 	'us-east-1';
 const S3_PREFIX = env.S3_PREFIX || process.env.S3_PREFIX || '';
+const S3_DEBUG =
+	env.S3_DEBUG === 'true' ||
+	process.env.S3_DEBUG === 'true' ||
+	env.APP_DEBUG_S3 === 'true' ||
+	process.env.APP_DEBUG_S3 === 'true';
+const S3_OBJECT_ACL = env.S3_OBJECT_ACL || process.env.S3_OBJECT_ACL || '';
 
 const s3 = new S3Client({
 	region: S3_REGION,
@@ -47,15 +53,53 @@ export async function uploadBufferToS3({
 	contentType,
 	key
 }: UploadBufferParams): Promise<string> {
-	const put = new PutObjectCommand({
+	if (!S3_BUCKET) {
+		throw new Error('S3_BUCKET is not set');
+	}
+	if (!S3_REGION) {
+		throw new Error('S3 region is not set');
+	}
+
+	const input: ConstructorParameters<typeof PutObjectCommand>[0] = {
 		Bucket: S3_BUCKET,
 		Key: key,
 		Body: buffer,
-		ContentType: contentType,
-		ACL: 'public-read'
-	});
-	await s3.send(put);
-	return buildPublicUrl(key);
+		ContentType: contentType
+	};
+
+	// Many production buckets have ACLs disabled (Object Ownership: bucket owner enforced).
+	// In that case, sending any ACL (e.g. 'public-read') will fail with AccessControlListNotSupported.
+	if (S3_OBJECT_ACL) {
+		input.ACL = S3_OBJECT_ACL as never;
+	}
+
+	const put = new PutObjectCommand(input);
+	try {
+		await s3.send(put);
+		return buildPublicUrl(key);
+	} catch (err) {
+		if (S3_DEBUG) {
+			const e = err as {
+				name?: string;
+				message?: string;
+				$metadata?: { requestId?: string; extendedRequestId?: string; httpStatusCode?: number };
+			};
+			console.error('S3 upload failed', {
+				name: e?.name,
+				message: e?.message,
+				httpStatusCode: e?.$metadata?.httpStatusCode,
+				requestId: e?.$metadata?.requestId,
+				extendedRequestId: e?.$metadata?.extendedRequestId,
+				bucketPresent: Boolean(S3_BUCKET),
+				region: S3_REGION,
+				key,
+				contentType,
+				bufferLength: buffer.length,
+				aclSent: Boolean(S3_OBJECT_ACL)
+			});
+		}
+		throw err;
+	}
 }
 
 export async function deleteFromS3(key: string): Promise<void> {
