@@ -17,7 +17,7 @@ Serverless SvelteKit application for running group-based scavenger hunts. The ap
 
 ### Prerequisites
 
-- Node.js 18+ (LTS recommended)
+- Node.js 20 (LTS)
 - `pnpm` (preferred), or `npm`/`yarn`
 
 ### 1. Install dependencies
