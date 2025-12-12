@@ -22,18 +22,8 @@ const S3_PREFIX = env.S3_PREFIX || process.env.S3_PREFIX || '';
 const s3 = new S3Client({
 	region: S3_REGION,
 	credentials: {
-		accessKeyId:
-			env.APP_AWS_ACCESS_KEY_ID ||
-			process.env.APP_AWS_ACCESS_KEY_ID ||
-			env.AWS_ACCESS_KEY_ID ||
-			process.env.AWS_ACCESS_KEY_ID ||
-			'',
-		secretAccessKey:
-			env.APP_AWS_SECRET_ACCESS_KEY ||
-			process.env.APP_AWS_SECRET_ACCESS_KEY ||
-			env.AWS_SECRET_ACCESS_KEY ||
-			process.env.AWS_SECRET_ACCESS_KEY ||
-			''
+		accessKeyId: env.APP_AWS_ACCESS_KEY_ID || process.env.APP_AWS_ACCESS_KEY_ID || '',
+		secretAccessKey: env.APP_AWS_SECRET_ACCESS_KEY || process.env.APP_AWS_SECRET_ACCESS_KEY || ''
 	}
 });
 
