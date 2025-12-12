@@ -1,16 +1,17 @@
+import crypto from 'node:crypto';
 import { integer, sqliteTable, text, real } from 'drizzle-orm/sqlite-core';
 import { relations } from 'drizzle-orm';
 
-export const users = sqliteTable('users', {
+export const userProfiles = sqliteTable('user_profiles', {
 	id: text('id')
 		.primaryKey()
 		.$defaultFn(() => crypto.randomUUID()),
-	name: text('name').notNull().unique(),
+	displayName: text('display_name').notNull().unique(),
 	isAdmin: integer('is_admin', { mode: 'boolean' }).notNull().default(false),
 	createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date())
 });
 
-export const usersRelations = relations(users, ({ many }) => ({
+export const userProfilesRelations = relations(userProfiles, ({ many }) => ({
 	photos: many(photos),
 	submissions: many(submissions),
 	groups: many(userGroups)
@@ -22,7 +23,7 @@ export const photos = sqliteTable('photos', {
 		.$defaultFn(() => crypto.randomUUID()),
 	userId: text('user_id')
 		.notNull()
-		.references(() => users.id, { onDelete: 'cascade' }),
+		.references(() => userProfiles.id, { onDelete: 'cascade' }),
 	filePath: text('file_path').notNull(),
 	originalFilename: text('original_filename').notNull(),
 	fileSize: integer('file_size').notNull(),
@@ -30,9 +31,9 @@ export const photos = sqliteTable('photos', {
 });
 
 export const photosRelations = relations(photos, ({ one, many }) => ({
-	user: one(users, {
+	user: one(userProfiles, {
 		fields: [photos.userId],
-		references: [users.id]
+		references: [userProfiles.id]
 	}),
 	submissions: many(submissions)
 }));
@@ -52,7 +53,7 @@ export const submissions = sqliteTable('submissions', {
 		.$defaultFn(() => crypto.randomUUID()),
 	userId: text('user_id')
 		.notNull()
-		.references(() => users.id),
+		.references(() => userProfiles.id),
 	groupId: text('group_id')
 		.notNull()
 		.references(() => groups.id, { onDelete: 'cascade' }),
@@ -78,9 +79,9 @@ export const submissionsRelations = relations(submissions, ({ one }) => ({
 		fields: [submissions.taskId],
 		references: [tasks.id]
 	}),
-	user: one(users, {
+	user: one(userProfiles, {
 		fields: [submissions.userId],
-		references: [users.id]
+		references: [userProfiles.id]
 	}),
 	group: one(groups, {
 		fields: [submissions.groupId],
@@ -95,7 +96,7 @@ export const groups = sqliteTable('groups', {
 	name: text('name').notNull(),
 	description: text('description'),
 	createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
-	createdByUserId: text('created_by_user_id').references(() => users.id)
+	createdByUserId: text('created_by_user_id').references(() => userProfiles.id)
 });
 
 export const userGroups = sqliteTable('user_groups', {
@@ -104,7 +105,7 @@ export const userGroups = sqliteTable('user_groups', {
 		.$defaultFn(() => crypto.randomUUID()),
 	userId: text('user_id')
 		.notNull()
-		.references(() => users.id, { onDelete: 'cascade' }),
+		.references(() => userProfiles.id, { onDelete: 'cascade' }),
 	groupId: text('group_id')
 		.notNull()
 		.references(() => groups.id, { onDelete: 'cascade' }),
@@ -117,9 +118,9 @@ export const groupsRelations = relations(groups, ({ many }) => ({
 }));
 
 export const userGroupsRelations = relations(userGroups, ({ one }) => ({
-	user: one(users, {
+	user: one(userProfiles, {
 		fields: [userGroups.userId],
-		references: [users.id]
+		references: [userProfiles.id]
 	}),
 	group: one(groups, {
 		fields: [userGroups.groupId],
@@ -127,22 +128,22 @@ export const userGroupsRelations = relations(userGroups, ({ one }) => ({
 	})
 }));
 
-export const user = sqliteTable('user', {
+export const authUsers = sqliteTable('auth_users', {
 	id: text('id').primaryKey(),
 	username: text('username').notNull().unique(),
 	passwordHash: text('password_hash').notNull(),
-	playerUserId: text('player_user_id')
+	profileId: text('profile_id')
 		.notNull()
-		.references(() => users.id, { onDelete: 'cascade' })
+		.references(() => userProfiles.id, { onDelete: 'cascade' })
 });
 
-export type User = typeof user.$inferSelect;
+export type AuthUser = typeof authUsers.$inferSelect;
 
 export const sessions = sqliteTable('session', {
 	id: text('id').primaryKey(),
 	userId: text('user_id')
 		.notNull()
-		.references(() => user.id, { onDelete: 'cascade' }),
+		.references(() => authUsers.id, { onDelete: 'cascade' }),
 	secretHash: text('secret_hash').notNull(),
 	createdAt: integer('created_at', { mode: 'timestamp' }).notNull()
 });

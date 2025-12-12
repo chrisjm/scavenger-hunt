@@ -23,7 +23,7 @@ export const GET: RequestHandler = async ({ params, url, locals }) => {
       return json({ error: 'userId is required' }, { status: 400 });
     }
 
-    const { submissions, tasks, users, photos } = schema;
+    const { submissions, tasks, userProfiles, photos } = schema;
 
     const conditions = [eq(submissions.userId, userId)];
     if (groupId) {
@@ -43,12 +43,12 @@ export const GET: RequestHandler = async ({ params, url, locals }) => {
         valid: submissions.valid,
         submittedAt: submissions.submittedAt,
         taskDescription: tasks.description,
-        userName: users.name,
+        userName: userProfiles.displayName,
         imagePath: photos.filePath
       })
       .from(submissions)
       .innerJoin(tasks, eq(submissions.taskId, tasks.id))
-      .innerJoin(users, eq(submissions.userId, users.id))
+      .innerJoin(userProfiles, eq(submissions.userId, userProfiles.id))
       .innerJoin(photos, eq(submissions.photoId, photos.id))
       .where(and(...conditions));
 

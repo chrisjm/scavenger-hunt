@@ -26,11 +26,11 @@ export const GET: RequestHandler = async ({ params }) => {
       );
     }
 
-    const { users } = schema;
+    const { userProfiles } = schema;
     const existingUser = await db
       .select()
-      .from(users)
-      .where(sql`lower(${users.name}) = lower(${trimmedName})`)
+      .from(userProfiles)
+      .where(sql`lower(${userProfiles.displayName}) = lower(${trimmedName})`)
       .limit(1);
 
     return json({

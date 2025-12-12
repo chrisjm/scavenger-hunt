@@ -38,16 +38,17 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
       return json({ error: 'Password must be more than 8 characters' }, { status: 400 });
     }
 
-    const { user: authUserTable, users: playerUsers } = schema;
-
-    // Look up existing auth user by username
-    const [existingAuthUser] = await db
-      .select()
-      .from(authUserTable)
-      .where(eq(authUserTable.username, trimmedName))
-      .limit(1);
+    const { authUsers: authUserTable, userProfiles } = schema;
 
     if (isReturningUser) {
+      const usernameLower = trimmedName.toLowerCase();
+
+      const [existingAuthUser] = await db
+        .select()
+        .from(authUserTable)
+        .where(eq(authUserTable.username, usernameLower))
+        .limit(1);
+
       if (!existingAuthUser) {
         return json(
           {
@@ -65,14 +66,13 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
         return json({ error: 'Incorrect password' }, { status: 400 });
       }
 
-      // Fetch the player row to get isAdmin
-      const [player] = await db
+      const [profile] = await db
         .select()
-        .from(playerUsers)
-        .where(eq(playerUsers.id, existingAuthUser.playerUserId))
+        .from(userProfiles)
+        .where(eq(userProfiles.id, existingAuthUser.profileId))
         .limit(1);
 
-      const isAdmin = player?.isAdmin ?? false;
+      const isAdmin = profile?.isAdmin ?? false;
       const session = await createSessionForUser(existingAuthUser.id);
 
       cookies.set('auth_token', session.token, {
@@ -84,14 +84,22 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
       });
 
       return json({
-        userId: existingAuthUser.playerUserId,
-        userName: existingAuthUser.username,
+        userId: existingAuthUser.profileId,
+        userName: profile?.displayName ?? existingAuthUser.username,
         isReturningUser: true,
         isAdmin
       });
     }
 
     // New user flow
+    const usernameLower = trimmedName.toLowerCase();
+
+    const [existingAuthUser] = await db
+      .select()
+      .from(authUserTable)
+      .where(eq(authUserTable.username, usernameLower))
+      .limit(1);
+
     if (existingAuthUser) {
       return json(
         {
@@ -103,19 +111,19 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
     }
 
     const passwordHash = await hash(password);
-    const playerUserId = crypto.randomUUID();
+    const profileId = crypto.randomUUID();
     const authUserId = crypto.randomUUID();
 
-    // Create player row (new users default to non-admin)
+    // Create profile row (new users default to non-admin)
     const isAdmin = false;
-    await db.insert(playerUsers).values({ id: playerUserId, name: trimmedName, isAdmin });
+    await db.insert(userProfiles).values({ id: profileId, displayName: trimmedName, isAdmin });
 
     // Create auth row
     await db.insert(authUserTable).values({
       id: authUserId,
-      username: trimmedName,
+      username: usernameLower,
       passwordHash,
-      playerUserId
+      profileId
     });
 
     const session = await createSessionForUser(authUserId);
@@ -129,7 +137,7 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
     });
 
     return json({
-      userId: playerUserId,
+      userId: profileId,
       userName: trimmedName,
       isReturningUser: false,
       isAdmin

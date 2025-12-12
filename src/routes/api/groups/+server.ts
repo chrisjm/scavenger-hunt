@@ -8,8 +8,8 @@ import { eq, sql } from 'drizzle-orm';
 import { db, schema } from '$lib/server/db';
 
 async function ensureAdmin(userId: string) {
-  const { users } = schema;
-  const rows = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+  const { userProfiles } = schema;
+  const rows = await db.select().from(userProfiles).where(eq(userProfiles.id, userId)).limit(1);
   if (!rows.length) return { ok: false, status: 404, body: { error: 'User not found' } } as const;
   if (!rows[0].isAdmin)
     return { ok: false, status: 403, body: { error: 'Admin privileges required' } } as const;

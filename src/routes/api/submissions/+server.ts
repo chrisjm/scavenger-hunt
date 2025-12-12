@@ -31,12 +31,12 @@ export const POST: RequestHandler = async ({ request, locals }) => {
       return json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    const { tasks, submissions, users, photos, userGroups } = schema;
+    const { tasks, submissions, userProfiles, photos, userGroups } = schema;
 
     // 2. Fetch context (Photo & Task & membership)
     const photo = await db.select().from(photos).where(eq(photos.id, photoId)).get();
     const task = await db.select().from(tasks).where(eq(tasks.id, taskId)).get();
-    const user = await db.select().from(users).where(eq(users.id, userId)).get();
+    const user = await db.select().from(userProfiles).where(eq(userProfiles.id, userId)).get();
     const membership = await db
       .select()
       .from(userGroups)
@@ -108,7 +108,7 @@ export const GET: RequestHandler = async ({ url, locals }) => {
       return json({ error: 'groupId is required' }, { status: 400 });
     }
 
-    const { tasks, submissions, users, photos } = schema;
+    const { tasks, submissions, userProfiles, photos } = schema;
 
     const allSubmissions = await db
       .select({
@@ -123,12 +123,12 @@ export const GET: RequestHandler = async ({ url, locals }) => {
         valid: submissions.valid,
         submittedAt: submissions.submittedAt,
         taskDescription: tasks.description,
-        userName: users.name,
+        userName: userProfiles.displayName,
         imagePath: photos.filePath
       })
       .from(submissions)
       .innerJoin(tasks, eq(submissions.taskId, tasks.id))
-      .innerJoin(users, eq(submissions.userId, users.id))
+      .innerJoin(userProfiles, eq(submissions.userId, userProfiles.id))
       .innerJoin(photos, eq(submissions.photoId, photos.id))
       .where(and(eq(submissions.aiMatch, true), eq(submissions.groupId, groupId)))
       .orderBy(desc(submissions.submittedAt));
@@ -153,7 +153,7 @@ export const _GET_all: RequestHandler = async ({ url, locals }) => {
       return json({ error: 'groupId is required' }, { status: 400 });
     }
 
-    const { tasks, submissions, users, photos } = schema;
+    const { tasks, submissions, userProfiles, photos } = schema;
 
     const conditions = [eq(submissions.groupId, groupId)];
     if (!authUser.isAdmin && authUser.userId) {
@@ -173,12 +173,12 @@ export const _GET_all: RequestHandler = async ({ url, locals }) => {
         valid: submissions.valid,
         submittedAt: submissions.submittedAt,
         taskDescription: tasks.description,
-        userName: users.name,
+        userName: userProfiles.displayName,
         imagePath: photos.filePath
       })
       .from(submissions)
       .innerJoin(tasks, eq(submissions.taskId, tasks.id))
-      .innerJoin(users, eq(submissions.userId, users.id))
+      .innerJoin(userProfiles, eq(submissions.userId, userProfiles.id))
       .innerJoin(photos, eq(submissions.photoId, photos.id))
       .where(and(...conditions))
       .orderBy(desc(submissions.submittedAt));
@@ -203,17 +203,17 @@ export const _GET_leaderboard: RequestHandler = async ({ url, locals }) => {
       return json({ error: 'groupId is required' }, { status: 400 });
     }
 
-    const { submissions, users } = schema;
+    const { submissions, userProfiles } = schema;
 
     const leaderboard = await db
       .select({
-        name: users.name,
+        name: userProfiles.displayName,
         score: count(submissions.id)
       })
       .from(submissions)
-      .innerJoin(users, eq(submissions.userId, users.id))
+      .innerJoin(userProfiles, eq(submissions.userId, userProfiles.id))
       .where(and(eq(submissions.valid, true), eq(submissions.groupId, groupId)))
-      .groupBy(users.name)
+      .groupBy(userProfiles.displayName)
       .orderBy(desc(count(submissions.id)));
 
     return json(leaderboard);

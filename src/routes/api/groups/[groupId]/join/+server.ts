@@ -20,7 +20,7 @@ export const POST: RequestHandler = async ({ params, locals }) => {
       return json({ error: 'userId and groupId are required' }, { status: 400 });
     }
 
-    const { groups, users, userGroups } = schema;
+    const { groups, userProfiles, userGroups } = schema;
 
     // Validate group
     const groupRows = await db.select().from(groups).where(eq(groups.id, groupId)).limit(1);
@@ -29,7 +29,11 @@ export const POST: RequestHandler = async ({ params, locals }) => {
     }
 
     // Validate user
-    const userRows = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+    const userRows = await db
+      .select()
+      .from(userProfiles)
+      .where(eq(userProfiles.id, userId))
+      .limit(1);
     if (!userRows.length) {
       return json({ error: 'User not found' }, { status: 404 });
     }

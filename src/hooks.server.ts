@@ -27,8 +27,8 @@ const handleAuth: Handle = async ({ event, resolve }) => {
 	// Look up auth user and corresponding player user
 	const [authUser] = await db
 		.select()
-		.from(schema.user)
-		.where(eq(schema.user.id, session.userId))
+		.from(schema.authUsers)
+		.where(eq(schema.authUsers.id, session.userId))
 		.limit(1);
 
 	if (!authUser) {
@@ -42,13 +42,13 @@ const handleAuth: Handle = async ({ event, resolve }) => {
 		return resolve(event);
 	}
 
-	const [playerUser] = await db
+	const [profile] = await db
 		.select()
-		.from(schema.users)
-		.where(eq(schema.users.id, authUser.playerUserId))
+		.from(schema.userProfiles)
+		.where(eq(schema.userProfiles.id, authUser.profileId))
 		.limit(1);
 
-	if (!playerUser) {
+	if (!profile) {
 		await deleteSession(session.id);
 		event.cookies.set('auth_token', '', {
 			path: '/',
@@ -60,10 +60,10 @@ const handleAuth: Handle = async ({ event, resolve }) => {
 	}
 
 	event.locals.user = {
-		userId: playerUser.id,
+		userId: profile.id,
 		authId: authUser.id,
 		username: authUser.username,
-		isAdmin: playerUser.isAdmin ?? false
+		isAdmin: profile.isAdmin ?? false
 	};
 
 	return resolve(event);
