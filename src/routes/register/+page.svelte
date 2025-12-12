@@ -20,13 +20,20 @@
 	let nameAvailable = $state<boolean | null>(null);
 	let groupExists = $state<boolean | null>(null);
 
+	$effect(() => {
+		const lower = name.toLowerCase();
+		if (name !== lower) {
+			name = lower;
+		}
+	});
+
 	const runNameCheck = debounce(async (currentName: string) => {
 		try {
-			const res = await fetch(`/api/check-name/${encodeURIComponent(currentName)}`);
+			const res = await fetch(`/api/check-username/${encodeURIComponent(currentName)}`);
 			const data = await res.json().catch(() => ({}));
 			if (!res.ok || data.available === false) {
 				nameError =
-					data.error || `"${currentName}" is already taken. Please choose a different name.`;
+					data.error || `"${currentName}" is already taken. Please choose a different username.`;
 				nameAvailable = false;
 			} else {
 				nameAvailable = true;
@@ -58,11 +65,11 @@
 	}, 300);
 
 	async function registerUser() {
-		const trimmedName = name.trim();
+		const trimmedName = name.trim().toLowerCase();
 		const trimmedGroup = groupName.trim();
 
 		if (!trimmedName) {
-			nameError = 'Please enter a display name';
+			nameError = 'Please enter a username';
 			return;
 		}
 		if (!trimmedGroup) {
@@ -78,12 +85,13 @@
 		errorMessage = '';
 
 		try {
-			// 1) Check name availability
-			const nameRes = await fetch(`/api/check-name/${encodeURIComponent(trimmedName)}`);
+			// 1) Check username availability
+			const nameRes = await fetch(`/api/check-username/${encodeURIComponent(trimmedName)}`);
 			const nameData = await nameRes.json().catch(() => ({}));
 			if (!nameRes.ok || nameData.available === false) {
 				nameError =
-					nameData.error || `"${trimmedName}" is already taken. Please choose a different name.`;
+					nameData.error ||
+					`"${trimmedName}" is already taken. Please choose a different username.`;
 				return;
 			}
 			nameAvailable = true;
@@ -120,7 +128,7 @@
 				const error = await response.json().catch(() => ({}));
 				if (response.status === 409) {
 					errorMessage =
-						error.message || 'This name is already taken. Please choose a different name.';
+						error.message || 'This username is already taken. Please choose a different username.';
 				} else if (response.status === 400) {
 					errorMessage = error.error || 'Invalid registration details. Please check and try again.';
 				} else {
@@ -132,7 +140,6 @@
 			const data = await response.json();
 
 			// Store user data and update context
-			localStorage.setItem('scavenger-hunt-userId', data.userId);
 			userContext.userId = data.userId;
 			userContext.userName = data.userName;
 			userContext.isAdmin = data.isAdmin ?? false;
@@ -166,15 +173,15 @@
 	}
 
 	async function validateNameOnBlur() {
-		const trimmedName = name.trim();
+		const trimmedName = name.trim().toLowerCase();
 		nameError = '';
 		nameAvailable = null;
 		if (!trimmedName) {
-			nameError = 'Please enter a display name';
+			nameError = 'Please enter a username';
 			return;
 		}
 		if (trimmedName.length < 2 || trimmedName.length > 30) {
-			nameError = 'Name must be between 2 and 30 characters';
+			nameError = 'Username must be between 2 and 30 characters';
 			return;
 		}
 
@@ -200,10 +207,7 @@
 	}
 
 	onMount(() => {
-		const storedUserId = localStorage.getItem('scavenger-hunt-userId');
-		if (storedUserId) {
-			goto('/tasks');
-		}
+		// Auth hydration/redirect is handled globally via session cookie.
 	});
 
 	function handleKeydown(event: KeyboardEvent) {
@@ -228,9 +232,9 @@
 			>
 				<Gift class="w-10 h-10 text-green-600 dark:text-emerald-300" />
 			</div>
-			<h1 class="text-3xl font-bold text-gray-800 mb-2 dark:text-slate-100">Create your player</h1>
+			<h1 class="text-3xl font-bold text-gray-800 mb-2 dark:text-slate-100">Create your account</h1>
 			<p class="text-gray-600 dark:text-slate-300">
-				Choose a display name, join your group, and you're ready to start the hunt.
+				Choose a username (lowercase), join your group, and you're ready to start the hunt.
 			</p>
 		</div>
 
@@ -242,7 +246,7 @@
 		>
 			<div class="mb-5">
 				<label for="name" class="block text-sm font-medium text-gray-700 mb-2 dark:text-slate-200">
-					Display name
+					Username (lowercase)
 				</label>
 				<input
 					id="name"
@@ -250,7 +254,9 @@
 					bind:value={name}
 					onkeydown={handleKeydown}
 					onblur={validateNameOnBlur}
-					placeholder="Choose a unique name"
+					autocapitalize="none"
+					spellcheck="false"
+					placeholder="choose a username (lowercase)"
 					class="w-full px-4 py-3 border-2 rounded-xl focus:ring-0 transition-colors text-lg border-gray-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 {nameError
 						? 'border-red-300 focus:border-red-500'
 						: 'focus:border-green-500'}"
@@ -265,12 +271,12 @@
 				{:else if nameChecking}
 					<p class="mt-2 text-sm text-blue-600 dark:text-blue-400 flex items-center gap-1">
 						<Loader class="w-4 h-4 animate-spin" />
-						Checking name availability...
+						Checking username availability...
 					</p>
 				{:else if nameAvailable}
 					<p class="mt-2 text-sm text-green-600 dark:text-emerald-300 flex items-center gap-1">
 						<CheckCircle class="w-4 h-4" />
-						Name is available!
+						Username is available!
 					</p>
 				{/if}
 			</div>

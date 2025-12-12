@@ -28,8 +28,6 @@
 		} catch (error) {
 			console.error('Logout failed', error);
 		}
-
-		localStorage.removeItem('scavenger-hunt-userId');
 		userContext.userId = null;
 		userContext.userName = null;
 		userContext.setActiveGroup(null);

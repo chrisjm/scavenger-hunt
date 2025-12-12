@@ -6,24 +6,14 @@
 	// Get user context from layout
 	const userContext = getUserContext();
 
-	let loginName = $state('');
+	let username = $state('');
 	let loggingIn = $state(false);
 	const isReturningUser = true;
 	let errorMessage = $state('');
 	let password = $state('');
 
-	// Check if user is already logged in
-	onMount(() => {
-		const storedUserId = localStorage.getItem('scavenger-hunt-userId');
-
-		if (storedUserId) {
-			// User is already logged in, go straight to tasks
-			goto('/tasks');
-		}
-	});
-
 	async function loginUser() {
-		const trimmedName = loginName.trim();
+		const trimmedName = username.trim();
 
 		if (!trimmedName) {
 			errorMessage = 'Please enter your name';
@@ -53,7 +43,6 @@
 				const data = await response.json();
 
 				// Store user data and update context
-				localStorage.setItem('scavenger-hunt-userId', data.userId);
 				userContext.userId = data.userId;
 				userContext.userName = data.userName;
 				userContext.isAdmin = data.isAdmin ?? false;
@@ -119,12 +108,12 @@
 		>
 			<div class="mb-6">
 				<label for="name" class="block text-sm font-medium text-gray-700 mb-2 dark:text-slate-200">
-					Your Name
+					Username
 				</label>
 				<input
 					id="name"
 					type="text"
-					bind:value={loginName}
+					bind:value={username}
 					onkeydown={handleKeydown}
 					placeholder="Enter your username"
 					class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-green-500 focus:ring-0 transition-colors text-lg dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
@@ -141,7 +130,7 @@
 					for="password"
 					class="block text-sm font-medium text-gray-700 mb-2 dark:text-slate-200"
 				>
-					Password (more than 8 characters)
+					Password
 				</label>
 				<input
 					id="password"
@@ -170,7 +159,7 @@
 
 			<button
 				type="submit"
-				disabled={loggingIn || !loginName.trim() || password.length < 9}
+				disabled={loggingIn || !username.trim() || password.length < 9}
 				class="w-full py-3 px-4 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-semibold rounded-xl transition-all duration-200 transform hover:scale-105 disabled:hover:scale-100 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-2"
 			>
 				{#if loggingIn}

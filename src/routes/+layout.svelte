@@ -78,16 +78,22 @@
 
 		let isMounted = true;
 		const init = async () => {
-			const storedUserId = localStorage.getItem('scavenger-hunt-userId');
-
-			if (storedUserId) {
-				userId = storedUserId;
-				// Fetch user profile and groups from API
-				fetchUserProfile(storedUserId);
-				await refreshGroups();
-			} else if (!isPublicRoute(page.route.id)) {
-				// Redirect unauthenticated users away from protected routes
-				goto('/login');
+			try {
+				const meRes = await fetch('/api/users/me');
+				if (meRes.ok) {
+					const data = await meRes.json();
+					userId = data.user.id;
+					userName = data.user.name;
+					isAdmin = data.user.isAdmin ?? false;
+					await refreshGroups();
+				} else if (!isPublicRoute(page.route.id)) {
+					goto('/login');
+				}
+			} catch (e) {
+				console.error('Failed to hydrate session user:', e);
+				if (!isPublicRoute(page.route.id)) {
+					goto('/login');
+				}
 			}
 
 			if (isMounted) {

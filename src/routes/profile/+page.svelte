@@ -182,9 +182,6 @@
 			console.error('Logout failed', error);
 		}
 
-		// Clear localStorage
-		localStorage.removeItem('scavenger-hunt-userId');
-
 		// Redirect to landing page
 		goto('/');
 	}
