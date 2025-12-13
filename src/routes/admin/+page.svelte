@@ -17,7 +17,7 @@
 		<div class="grid gap-4 md:grid-cols-2">
 			<button
 				type="button"
-				onclick={() => goto(resolve('/groups/select'))}
+				onclick={() => goto(resolve('/admin/groups'))}
 				class="rounded-2xl bg-white p-6 text-left shadow-xl transition-transform hover:scale-[1.01] dark:bg-slate-900"
 			>
 				<div class="text-lg font-semibold text-gray-800 dark:text-slate-100">Groups</div>

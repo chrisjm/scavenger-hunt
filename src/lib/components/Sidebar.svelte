@@ -1,10 +1,9 @@
 <script lang="ts">
-	import { User, Camera, LogOut, X, ListChecks, Activity, Settings, Shield } from 'lucide-svelte';
+	import { User, Camera, LogOut, X, ListChecks, Activity, Shield } from 'lucide-svelte';
 	import { browser } from '$app/environment';
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { getUserContext } from '$lib/stores/user';
-	import GroupSelector from '$lib/components/GroupSelector.svelte';
 
 	const userContext = getUserContext();
 	const isAdmin = $derived(userContext.isAdmin);
@@ -31,13 +30,7 @@
 		taskId: number;
 	}
 
-	type SidebarRoute =
-		| '/tasks'
-		| '/submissions'
-		| '/profile'
-		| '/library'
-		| '/groups/select'
-		| '/admin';
+	type SidebarRoute = '/tasks' | '/submissions' | '/profile' | '/library' | '/admin';
 
 	async function handleLogout() {
 		try {
@@ -163,10 +156,6 @@
 						</div>
 					</div>
 				</div>
-
-				<div class="mt-2">
-					<GroupSelector />
-				</div>
 			</div>
 		{/if}
 
@@ -220,14 +209,6 @@
 					>
 						<Shield size={20} class="text-gray-600 dark:text-slate-300" />
 						<span class="font-medium text-gray-700 dark:text-slate-300">Admin</span>
-					</button>
-
-					<button
-						onclick={() => handleNavigation('/groups/select')}
-						class="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors text-left text-gray-800 dark:text-slate-100"
-					>
-						<Settings size={20} class="text-gray-600 dark:text-slate-300" />
-						<span class="font-medium text-gray-700 dark:text-slate-300">Manage Groups</span>
 					</button>
 				{/if}
 			</div>

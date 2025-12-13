@@ -128,7 +128,6 @@
 				const groups = await response.json();
 				userGroups = groups;
 				userGroupsStore.set(groups);
-				// Resolve active group: prefer stored if still valid, else first available
 				const storedActive = localStorage.getItem('scavenger-hunt-activeGroupId');
 				const validStored = groups.find((g: GroupSummary) => g.id === storedActive);
 				if (validStored) {
@@ -137,6 +136,29 @@
 				} else if (groups.length > 0) {
 					activeGroupId = groups[0].id;
 					setActiveGroupStore(groups[0].id);
+				} else if (isAdmin) {
+					try {
+						const checkRes = await fetch(`/api/check-group/${encodeURIComponent('test')}`);
+						const checkData = await checkRes.json().catch(() => ({}));
+						const testGroupId = checkData.id as string | undefined;
+						if (checkRes.ok && testGroupId) {
+							await fetch(`/api/groups/${testGroupId}/join`, { method: 'POST' }).catch(() => null);
+							activeGroupId = testGroupId;
+							setActiveGroupStore(testGroupId);
+
+							const refreshed = await fetch(`/api/groups/users/${userId}/groups`).catch(() => null);
+							if (refreshed?.ok) {
+								const refreshedGroups = await refreshed.json();
+								userGroups = refreshedGroups;
+								userGroupsStore.set(refreshedGroups);
+							}
+							return;
+						}
+					} catch (e) {
+						console.error('Failed to default admin group to "test":', e);
+					}
+					activeGroupId = null;
+					setActiveGroupStore(null);
 				} else {
 					activeGroupId = null;
 					setActiveGroupStore(null);
@@ -154,18 +176,6 @@
 
 		if (!userId && !isPublicRoute(routeId)) {
 			goto(resolve('/login'));
-			return;
-		}
-
-		// Force group selection when authenticated but no active group
-		if (userId && !activeGroupId && routeId !== '/groups/select' && routeId !== '/register') {
-			goto(resolve('/groups/select'));
-			return;
-		}
-
-		// If active group is ready but user is on selection page, send to tasks (non-admins only)
-		if (userId && activeGroupId && routeId === '/groups/select' && isAdmin === false) {
-			goto(resolve('/tasks'));
 			return;
 		}
 
