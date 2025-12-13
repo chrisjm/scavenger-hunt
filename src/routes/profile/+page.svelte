@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
+	import { browser } from '$app/environment';
 	import { onMount } from 'svelte';
 	import { getUserContext } from '$lib/stores/user';
 
@@ -24,6 +25,7 @@
 
 	// Watch for userId changes and load data
 	$effect(() => {
+		if (!browser) return;
 		if (userId) {
 			loadUserData();
 		}

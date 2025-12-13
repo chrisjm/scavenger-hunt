@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { User, Camera, LogOut, X, ListChecks, Activity, Settings } from 'lucide-svelte';
+	import { browser } from '$app/environment';
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { getUserContext } from '$lib/stores/user';
@@ -80,12 +81,14 @@
 
 	// Recompute progress when user/group changes or when the drawer opens
 	$effect(() => {
+		if (!browser) return;
 		if (userId && activeGroupId) {
 			loadProgress();
 		}
 	});
 
 	$effect(() => {
+		if (!browser) return;
 		if (isOpen && userId && activeGroupId) {
 			loadProgress();
 		}

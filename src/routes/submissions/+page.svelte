@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { browser } from '$app/environment';
 	import { onMount } from 'svelte';
 	import SubmissionsFeed from '$lib/components/SubmissionsFeed.svelte';
 	import { getUserContext } from '$lib/stores/user';
@@ -54,6 +55,7 @@
 	});
 
 	$effect(() => {
+		if (!browser) return;
 		if (userId && activeGroupId) {
 			loadSubmissions();
 		}
