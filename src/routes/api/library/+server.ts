@@ -16,12 +16,11 @@ const RESIZE_CONFIG = {
 	quality: 80
 };
 
-async function resizeImageBuffer(buffer: Buffer) {
+async function resizeImageBuffer(buffer: Buffer, contentType: string) {
 	const metadata = await sharp(buffer).metadata();
-	const { width, height } = metadata;
+	const { width, height, orientation } = metadata;
 
-	const originalWidth = width ?? RESIZE_CONFIG.maxWidth;
-	const originalHeight = height ?? RESIZE_CONFIG.maxHeight;
+	const originalExt = contentType.split('/')[1] || 'jpg';
 
 	const needsResize =
 		!width ||
@@ -29,27 +28,27 @@ async function resizeImageBuffer(buffer: Buffer) {
 		width > RESIZE_CONFIG.maxWidth ||
 		height > RESIZE_CONFIG.maxHeight ||
 		buffer.length > 2 * 1024 * 1024;
+	const needsRotate = typeof orientation === 'number' && orientation !== 1;
 
-	if (!needsResize) {
-		return buffer;
+	if (!needsResize && !needsRotate) {
+		return { buffer, contentType, ext: originalExt };
 	}
 
-	const widthRatio = RESIZE_CONFIG.maxWidth / originalWidth;
-	const heightRatio = RESIZE_CONFIG.maxHeight / originalHeight;
-	const scale = Math.min(widthRatio, heightRatio);
-	const newWidth = Math.round(originalWidth * scale);
-	const newHeight = Math.round(originalHeight * scale);
-
-	return await sharp(buffer)
-		.resize(newWidth, newHeight, {
+	const pipeline = sharp(buffer).rotate();
+	if (needsResize) {
+		pipeline.resize(RESIZE_CONFIG.maxWidth, RESIZE_CONFIG.maxHeight, {
 			fit: 'inside',
 			withoutEnlargement: true
-		})
+		});
+	}
+
+	return await pipeline
 		.jpeg({
 			quality: RESIZE_CONFIG.quality,
 			progressive: true
 		})
-		.toBuffer();
+		.toBuffer()
+		.then((out) => ({ buffer: out, contentType: 'image/jpeg', ext: 'jpg' }));
 }
 
 // GET /api/library - current user's photo library
@@ -125,23 +124,33 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 			);
 		}
 
+		let fileType = file.type || 'image/jpeg';
+		let ext = fileType.split('/')[1] || 'jpg';
+
 		// Resize image similarly to imageResize middleware
 		try {
-			buffer = await resizeImageBuffer(buffer);
-			console.log('Library upload: resized image', { resizedSize: buffer.length });
+			const resized = await resizeImageBuffer(buffer, fileType);
+			buffer = resized.buffer;
+			console.log('Library upload: resized image', {
+				resizedSize: buffer.length,
+				outputContentType: resized.contentType,
+				outputExt: resized.ext
+			});
+			// Update upload metadata to match what we actually encoded
+			fileType = resized.contentType;
+			ext = resized.ext;
 		} catch (err) {
 			console.error('Server-side image resize failed (SvelteKit):', err);
 			// keep original buffer unchanged
 		}
 
-		const ext = file.type.split('/')[1] || 'jpg';
 		const key = buildObjectKey(`library/${Date.now()}-${crypto.randomUUID()}.${ext}`);
 
 		let filePath: string;
 		try {
 			filePath = await uploadBufferToS3({
 				buffer,
-				contentType: file.type || 'image/jpeg',
+				contentType: fileType,
 				key
 			});
 			console.log('Library upload: uploaded to S3', { key, filePath });

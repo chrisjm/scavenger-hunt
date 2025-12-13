@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { browser } from '$app/environment';
 	import { onMount } from 'svelte';
 	import { Loader, Trash2, Upload } from 'lucide-svelte';
 	import { getUserContext } from '$lib/stores/user';
@@ -24,6 +25,7 @@
 
 	// Load library when userId becomes available
 	$effect(() => {
+		if (!browser) return;
 		if (userId) {
 			loadLibrary();
 		}

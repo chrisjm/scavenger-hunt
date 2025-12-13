@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { browser } from '$app/environment';
 	import { onMount } from 'svelte';
 	import StatsGrid from '$lib/components/StatsGrid.svelte';
 	import TaskGrid from '$lib/components/TaskGrid.svelte';
@@ -60,6 +61,7 @@
 
 	// Reload submissions/leaderboard whenever activeGroupId changes
 	$effect(() => {
+		if (!browser) return;
 		if (activeGroupId) {
 			loadSubmissions();
 			loadLeaderboard();
