@@ -181,35 +181,45 @@
 			<h2 class="text-lg font-semibold text-gray-800 dark:text-slate-100">Create Task</h2>
 			<div class="mt-4 grid gap-4 md:grid-cols-2">
 				<div>
-					<label for="createDescription" class="text-sm font-medium text-gray-700 dark:text-slate-200">Description</label>
+					<label
+						for="createDescription"
+						class="text-sm font-medium text-gray-700 dark:text-slate-200">Description</label
+					>
 					<input
 						class="mt-1 w-full rounded-xl border border-gray-200 bg-white p-3 text-sm text-gray-800 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
 						bind:value={createDescription}
 						placeholder="e.g. Find a candy cane"
-            id="createDescription"
+						id="createDescription"
 					/>
 				</div>
 				<div>
-					<label for="createUnlockDate" class="text-sm font-medium text-gray-700 dark:text-slate-200">Unlock Date</label>
+					<label
+						for="createUnlockDate"
+						class="text-sm font-medium text-gray-700 dark:text-slate-200">Unlock Date</label
+					>
 					<input
 						type="datetime-local"
 						class="mt-1 w-full rounded-xl border border-gray-200 bg-white p-3 text-sm text-gray-800 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
 						bind:value={createUnlockDate}
-            id="createUnlockDate"
+						id="createUnlockDate"
 					/>
 				</div>
 				<div class="md:col-span-2">
-					<label for="createAiPrompt" class="text-sm font-medium text-gray-700 dark:text-slate-200">AI Prompt</label>
+					<label for="createAiPrompt" class="text-sm font-medium text-gray-700 dark:text-slate-200"
+						>AI Prompt</label
+					>
 					<textarea
 						rows={4}
 						class="mt-1 w-full rounded-xl border border-gray-200 bg-white p-3 text-sm text-gray-800 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
 						bind:value={createAiPrompt}
 						placeholder="Describe what the AI should validate in the photo"
-            id="createAiPrompt"
+						id="createAiPrompt"
 					></textarea>
 				</div>
 				<div>
-					<label for="createMinConfidence" class="text-sm font-medium text-gray-700 dark:text-slate-200">Min Confidence</label
+					<label
+						for="createMinConfidence"
+						class="text-sm font-medium text-gray-700 dark:text-slate-200">Min Confidence</label
 					>
 					<input
 						type="number"
@@ -218,7 +228,7 @@
 						max="1"
 						class="mt-1 w-full rounded-xl border border-gray-200 bg-white p-3 text-sm text-gray-800 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
 						bind:value={createMinConfidence}
-            id="createMinConfidence"
+						id="createMinConfidence"
 					/>
 				</div>
 				<div class="flex items-end">
