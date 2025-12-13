@@ -13,6 +13,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Fix image rotation and filetype
+- Fix warning about SSR and fetch
+
 ### Removed
 
 ### Security
