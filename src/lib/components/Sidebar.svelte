@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { User, Camera, LogOut, X, ListChecks, Activity, Settings } from 'lucide-svelte';
+	import { User, Camera, LogOut, X, ListChecks, Activity, Settings, Shield } from 'lucide-svelte';
 	import { browser } from '$app/environment';
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
@@ -34,10 +34,10 @@
 	type SidebarRoute =
 		| '/tasks'
 		| '/submissions'
-		| '/submissions/me'
 		| '/profile'
 		| '/library'
-		| '/groups/select';
+		| '/groups/select'
+		| '/admin';
 
 	async function handleLogout() {
 		try {
@@ -214,6 +214,14 @@
 				</button>
 
 				{#if isAdmin}
+					<button
+						onclick={() => handleNavigation('/admin')}
+						class="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors text-left text-gray-800 dark:text-slate-100"
+					>
+						<Shield size={20} class="text-gray-600 dark:text-slate-300" />
+						<span class="font-medium text-gray-700 dark:text-slate-300">Admin</span>
+					</button>
+
 					<button
 						onclick={() => handleNavigation('/groups/select')}
 						class="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors text-left text-gray-800 dark:text-slate-100"
