@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Add My Submissions page with submission history and refactor submission components
+
 ### Changed
 
 ### Fixed
