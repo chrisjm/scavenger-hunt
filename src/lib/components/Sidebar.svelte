@@ -30,7 +30,13 @@
 		taskId: number;
 	}
 
-	type SidebarRoute = '/tasks' | '/submissions' | '/profile' | '/library' | '/admin';
+	type SidebarRoute =
+		| '/tasks'
+		| '/submissions'
+		| '/profile'
+		| '/library'
+		| '/submissions/me'
+		| '/admin';
 
 	async function handleLogout() {
 		try {
