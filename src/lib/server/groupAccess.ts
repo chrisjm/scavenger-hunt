@@ -5,23 +5,23 @@ import { and, eq } from 'drizzle-orm';
 import { db, schema } from '$lib/server/db';
 
 export async function ensureGroupAccess({
-  userId,
-  isAdmin,
-  groupId
+	userId,
+	isAdmin,
+	groupId
 }: {
-  userId: string | null | undefined;
-  isAdmin: boolean;
-  groupId: string;
+	userId: string | null | undefined;
+	isAdmin: boolean;
+	groupId: string;
 }): Promise<boolean> {
-  if (isAdmin) return true;
-  if (!userId) return false;
+	if (isAdmin) return true;
+	if (!userId) return false;
 
-  const { userGroups } = schema;
-  const membership = await db
-    .select()
-    .from(userGroups)
-    .where(and(eq(userGroups.userId, userId), eq(userGroups.groupId, groupId)))
-    .get();
+	const { userGroups } = schema;
+	const membership = await db
+		.select()
+		.from(userGroups)
+		.where(and(eq(userGroups.userId, userId), eq(userGroups.groupId, groupId)))
+		.get();
 
-  return Boolean(membership);
+	return Boolean(membership);
 }
