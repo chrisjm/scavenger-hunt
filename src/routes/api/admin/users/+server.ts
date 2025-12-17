@@ -28,15 +28,39 @@ export const GET: RequestHandler = async ({ locals }) => {
 
     const { userProfiles } = schema;
     const rows = await db.select().from(userProfiles).orderBy(userProfiles.createdAt);
-    const users = rows.map((row) => ({
-      id: row.id,
-      displayName: row.displayName,
-      isAdmin: row.isAdmin,
-      createdAt:
-        row.createdAt instanceof Date
-          ? row.createdAt.toISOString()
-          : new Date(row.createdAt as unknown as number).toISOString()
-    }));
+
+    const authUsers = await db.select().from(schema.authUsers);
+    const authIdByProfileId = new Map<string, string>();
+    for (const row of authUsers) {
+      authIdByProfileId.set(row.profileId, row.id);
+    }
+
+    const sessions = await db.select().from(schema.sessions);
+    const lastLoginByAuthId = new Map<string, Date>();
+    for (const session of sessions) {
+      const existing = lastLoginByAuthId.get(session.userId);
+      const createdAt =
+        session.createdAt instanceof Date ? session.createdAt : new Date(session.createdAt);
+      if (!existing || createdAt.getTime() > existing.getTime()) {
+        lastLoginByAuthId.set(session.userId, createdAt);
+      }
+    }
+
+    const users = rows.map((row) => {
+      const authId = authIdByProfileId.get(row.id);
+      const lastLoginAt = authId ? lastLoginByAuthId.get(authId) : undefined;
+
+      return {
+        id: row.id,
+        displayName: row.displayName,
+        isAdmin: row.isAdmin,
+        createdAt:
+          row.createdAt instanceof Date
+            ? row.createdAt.toISOString()
+            : new Date(row.createdAt as unknown as number).toISOString(),
+        lastLoginAt: lastLoginAt ? lastLoginAt.toISOString() : null
+      };
+    });
 
     return json({ users });
   } catch (error) {
