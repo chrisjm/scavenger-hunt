@@ -6,11 +6,11 @@
 
 	const userContext = getUserContext();
 	const userId = $derived(userContext.userId);
-	const isAdmin = $derived(userContext.isAdmin);
 	const activeGroupId = $derived(userContext.activeGroupId);
 
 	interface Submission {
 		id: string;
+		userId: string;
 		userName: string;
 		taskDescription: string;
 		imagePath: string;
@@ -30,15 +30,13 @@
 		loading = true;
 		error = null;
 		try {
-			const url = isAdmin
-				? `/api/submissions/all?groupId=${activeGroupId}`
-				: `/api/submissions/all?groupId=${activeGroupId}`; // non-admins are scoped by backend
-			const response = await fetch(url);
+			const response = await fetch(`/api/submissions/all?groupId=${activeGroupId}`);
 			if (!response.ok) {
 				const data = await response.json().catch(() => ({}));
 				throw new Error(data.error || 'Failed to load submissions');
 			}
-			submissions = await response.json();
+			const all = (await response.json()) as Submission[];
+			submissions = all.filter((sub) => sub.userId === userId);
 		} catch (err) {
 			console.error('Failed to load submissions:', err);
 			error = err instanceof Error ? err.message : 'Failed to load submissions';
@@ -59,15 +57,15 @@
 	class="min-h-screen bg-gradient-to-br from-green-50 via-white to-red-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950"
 >
 	<div class="max-w-5xl mx-auto px-4 py-8 md:py-12">
-		<div class="mb-6 md:mb-8 flex items-center justify-between gap-4">
+		<div class="mb-6 md:mb-8">
 			<div>
 				<h1
 					class="text-3xl md:text-4xl font-bold tracking-tight text-slate-900 dark:text-slate-200"
 				>
-					Submissions
+					My submissions
 				</h1>
 				<p class="mt-2 text-sm md:text-base text-slate-600 dark:text-slate-400">
-					All submissions for your active group, including both approved and rejected attempts.
+					All your submissions in the active group, including both approved and rejected attempts.
 				</p>
 			</div>
 		</div>
@@ -76,7 +74,7 @@
 			<div class="bg-slate-900/60 border border-slate-700 rounded-xl p-6 text-center">
 				<p class="text-slate-200 font-medium mb-1">No active group selected</p>
 				<p class="text-slate-400 text-sm">
-					Join or select a group from the header to see its submissions.
+					Join or select a group from the header to see your submissions.
 				</p>
 			</div>
 		{:else if loading}
@@ -94,9 +92,10 @@
 		{:else}
 			<SubmissionsList
 				{submissions}
-				subtitle="Group history"
+				title="My submissions"
+				subtitle="Personal history"
 				emptyTitle="No submissions yet"
-				emptySubtitle="Be the first to share your festive finds!"
+				emptySubtitle="Submit a photo for a task to start building your history."
 			/>
 		{/if}
 	</div>

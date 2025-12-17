@@ -31,7 +31,13 @@
 		taskId: number;
 	}
 
-	type SidebarRoute = '/tasks' | '/submissions' | '/profile' | '/library' | '/groups/select';
+	type SidebarRoute =
+		| '/tasks'
+		| '/submissions'
+		| '/submissions/me'
+		| '/profile'
+		| '/library'
+		| '/groups/select';
 
 	async function handleLogout() {
 		try {
@@ -181,6 +187,14 @@
 				>
 					<Activity size={20} class="text-gray-600 dark:text-slate-300" />
 					<span class="font-medium text-gray-600 dark:text-slate-300">Submissions</span>
+				</button>
+
+				<button
+					onclick={() => handleNavigation('/submissions/me')}
+					class="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors text-left text-gray-800 dark:text-slate-100"
+				>
+					<Activity size={20} class="text-gray-600 dark:text-slate-300" />
+					<span class="font-medium text-gray-600 dark:text-slate-300">My submissions</span>
 				</button>
 
 				<button

@@ -3,8 +3,9 @@
 
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { and, count, eq, desc } from 'drizzle-orm';
+import { and, eq, desc, sql } from 'drizzle-orm';
 import { db, schema } from '$lib/server/db';
+import { ensureGroupAccess } from '$lib/server/groupAccess';
 import { extractKeyFromUrl, fetchObjectBuffer } from '$lib/utils/s3';
 import { validateImageWithAI, isSubmissionValid } from '$lib/utils/aiValidator';
 
@@ -68,16 +69,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		}
 		const valid = isSubmissionValid(aiResponse, task);
 
-		// 4. Record submission (replace any existing submission for this user/task/group)
-		await db
-			.delete(submissions)
-			.where(
-				and(
-					and(eq(submissions.userId, userId), eq(submissions.taskId, taskId)),
-					eq(submissions.groupId, groupId)
-				)
-			);
-
+		// 4. Record submission (keep history)
 		const [submission] = await db
 			.insert(submissions)
 			.values({
@@ -112,6 +104,15 @@ export const GET: RequestHandler = async ({ url, locals }) => {
 			return json({ error: 'groupId is required' }, { status: 400 });
 		}
 
+		const hasAccess = await ensureGroupAccess({
+			userId: authUser.userId,
+			isAdmin: authUser.isAdmin,
+			groupId
+		});
+		if (!hasAccess) {
+			return json({ error: 'User is not a member of this group' }, { status: 403 });
+		}
+
 		const { tasks, submissions, userProfiles, photos } = schema;
 
 		const allSubmissions = await db
@@ -134,7 +135,7 @@ export const GET: RequestHandler = async ({ url, locals }) => {
 			.innerJoin(tasks, eq(submissions.taskId, tasks.id))
 			.innerJoin(userProfiles, eq(submissions.userId, userProfiles.id))
 			.innerJoin(photos, eq(submissions.photoId, photos.id))
-			.where(and(eq(submissions.aiMatch, true), eq(submissions.groupId, groupId)))
+			.where(eq(submissions.groupId, groupId))
 			.orderBy(desc(submissions.submittedAt));
 
 		return json(allSubmissions);
@@ -157,12 +158,16 @@ export const _GET_all: RequestHandler = async ({ url, locals }) => {
 			return json({ error: 'groupId is required' }, { status: 400 });
 		}
 
-		const { tasks, submissions, userProfiles, photos } = schema;
-
-		const conditions = [eq(submissions.groupId, groupId)];
-		if (!authUser.isAdmin && authUser.userId) {
-			conditions.push(eq(submissions.userId, authUser.userId));
+		const hasAccess = await ensureGroupAccess({
+			userId: authUser.userId,
+			isAdmin: authUser.isAdmin,
+			groupId
+		});
+		if (!hasAccess) {
+			return json({ error: 'User is not a member of this group' }, { status: 403 });
 		}
+
+		const { tasks, submissions, userProfiles, photos } = schema;
 
 		const scopedSubmissions = await db
 			.select({
@@ -184,7 +189,7 @@ export const _GET_all: RequestHandler = async ({ url, locals }) => {
 			.innerJoin(tasks, eq(submissions.taskId, tasks.id))
 			.innerJoin(userProfiles, eq(submissions.userId, userProfiles.id))
 			.innerJoin(photos, eq(submissions.photoId, photos.id))
-			.where(and(...conditions))
+			.where(eq(submissions.groupId, groupId))
 			.orderBy(desc(submissions.submittedAt));
 
 		return json(scopedSubmissions);
@@ -207,18 +212,28 @@ export const _GET_leaderboard: RequestHandler = async ({ url, locals }) => {
 			return json({ error: 'groupId is required' }, { status: 400 });
 		}
 
+		const hasAccess = await ensureGroupAccess({
+			userId: authUser.userId,
+			isAdmin: authUser.isAdmin,
+			groupId
+		});
+		if (!hasAccess) {
+			return json({ error: 'User is not a member of this group' }, { status: 403 });
+		}
+
 		const { submissions, userProfiles } = schema;
+		const score = sql<number>`count(distinct ${submissions.taskId})`;
 
 		const leaderboard = await db
 			.select({
 				name: userProfiles.displayName,
-				score: count(submissions.id)
+				score
 			})
 			.from(submissions)
 			.innerJoin(userProfiles, eq(submissions.userId, userProfiles.id))
 			.where(and(eq(submissions.valid, true), eq(submissions.groupId, groupId)))
-			.groupBy(userProfiles.displayName)
-			.orderBy(desc(count(submissions.id)));
+			.groupBy(userProfiles.id, userProfiles.displayName)
+			.orderBy(desc(score));
 
 		return json(leaderboard);
 	} catch (error) {
