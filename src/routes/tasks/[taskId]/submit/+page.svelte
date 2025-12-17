@@ -1,10 +1,11 @@
 <script lang="ts">
+	import { browser } from '$app/environment';
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
-	import { onMount } from 'svelte';
 	import { Camera, Image as ImageIcon, Loader } from 'lucide-svelte';
 	import PhotoSelector from '$lib/components/PhotoSelector.svelte';
+	import SubmissionsList from '$lib/components/SubmissionsList.svelte';
 	import { getUserContext } from '$lib/stores/user';
 
 	const userContext = getUserContext();
@@ -22,8 +23,24 @@
 		id: string;
 	}
 
+	interface Submission {
+		id: string;
+		userId: string;
+		taskId: number;
+		userName: string;
+		taskDescription: string;
+		imagePath: string;
+		valid: boolean;
+		aiReasoning: string;
+		aiConfidence: number;
+		submittedAt: string;
+	}
+
 	let task = $state<Task | null>(null);
 	let loadingTask = $state(true);
+	let historySubmissions = $state<Submission[]>([]);
+	let loadingHistory = $state(false);
+	let historyError = $state<string | null>(null);
 
 	let activeTab = $state<'upload' | 'library'>('upload');
 	let selectedPhotoId = $state<string | null>(null);
@@ -41,11 +58,9 @@
 		tempPreview = null;
 	}
 
-	onMount(() => {
-		loadTask();
-	});
-
 	async function loadTask() {
+		loadingTask = true;
+		task = null;
 		const taskIdParam = page.params.taskId;
 		const taskId = Number(taskIdParam);
 		if (!Number.isFinite(taskId)) {
@@ -70,11 +85,53 @@
 		}
 	}
 
+	async function loadHistory() {
+		const taskIdParam = page.params.taskId;
+		const taskId = Number(taskIdParam);
+		if (!Number.isFinite(taskId)) return;
+		if (!userId || !activeGroupId) return;
+
+		historySubmissions = [];
+		loadingHistory = true;
+		historyError = null;
+		try {
+			const response = await fetch(`/api/submissions/all?groupId=${activeGroupId}`);
+			if (!response.ok) {
+				const data = await response.json().catch(() => ({}));
+				throw new Error(data.error || 'Failed to load submissions');
+			}
+
+			const all = (await response.json()) as Submission[];
+			historySubmissions = all.filter((sub) => sub.userId === userId && sub.taskId === taskId);
+		} catch (err) {
+			console.error('Failed to load submission history:', err);
+			historyError = err instanceof Error ? err.message : 'Failed to load submission history';
+		} finally {
+			loadingHistory = false;
+		}
+	}
+
 	// Redirect back to tasks if user or group is missing
 	$effect(() => {
+		if (!browser) return;
 		if (!userId || !activeGroupId) {
 			goto(resolve('/tasks'));
 		}
+	});
+
+	$effect(() => {
+		if (!browser) return;
+		const taskIdParam = page.params.taskId;
+		if (!taskIdParam) return;
+		loadTask();
+	});
+
+	$effect(() => {
+		if (!browser) return;
+		const taskIdParam = page.params.taskId;
+		if (!taskIdParam) return;
+		if (!userId || !activeGroupId) return;
+		loadHistory();
 	});
 
 	// Handle file selection from input
@@ -319,6 +376,30 @@
 								Submit Entry
 							{/if}
 						</button>
+					</div>
+
+					<div class="mt-8">
+						{#if historyError}
+							<div class="bg-red-900/40 border border-red-700 rounded-xl p-6">
+								<p class="text-red-200 font-medium mb-1">Unable to load past attempts</p>
+								<p class="text-red-300 text-sm">{historyError}</p>
+							</div>
+						{:else if loadingHistory}
+							<div class="bg-slate-900/60 border border-slate-800 rounded-xl p-6 text-center">
+								<div class="flex items-center justify-center gap-3">
+									<Loader size={20} class="text-slate-300 animate-spin" />
+									<p class="text-slate-200">Loading past attempts...</p>
+								</div>
+							</div>
+						{:else}
+							<SubmissionsList
+								submissions={historySubmissions}
+								title="Past attempts"
+								subtitle="For this task"
+								emptyTitle="No attempts yet"
+								emptySubtitle="Your previous submissions for this task will show up here."
+							/>
+						{/if}
 					</div>
 				</div>
 			</div>
