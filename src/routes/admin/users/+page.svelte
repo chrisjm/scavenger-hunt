@@ -91,6 +91,20 @@
 		return formatDate(value);
 	}
 
+	function toAdminGroup(value: unknown): AdminGroup | null {
+		if (!value || typeof value !== 'object') return null;
+		const record = value as Record<string, unknown>;
+		const id = record.id;
+		const name = record.name;
+		if (typeof id !== 'string' && typeof id !== 'number') return null;
+		if (typeof name !== 'string' && typeof name !== 'number') return null;
+		return {
+			id: String(id),
+			name: String(name),
+			description: typeof record.description === 'string' ? record.description : null
+		};
+	}
+
 	async function ensureGroupsLoaded() {
 		if (groups.length) return;
 		groupsLoading = true;
@@ -98,11 +112,9 @@
 			const res = await fetch('/api/admin/groups');
 			const data = await res.json().catch(() => ({}));
 			if (!res.ok) throw new Error(data.error || 'Failed to load groups');
-			groups = (data.groups ?? []).map((g: any) => ({
-				id: String(g.id),
-				name: String(g.name),
-				description: typeof g.description === 'string' ? g.description : null
-			})) as AdminGroup[];
+			groups = (data.groups ?? [])
+				.map(toAdminGroup)
+				.filter((g: AdminGroup | null): g is AdminGroup => g !== null);
 		} finally {
 			groupsLoading = false;
 		}
