@@ -102,6 +102,7 @@ export const POST: RequestHandler = async ({ locals, params, request }) => {
     if (!userRows.length) {
       return json({ error: 'User not found' }, { status: 404 });
     }
+    const targetIsAdmin = userRows[0].isAdmin ?? false;
 
     const groupRows = await db.select().from(groups).where(eq(groups.id, groupId)).limit(1);
     if (!groupRows.length) {
@@ -115,6 +116,17 @@ export const POST: RequestHandler = async ({ locals, params, request }) => {
       .limit(1);
     if (existing.length) {
       return json({ error: 'User is already a member of this group' }, { status: 409 });
+    }
+
+    if (!targetIsAdmin) {
+      const existingMembership = await db
+        .select()
+        .from(userGroups)
+        .where(eq(userGroups.userId, targetUserId))
+        .limit(1);
+      if (existingMembership.length) {
+        return json({ error: 'User can only be a member of one group' }, { status: 409 });
+      }
     }
 
     await db.insert(userGroups).values({

@@ -138,12 +138,13 @@ describe('admin user groups endpoints', () => {
       .mockReturnValueOnce({ from: fromMockEnsureAdmin })
       .mockReturnValueOnce({ from: fromMockTargetUser })
       .mockReturnValueOnce({ from: fromMockGroupLookup })
+      .mockReturnValueOnce({ from: fromMockMembershipLookup })
       .mockReturnValueOnce({ from: fromMockMembershipLookup });
 
     limitEnsureAdminMock.mockResolvedValueOnce([{ id: 'admin', isAdmin: true }]);
     limitTargetUserMock.mockResolvedValueOnce([{ id: 'u2', isAdmin: false }]);
     limitGroupLookupMock.mockResolvedValueOnce([{ id: 'g1', name: 'Team A' }]);
-    limitMembershipLookupMock.mockResolvedValueOnce([]);
+    limitMembershipLookupMock.mockResolvedValueOnce([]).mockResolvedValueOnce([]);
     valuesMock.mockResolvedValueOnce(undefined);
 
     const response = await POST({
@@ -154,6 +155,31 @@ describe('admin user groups endpoints', () => {
 
     expect(response.status).toBe(201);
     expect(await response.json()).toEqual({ ok: true });
+  });
+
+  it('POST returns 409 when non-admin user already has a group', async () => {
+    selectMock
+      .mockReturnValueOnce({ from: fromMockEnsureAdmin })
+      .mockReturnValueOnce({ from: fromMockTargetUser })
+      .mockReturnValueOnce({ from: fromMockGroupLookup })
+      .mockReturnValueOnce({ from: fromMockMembershipLookup })
+      .mockReturnValueOnce({ from: fromMockMembershipLookup });
+
+    limitEnsureAdminMock.mockResolvedValueOnce([{ id: 'admin', isAdmin: true }]);
+    limitTargetUserMock.mockResolvedValueOnce([{ id: 'u2', isAdmin: false }]);
+    limitGroupLookupMock.mockResolvedValueOnce([{ id: 'g2', name: 'Team B' }]);
+    limitMembershipLookupMock
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([{ id: 'ug1', userId: 'u2', groupId: 'g1' }]);
+
+    const response = await POST({
+      locals: { user: { userId: 'admin' } },
+      params: { userId: 'u2' },
+      request: { json: async () => ({ groupId: 'g2' }) }
+    } as any);
+
+    expect(response.status).toBe(409);
+    expect(await response.json()).toEqual({ error: 'User can only be a member of one group' });
   });
 
   it('DELETE removes membership when admin', async () => {

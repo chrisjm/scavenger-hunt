@@ -16,6 +16,7 @@ export const POST: RequestHandler = async ({ params, locals }) => {
 
 		const groupId = params.groupId;
 		const userId = authUser.userId;
+		const isAdmin = authUser.isAdmin ?? false;
 		if (!userId || !groupId) {
 			return json({ error: 'userId and groupId are required' }, { status: 400 });
 		}
@@ -46,6 +47,17 @@ export const POST: RequestHandler = async ({ params, locals }) => {
 			.limit(1);
 		if (existing.length) {
 			return json({ error: 'Already a member of this group' }, { status: 409 });
+		}
+
+		if (!isAdmin) {
+			const existingMembership = await db
+				.select()
+				.from(userGroups)
+				.where(eq(userGroups.userId, userId))
+				.limit(1);
+			if (existingMembership.length) {
+				return json({ error: 'User can only be a member of one group' }, { status: 409 });
+			}
 		}
 
 		await db.insert(userGroups).values({

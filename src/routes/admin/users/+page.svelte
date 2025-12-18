@@ -351,24 +351,26 @@
 													Make admin
 												{/if}
 											</button>
-											<button
-												type="button"
-												onclick={() => toggleGroups(user.id)}
-												disabled={groupsLoadingUserId === user.id}
-												class="rounded-xl border border-gray-200 px-3 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
-											>
-												{#if expandedUserId === user.id}
-													Hide groups
-												{:else if groupsLoadingUserId === user.id}
-													Loading…
-												{:else}
-													Groups
-												{/if}
-											</button>
+											{#if !user.isAdmin}
+												<button
+													type="button"
+													onclick={() => toggleGroups(user.id)}
+													disabled={groupsLoadingUserId === user.id}
+													class="rounded-xl border border-gray-200 px-3 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+												>
+													{#if expandedUserId === user.id}
+														Hide groups
+													{:else if groupsLoadingUserId === user.id}
+														Loading…
+													{:else}
+														Groups
+													{/if}
+												</button>
+											{/if}
 										</div>
 									</td>
 								</tr>
-								{#if expandedUserId === user.id}
+								{#if expandedUserId === user.id && !user.isAdmin}
 									<tr class="border-t border-gray-100 dark:border-slate-800">
 										<td colspan="6" class="py-4 pr-4">
 											<div class="rounded-xl border border-gray-200 p-4 dark:border-slate-800">
@@ -426,7 +428,11 @@
 														>
 															Add to group
 														</div>
-														{#if groupsLoading}
+														{#if (membershipsByUserId[user.id] ?? []).length >= 1}
+															<div class="mt-2 text-sm text-gray-600 dark:text-slate-300">
+																Non-admin users can only belong to one group.
+															</div>
+														{:else if groupsLoading}
 															<div class="mt-2 text-sm text-gray-600 dark:text-slate-300">
 																Loading groups…
 															</div>
@@ -458,8 +464,8 @@
 														{/if}
 													</div>
 												</div>
-											</div></td
-										>
+											</div>
+										</td>
 									</tr>
 								{/if}
 							{/each}
