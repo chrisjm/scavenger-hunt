@@ -144,23 +144,19 @@
 			userContext.userName = data.userName;
 			userContext.isAdmin = data.isAdmin ?? false;
 
-			// 4) Join the resolved group
-			try {
-				const joinRes = await fetch(`/api/groups/${groupId}/join`, {
-					method: 'POST',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({ userId: data.userId })
-				});
-				if (!joinRes.ok) {
-					// Non-fatal; user can still join from tasks page
-					console.error('Failed to join group during registration');
-				} else {
-					await userContext.refreshGroups();
-					userContext.setActiveGroup(groupId);
-				}
-			} catch (e) {
-				console.error('Error joining group during registration', e);
+			// 4) Join the resolved group (required)
+			const joinRes = await fetch(`/api/groups/${groupId}/join`, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ userId: data.userId })
+			});
+			if (!joinRes.ok) {
+				const joinError = await joinRes.json().catch(() => ({}));
+				errorMessage = joinError.error || 'Failed to join group. Please try again.';
+				return;
 			}
+			await userContext.refreshGroups();
+			userContext.setActiveGroup(groupId);
 
 			// Go to main tasks view
 			goto(resolve('/tasks'));
