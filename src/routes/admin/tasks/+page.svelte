@@ -370,7 +370,7 @@
 						Assign to Groups (select one or more)
 					</div>
 					<div class="mt-2 grid gap-2 md:grid-cols-3">
-						{#each availableGroups as group}
+						{#each availableGroups as group (group.id)}
 							<label
 								class="flex items-center gap-2 rounded-lg border border-gray-200 p-3 hover:bg-gray-50 dark:border-slate-700 dark:hover:bg-slate-800 cursor-pointer"
 							>
@@ -494,7 +494,7 @@
 									<td class="py-3 pr-4 align-top">
 										{#if editingTaskId === task.id}
 											<div class="space-y-1">
-												{#each availableGroups as group}
+												{#each availableGroups as group (group.id)}
 													<label class="flex items-center gap-2 text-xs">
 														<input
 															type="checkbox"
@@ -508,7 +508,7 @@
 											</div>
 										{:else}
 											<div class="flex flex-wrap gap-1">
-												{#each task.groups as group}
+												{#each task.groups as group (group.id)}
 													<span
 														class="rounded-full bg-green-100 px-2 py-1 text-xs text-green-700 dark:bg-green-900/30 dark:text-green-300"
 													>
@@ -622,7 +622,7 @@
 						Select Groups to Add
 					</div>
 					<div class="mt-3 space-y-2">
-						{#each availableGroups as group}
+						{#each availableGroups as group (group.id)}
 							<label
 								class="flex items-center gap-3 rounded-lg border border-gray-200 p-3 hover:bg-gray-50 dark:border-slate-700 dark:hover:bg-slate-800 cursor-pointer"
 							>
