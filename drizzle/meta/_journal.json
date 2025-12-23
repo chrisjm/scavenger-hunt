@@ -29,6 +29,13 @@
       "when": 1766519945660,
       "tag": "0003_even_fenris",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1766530589830,
+      "tag": "0004_greedy_thunderbolt_ross",
+      "breakpoints": true
     }
   ]
 }
