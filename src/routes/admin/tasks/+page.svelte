@@ -39,6 +39,11 @@
 	let saving = $state(false);
 	let deletingId = $state<number | null>(null);
 
+	let selectedTaskIds = $state<number[]>([]);
+	let bulkEditMode = $state(false);
+	let bulkSelectedGroupIds = $state<string[]>([]);
+	let bulkSaving = $state(false);
+
 	onMount(() => {
 		loadGroups();
 		load();
@@ -197,6 +202,83 @@
 			}
 		}
 	}
+
+	function toggleTaskSelection(taskId: number) {
+		const index = selectedTaskIds.indexOf(taskId);
+		if (index > -1) {
+			selectedTaskIds = selectedTaskIds.filter((id) => id !== taskId);
+		} else {
+			selectedTaskIds = [...selectedTaskIds, taskId];
+		}
+	}
+
+	function toggleAllTasks() {
+		if (selectedTaskIds.length === tasks.length) {
+			selectedTaskIds = [];
+		} else {
+			selectedTaskIds = tasks.map((t) => t.id);
+		}
+	}
+
+	function startBulkEdit() {
+		if (selectedTaskIds.length === 0) return;
+		bulkEditMode = true;
+		bulkSelectedGroupIds = [];
+	}
+
+	function cancelBulkEdit() {
+		bulkEditMode = false;
+		bulkSelectedGroupIds = [];
+	}
+
+	function toggleBulkGroupSelection(groupId: string) {
+		const index = bulkSelectedGroupIds.indexOf(groupId);
+		if (index > -1) {
+			bulkSelectedGroupIds = bulkSelectedGroupIds.filter((id) => id !== groupId);
+		} else {
+			bulkSelectedGroupIds = [...bulkSelectedGroupIds, groupId];
+		}
+	}
+
+	async function saveBulkEdit() {
+		if (bulkSelectedGroupIds.length === 0) {
+			error = 'At least one group must be selected.';
+			return;
+		}
+		error = null;
+		bulkSaving = true;
+		try {
+			for (const taskId of selectedTaskIds) {
+				const task = tasks.find((t) => t.id === taskId);
+				if (!task) continue;
+
+				const mergedGroupIds = [
+					...new Set([...task.groups.map((g) => g.id), ...bulkSelectedGroupIds])
+				];
+
+				const res = await fetch(`/api/admin/tasks/${taskId}`, {
+					method: 'PUT',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({
+						description: task.description,
+						aiPrompt: task.aiPrompt,
+						minConfidence: task.minConfidence,
+						unlockDate: task.unlockDate,
+						groupIds: mergedGroupIds
+					})
+				});
+				const data = await res.json().catch(() => ({}));
+				if (!res.ok) throw new Error(data.error || `Failed to update task ${taskId}`);
+			}
+			await load();
+			selectedTaskIds = [];
+			cancelBulkEdit();
+		} catch (e) {
+			error = e instanceof Error ? e.message : 'Failed to bulk update tasks';
+		} finally {
+			bulkSaving = false;
+		}
+	}
 </script>
 
 <div
@@ -322,7 +404,32 @@
 		</div>
 
 		<div class="rounded-2xl bg-white p-6 shadow-xl dark:bg-slate-900">
-			<h2 class="text-lg font-semibold text-gray-800 dark:text-slate-100">Tasks</h2>
+			<div class="mb-4 flex items-center justify-between">
+				<h2 class="text-lg font-semibold text-gray-800 dark:text-slate-100">Tasks</h2>
+				{#if !loading && tasks.length > 0}
+					<div class="flex items-center gap-2">
+						{#if selectedTaskIds.length > 0}
+							<span class="text-sm text-gray-600 dark:text-slate-400">
+								{selectedTaskIds.length} selected
+							</span>
+							<button
+								type="button"
+								onclick={startBulkEdit}
+								class="rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700"
+							>
+								Add to Groups
+							</button>
+							<button
+								type="button"
+								onclick={() => (selectedTaskIds = [])}
+								class="rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-800"
+							>
+								Clear
+							</button>
+						{/if}
+					</div>
+				{/if}
+			</div>
 			{#if loading}
 				<div class="py-8 text-center text-sm text-gray-600 dark:text-slate-300">Loading…</div>
 			{:else if tasks.length === 0}
@@ -334,6 +441,14 @@
 					<table class="w-full text-left text-sm">
 						<thead class="text-xs uppercase text-gray-500 dark:text-slate-400">
 							<tr>
+								<th class="py-2 pr-4">
+									<input
+										type="checkbox"
+										checked={selectedTaskIds.length === tasks.length}
+										onchange={toggleAllTasks}
+										class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+									/>
+								</th>
 								<th class="py-2 pr-4">ID</th>
 								<th class="py-2 pr-4">Description</th>
 								<th class="py-2 pr-4">Groups</th>
@@ -345,6 +460,14 @@
 						<tbody>
 							{#each tasks as task (task.id)}
 								<tr class="border-t border-gray-100 dark:border-slate-800">
+									<td class="py-3 pr-4 align-top">
+										<input
+											type="checkbox"
+											checked={selectedTaskIds.includes(task.id)}
+											onchange={() => toggleTaskSelection(task.id)}
+											class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+										/>
+									</td>
 									<td class="py-3 pr-4 align-top text-gray-700 dark:text-slate-200">{task.id}</td>
 									<td class="py-3 pr-4 align-top">
 										{#if editingTaskId === task.id}
@@ -467,4 +590,86 @@
 			{/if}
 		</div>
 	</div>
+
+	{#if bulkEditMode}
+		<div
+			class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+			role="button"
+			tabindex="0"
+			onclick={(e) => {
+				if (e.target === e.currentTarget) cancelBulkEdit();
+			}}
+			onkeydown={(e) => {
+				if (e.key === 'Escape') cancelBulkEdit();
+			}}
+		>
+			<div
+				class="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl dark:bg-slate-900"
+				role="dialog"
+				aria-modal="true"
+				tabindex="-1"
+			>
+				<h3 class="text-xl font-semibold text-gray-800 dark:text-slate-100">
+					Add {selectedTaskIds.length} Task{selectedTaskIds.length !== 1 ? 's' : ''} to Groups
+				</h3>
+				<p class="mt-2 text-sm text-gray-600 dark:text-slate-400">
+					Select one or more groups to add these tasks to. Tasks will keep their existing group
+					assignments.
+				</p>
+
+				<div class="mt-6">
+					<div class="text-sm font-medium text-gray-700 dark:text-slate-200">
+						Select Groups to Add
+					</div>
+					<div class="mt-3 space-y-2">
+						{#each availableGroups as group}
+							<label
+								class="flex items-center gap-3 rounded-lg border border-gray-200 p-3 hover:bg-gray-50 dark:border-slate-700 dark:hover:bg-slate-800 cursor-pointer"
+							>
+								<input
+									type="checkbox"
+									checked={bulkSelectedGroupIds.includes(group.id)}
+									onchange={() => toggleBulkGroupSelection(group.id)}
+									class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+								/>
+								<span class="text-sm text-gray-700 dark:text-slate-200">{group.name}</span>
+							</label>
+						{/each}
+					</div>
+					{#if bulkSelectedGroupIds.length > 0}
+						<div class="mt-2 text-xs text-gray-500 dark:text-slate-400">
+							{bulkSelectedGroupIds.length} group{bulkSelectedGroupIds.length !== 1 ? 's' : ''} selected
+						</div>
+					{/if}
+				</div>
+
+				{#if error}
+					<div
+						class="mt-4 rounded-lg bg-red-50 p-3 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400"
+					>
+						{error}
+					</div>
+				{/if}
+
+				<div class="mt-6 flex justify-end gap-3">
+					<button
+						type="button"
+						onclick={cancelBulkEdit}
+						disabled={bulkSaving}
+						class="rounded-xl border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-800"
+					>
+						Cancel
+					</button>
+					<button
+						type="button"
+						onclick={saveBulkEdit}
+						disabled={bulkSaving || bulkSelectedGroupIds.length === 0}
+						class="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
+					>
+						{bulkSaving ? 'Saving…' : 'Add to Groups'}
+					</button>
+				</div>
+			</div>
+		</div>
+	{/if}
 </div>
