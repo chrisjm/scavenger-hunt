@@ -29,11 +29,12 @@ export const PUT: RequestHandler = async ({ locals, request, params }) => {
 		}
 
 		const body = await request.json().catch(() => null);
-		const { description, aiPrompt, minConfidence, unlockDate } = (body ?? {}) as {
+		const { description, aiPrompt, minConfidence, unlockDate, groupIds } = (body ?? {}) as {
 			description?: unknown;
 			aiPrompt?: unknown;
 			minConfidence?: unknown;
 			unlockDate?: unknown;
+			groupIds?: unknown;
 		};
 
 		if (typeof description !== 'string' || typeof aiPrompt !== 'string') {
@@ -62,7 +63,16 @@ export const PUT: RequestHandler = async ({ locals, request, params }) => {
 			return json({ error: 'unlockDate is required and must be a valid date' }, { status: 400 });
 		}
 
-		const { tasks } = schema;
+		if (!Array.isArray(groupIds) || groupIds.length === 0) {
+			return json({ error: 'groupIds is required and must be a non-empty array' }, { status: 400 });
+		}
+
+		const validGroupIds = groupIds.filter((id) => typeof id === 'string' && id.trim());
+		if (validGroupIds.length === 0) {
+			return json({ error: 'At least one valid groupId is required' }, { status: 400 });
+		}
+
+		const { tasks, taskGroups } = schema;
 		const existing = await db.select().from(tasks).where(eq(tasks.id, taskId)).limit(1);
 		if (!existing.length) {
 			return json({ error: 'Task not found' }, { status: 404 });
@@ -78,6 +88,16 @@ export const PUT: RequestHandler = async ({ locals, request, params }) => {
 			})
 			.where(eq(tasks.id, taskId))
 			.returning();
+
+		// Replace task-group associations
+		await db.delete(taskGroups).where(eq(taskGroups.taskId, taskId));
+
+		const taskGroupValues = validGroupIds.map((groupId) => ({
+			taskId,
+			groupId: groupId as string
+		}));
+
+		await db.insert(taskGroups).values(taskGroupValues);
 
 		return json({ task: updated });
 	} catch (error) {

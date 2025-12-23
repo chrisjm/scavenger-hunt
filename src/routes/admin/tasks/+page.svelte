@@ -10,16 +10,24 @@
 		minConfidence: number;
 		unlockDate: string;
 		createdAt: string;
+		groups: { id: string; name: string }[];
+	};
+
+	type Group = {
+		id: string;
+		name: string;
 	};
 
 	let loading = $state(true);
 	let error = $state<string | null>(null);
 	let tasks = $state<AdminTask[]>([]);
+	let availableGroups = $state<Group[]>([]);
 
 	let createDescription = $state('');
 	let createAiPrompt = $state('');
 	let createMinConfidence = $state('0.7');
 	let createUnlockDate = $state('');
+	let createSelectedGroupIds = $state<string[]>([]);
 	let creating = $state(false);
 
 	let editingTaskId = $state<number | null>(null);
@@ -27,12 +35,25 @@
 	let editAiPrompt = $state('');
 	let editMinConfidence = $state('0.7');
 	let editUnlockDate = $state('');
+	let editSelectedGroupIds = $state<string[]>([]);
 	let saving = $state(false);
 	let deletingId = $state<number | null>(null);
 
 	onMount(() => {
+		loadGroups();
 		load();
 	});
+
+	async function loadGroups() {
+		try {
+			const res = await fetch('/api/admin/groups');
+			const data = await res.json().catch(() => ({}));
+			if (!res.ok) throw new Error(data.error || 'Failed to load groups');
+			availableGroups = data.groups as Group[];
+		} catch (e) {
+			console.error('Failed to load groups:', e);
+		}
+	}
 
 	async function load() {
 		loading = true;
@@ -61,6 +82,10 @@
 			error = 'Description, AI Prompt, and Unlock Date are required.';
 			return;
 		}
+		if (createSelectedGroupIds.length === 0) {
+			error = 'At least one group must be selected.';
+			return;
+		}
 		creating = true;
 		try {
 			const res = await fetch('/api/admin/tasks', {
@@ -70,7 +95,8 @@
 					description: createDescription.trim(),
 					aiPrompt: createAiPrompt.trim(),
 					minConfidence: Number(createMinConfidence),
-					unlockDate: new Date(createUnlockDate).toISOString()
+					unlockDate: new Date(createUnlockDate).toISOString(),
+					groupIds: createSelectedGroupIds
 				})
 			});
 			const data = await res.json().catch(() => ({}));
@@ -79,6 +105,7 @@
 			createAiPrompt = '';
 			createMinConfidence = '0.7';
 			createUnlockDate = '';
+			createSelectedGroupIds = [];
 			await load();
 		} catch (e) {
 			error = e instanceof Error ? e.message : 'Failed to create task';
@@ -93,6 +120,7 @@
 		editAiPrompt = task.aiPrompt;
 		editMinConfidence = String(task.minConfidence);
 		editUnlockDate = toDatetimeLocal(task.unlockDate);
+		editSelectedGroupIds = task.groups.map((g) => g.id);
 	}
 
 	function cancelEdit() {
@@ -101,11 +129,16 @@
 		editAiPrompt = '';
 		editMinConfidence = '0.7';
 		editUnlockDate = '';
+		editSelectedGroupIds = [];
 	}
 
 	async function saveEdit() {
 		if (editingTaskId == null) return;
 		error = null;
+		if (editSelectedGroupIds.length === 0) {
+			error = 'At least one group must be selected.';
+			return;
+		}
 		saving = true;
 		try {
 			const res = await fetch(`/api/admin/tasks/${editingTaskId}`, {
@@ -115,7 +148,8 @@
 					description: editDescription.trim(),
 					aiPrompt: editAiPrompt.trim(),
 					minConfidence: Number(editMinConfidence),
-					unlockDate: new Date(editUnlockDate).toISOString()
+					unlockDate: new Date(editUnlockDate).toISOString(),
+					groupIds: editSelectedGroupIds
 				})
 			});
 			const data = await res.json().catch(() => ({}));
@@ -143,6 +177,24 @@
 			error = e instanceof Error ? e.message : 'Failed to delete task';
 		} finally {
 			deletingId = null;
+		}
+	}
+
+	function toggleGroupSelection(groupId: string, isCreate: boolean) {
+		const selectedIds = isCreate ? createSelectedGroupIds : editSelectedGroupIds;
+		const index = selectedIds.indexOf(groupId);
+		if (index > -1) {
+			if (isCreate) {
+				createSelectedGroupIds = selectedIds.filter((id) => id !== groupId);
+			} else {
+				editSelectedGroupIds = selectedIds.filter((id) => id !== groupId);
+			}
+		} else {
+			if (isCreate) {
+				createSelectedGroupIds = [...selectedIds, groupId];
+			} else {
+				editSelectedGroupIds = [...selectedIds, groupId];
+			}
 		}
 	}
 </script>
@@ -231,7 +283,32 @@
 						id="createMinConfidence"
 					/>
 				</div>
-				<div class="flex items-end">
+				<div class="md:col-span-2">
+					<div class="text-sm font-medium text-gray-700 dark:text-slate-200">
+						Assign to Groups (select one or more)
+					</div>
+					<div class="mt-2 grid gap-2 md:grid-cols-3">
+						{#each availableGroups as group}
+							<label
+								class="flex items-center gap-2 rounded-lg border border-gray-200 p-3 hover:bg-gray-50 dark:border-slate-700 dark:hover:bg-slate-800 cursor-pointer"
+							>
+								<input
+									type="checkbox"
+									checked={createSelectedGroupIds.includes(group.id)}
+									onchange={() => toggleGroupSelection(group.id, true)}
+									class="h-4 w-4 rounded border-gray-300 text-green-600 focus:ring-green-500 cursor-pointer"
+								/>
+								<span class="text-sm text-gray-700 dark:text-slate-200">{group.name}</span>
+							</label>
+						{/each}
+					</div>
+					{#if createSelectedGroupIds.length > 0}
+						<div class="mt-2 text-xs text-gray-500 dark:text-slate-400">
+							{createSelectedGroupIds.length} group{createSelectedGroupIds.length !== 1 ? 's' : ''} selected
+						</div>
+					{/if}
+				</div>
+				<div class="md:col-span-2">
 					<button
 						type="button"
 						onclick={createTask}
@@ -259,6 +336,7 @@
 							<tr>
 								<th class="py-2 pr-4">ID</th>
 								<th class="py-2 pr-4">Description</th>
+								<th class="py-2 pr-4">Groups</th>
 								<th class="py-2 pr-4">Unlock</th>
 								<th class="py-2 pr-4">Min Conf</th>
 								<th class="py-2 pr-4"></th>
@@ -287,6 +365,33 @@
 												class="mt-1 whitespace-pre-wrap text-xs text-gray-500 dark:text-slate-400"
 											>
 												{task.aiPrompt}
+											</div>
+										{/if}
+									</td>
+									<td class="py-3 pr-4 align-top">
+										{#if editingTaskId === task.id}
+											<div class="space-y-1">
+												{#each availableGroups as group}
+													<label class="flex items-center gap-2 text-xs">
+														<input
+															type="checkbox"
+															checked={editSelectedGroupIds.includes(group.id)}
+															onchange={() => toggleGroupSelection(group.id, false)}
+															class="h-3 w-3 rounded border-gray-300 text-green-600"
+														/>
+														<span class="text-gray-700 dark:text-slate-200">{group.name}</span>
+													</label>
+												{/each}
+											</div>
+										{:else}
+											<div class="flex flex-wrap gap-1">
+												{#each task.groups as group}
+													<span
+														class="rounded-full bg-green-100 px-2 py-1 text-xs text-green-700 dark:bg-green-900/30 dark:text-green-300"
+													>
+														{group.name}
+													</span>
+												{/each}
 											</div>
 										{/if}
 									</td>

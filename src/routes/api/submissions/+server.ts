@@ -37,7 +37,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 			return json({ error: 'Missing required fields' }, { status: 400 });
 		}
 
-		const { tasks, submissions, photos, userGroups } = schema;
+		const { tasks, submissions, photos, userGroups, taskGroups } = schema;
 
 		// 2. Fetch context (Photo & Task & membership)
 		const photo = await db.select().from(photos).where(eq(photos.id, photoId)).get();
@@ -51,6 +51,17 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		if (!photo) return json({ error: 'Photo not found' }, { status: 404 });
 		if (!task) return json({ error: 'Task not found' }, { status: 404 });
 		if (!membership) return json({ error: 'User is not a member of this group' }, { status: 403 });
+
+		// Verify task is assigned to this group
+		const taskGroupAssignment = await db
+			.select()
+			.from(taskGroups)
+			.where(and(eq(taskGroups.taskId, taskId), eq(taskGroups.groupId, groupId)))
+			.get();
+
+		if (!taskGroupAssignment) {
+			return json({ error: 'Task is not available for this group' }, { status: 400 });
+		}
 
 		// Security check: Ensure user owns the photo they are submitting
 		if (photo.userId !== userId) {
