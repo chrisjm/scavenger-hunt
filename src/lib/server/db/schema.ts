@@ -112,9 +112,34 @@ export const userGroups = sqliteTable('user_groups', {
 	joinedAt: integer('joined_at', { mode: 'timestamp' }).$defaultFn(() => new Date())
 });
 
+export const taskGroups = sqliteTable('task_groups', {
+	id: text('id')
+		.primaryKey()
+		.$defaultFn(() => crypto.randomUUID()),
+	taskId: integer('task_id')
+		.notNull()
+		.references(() => tasks.id, { onDelete: 'cascade' }),
+	groupId: text('group_id')
+		.notNull()
+		.references(() => groups.id, { onDelete: 'cascade' }),
+	createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date())
+});
+
+export const taskGroupsRelations = relations(taskGroups, ({ one }) => ({
+	task: one(tasks, {
+		fields: [taskGroups.taskId],
+		references: [tasks.id]
+	}),
+	group: one(groups, {
+		fields: [taskGroups.groupId],
+		references: [groups.id]
+	})
+}));
+
 export const groupsRelations = relations(groups, ({ many }) => ({
 	members: many(userGroups),
-	submissions: many(submissions)
+	submissions: many(submissions),
+	tasks: many(taskGroups)
 }));
 
 export const userGroupsRelations = relations(userGroups, ({ one }) => ({
