@@ -23,6 +23,9 @@
 		"db:migrate": "drizzle-kit migrate",
 		"db:studio": "drizzle-kit studio",
 		"db:seed": "node scripts/seed-tasks.js",
+		"db:backup": "node scripts/db-backup.js backup",
+		"db:restore": "node scripts/db-backup.js restore",
+		"db:backup:list": "node scripts/db-backup.js list",
 		"setup": "node scripts/setup-env.js"
 	},
 	"devDependencies": {

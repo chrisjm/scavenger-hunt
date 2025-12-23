@@ -23,9 +23,25 @@ export const GET: RequestHandler = async ({ locals }) => {
 			return json(adminCheck.body, { status: adminCheck.status });
 		}
 
-		const { tasks } = schema;
+		const { tasks, taskGroups, groups } = schema;
 		const rows = await db.select().from(tasks).orderBy(tasks.unlockDate);
-		return json({ tasks: rows });
+
+		// Fetch group associations for each task
+		const tasksWithGroups = await Promise.all(
+			rows.map(async (task) => {
+				const taskGroupRows = await db
+					.select({
+						id: groups.id,
+						name: groups.name
+					})
+					.from(taskGroups)
+					.innerJoin(groups, eq(taskGroups.groupId, groups.id))
+					.where(eq(taskGroups.taskId, task.id));
+				return { ...task, groups: taskGroupRows };
+			})
+		);
+
+		return json({ tasks: tasksWithGroups });
 	} catch (error) {
 		console.error('Error listing tasks (admin):', error);
 		return json({ error: 'Failed to list tasks' }, { status: 500 });
@@ -44,11 +60,12 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 		}
 
 		const body = await request.json().catch(() => null);
-		const { description, aiPrompt, minConfidence, unlockDate } = (body ?? {}) as {
+		const { description, aiPrompt, minConfidence, unlockDate, groupIds } = (body ?? {}) as {
 			description?: unknown;
 			aiPrompt?: unknown;
 			minConfidence?: unknown;
 			unlockDate?: unknown;
+			groupIds?: unknown;
 		};
 
 		if (typeof description !== 'string' || typeof aiPrompt !== 'string') {
@@ -77,7 +94,16 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 			return json({ error: 'unlockDate is required and must be a valid date' }, { status: 400 });
 		}
 
-		const { tasks } = schema;
+		if (!Array.isArray(groupIds) || groupIds.length === 0) {
+			return json({ error: 'groupIds is required and must be a non-empty array' }, { status: 400 });
+		}
+
+		const validGroupIds = groupIds.filter((id) => typeof id === 'string' && id.trim());
+		if (validGroupIds.length === 0) {
+			return json({ error: 'At least one valid groupId is required' }, { status: 400 });
+		}
+
+		const { tasks, taskGroups } = schema;
 		const [created] = await db
 			.insert(tasks)
 			.values({
@@ -87,6 +113,14 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 				unlockDate: unlock
 			})
 			.returning();
+
+		// Create task-group associations
+		const taskGroupValues = validGroupIds.map((groupId) => ({
+			taskId: created.id,
+			groupId: groupId as string
+		}));
+
+		await db.insert(taskGroups).values(taskGroupValues);
 
 		return json({ task: created }, { status: 201 });
 	} catch (error) {

@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Add My Submissions page with submission history and refactor submission components
+- Add ability to backup and restore database with CLI commands
+- Add ability to assign tasks to one or many groups
 
 ### Changed
 

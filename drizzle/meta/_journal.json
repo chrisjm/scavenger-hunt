@@ -22,6 +22,13 @@
       "when": 1766020030241,
       "tag": "0002_mighty_microchip",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1766519945660,
+      "tag": "0003_even_fenris",
+      "breakpoints": true
     }
   ]
 }
