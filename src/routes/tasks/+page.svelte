@@ -38,6 +38,15 @@
 	let userSubmissions = $derived(submissions.filter((sub) => sub.userId === userId));
 	let approvedUserSubmissions = $derived(userSubmissions.filter((sub) => sub.valid));
 	let completedTaskIds = $derived(new Set(approvedUserSubmissions.map((sub) => sub.taskId)));
+	let totalPoints = $derived(
+		userSubmissions.reduce(
+			(sum, sub) => sum + (Number.isFinite(sub.totalScore) ? sub.totalScore : 0),
+			0
+		)
+	);
+	let averageScore = $derived(
+		userSubmissions.length > 0 ? Math.round(totalPoints / userSubmissions.length) : 0
+	);
 	let completionRate = $derived(
 		unlockedTasks.length > 0 ? Math.round((completedTaskIds.size / unlockedTasks.length) * 100) : 0
 	);
@@ -107,6 +116,8 @@
 				{completionRate}
 				approvedSubmissions={approvedUserSubmissions.length}
 				totalSubmissions={userSubmissions.length}
+				{totalPoints}
+				{averageScore}
 			/>
 		</div>
 

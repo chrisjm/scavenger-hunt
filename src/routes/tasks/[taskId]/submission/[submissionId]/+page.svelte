@@ -18,8 +18,13 @@
 		taskId: number;
 		photoId: string;
 		aiMatch: boolean;
-		aiConfidence: number;
-		aiReasoning: string;
+		totalScore: number;
+		scoreBreakdown: {
+			accuracy: number;
+			composition: number;
+			vibe: number;
+		};
+		aiComment: string;
 		valid: boolean;
 		submittedAt: string;
 		imagePath: string;
@@ -230,16 +235,31 @@
 						>
 							AI Judge Feedback
 						</h2>
-						<div class="rounded-lg bg-gray-50 p-4 dark:bg-slate-900">
-							<p class="text-gray-700 leading-relaxed dark:text-slate-200">
-								<span class="font-medium">"{submission.aiReasoning}"</span>
-							</p>
-							<div
-								class="mt-3 flex items-center justify-between text-sm text-gray-500 dark:text-slate-400"
-							>
-								<span>Confidence: {Math.round((submission.aiConfidence || 0) * 100)}%</span>
-								<span>Submitted {formatSubmittedAt(submission.submittedAt)}</span>
+						<div class="rounded-lg bg-gray-50 p-5 space-y-4 dark:bg-slate-900">
+							<div class="flex flex-wrap items-center gap-3">
+								<p class="text-xl font-semibold text-emerald-700 dark:text-emerald-200">
+									Score: {submission.totalScore} pts
+								</p>
+								<div
+									class="flex flex-wrap gap-2 text-xs font-semibold text-gray-600 dark:text-slate-300"
+								>
+									<div class="rounded-full bg-gray-100 px-3 py-1 dark:bg-slate-800/70">
+										Accuracy {submission.scoreBreakdown.accuracy}
+									</div>
+									<div class="rounded-full bg-gray-100 px-3 py-1 dark:bg-slate-800/70">
+										Composition {submission.scoreBreakdown.composition}
+									</div>
+									<div class="rounded-full bg-gray-100 px-3 py-1 dark:bg-slate-800/70">
+										Vibe {submission.scoreBreakdown.vibe}
+									</div>
+								</div>
 							</div>
+							<p class="text-gray-700 leading-relaxed dark:text-slate-200">
+								<span class="font-medium">"{submission.aiComment}"</span>
+							</p>
+							<p class="text-sm text-gray-500 dark:text-slate-400">
+								Submitted {formatSubmittedAt(submission.submittedAt)}
+							</p>
 						</div>
 					</div>
 
@@ -409,18 +429,7 @@
 						AI Judge Feedback
 					</h2>
 					<div class="rounded-lg bg-gray-50 p-4 dark:bg-slate-900">
-						<p class="text-gray-700 leading-relaxed dark:text-slate-200">
-							<span class="font-medium">"{submission?.aiReasoning}"</span>
-						</p>
-						<div
-							class="mt-3 flex items-center justify-between text-sm text-gray-500 dark:text-slate-400"
-						>
-							<span>Confidence: {Math.round((submission?.aiConfidence || 0) * 100)}%</span>
-							<span>
-								Submitted at:
-								{submission ? formatSubmittedAt(submission.submittedAt) : 'Unknown'}
-							</span>
-						</div>
+						<p class="text-gray-700 leading-relaxed dark:text-slate-200">Awaiting judge results…</p>
 					</div>
 				</div>
 

@@ -62,19 +62,49 @@
 					</div>
 				</div>
 
-				<div class="bg-white/60 rounded-lg p-3 mb-2 dark:bg-slate-900/70">
-					<p class="text-sm text-gray-700 italic leading-relaxed dark:text-slate-200">
-						<span class="font-medium text-gray-600 dark:text-slate-300">AI Judge:</span>
-						"{submission.aiReasoning}"
+				<div class="bg-white/70 rounded-lg p-3 mb-2 space-y-2 dark:bg-slate-900/70">
+					<div class="flex items-center justify-between">
+						<p class="text-sm font-semibold text-emerald-700 dark:text-emerald-200">
+							AI Judge Score
+						</p>
+						<span
+							class="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-100"
+						>
+							<span aria-hidden="true">🏅</span>
+							{submission.totalScore} pts
+						</span>
+					</div>
+					<p class="text-sm text-gray-700 leading-relaxed dark:text-slate-200">
+						"{submission.aiComment}"
 					</p>
+					<div
+						class="grid grid-cols-3 gap-2 text-center text-xs font-semibold text-gray-600 dark:text-slate-300"
+					>
+						<div class="rounded-lg bg-gray-100 px-2 py-1 dark:bg-slate-800/70">
+							<span class="block text-[10px] uppercase tracking-widest text-gray-500">Accuracy</span
+							>
+							{submission.scoreBreakdown.accuracy}
+						</div>
+						<div class="rounded-lg bg-gray-100 px-2 py-1 dark:bg-slate-800/70">
+							<span class="block text-[10px] uppercase tracking-widest text-gray-500"
+								>Composition</span
+							>
+							{submission.scoreBreakdown.composition}
+						</div>
+						<div class="rounded-lg bg-gray-100 px-2 py-1 dark:bg-slate-800/70">
+							<span class="block text-[10px] uppercase tracking-widest text-gray-500">Vibe</span>
+							{submission.scoreBreakdown.vibe}
+						</div>
+					</div>
 				</div>
 
 				<div class="flex items-center justify-between text-xs text-gray-500 dark:text-slate-400">
-					<span class="flex items-center gap-1">
-						<span class="w-2 h-2 rounded-full bg-blue-400 dark:bg-blue-300"></span>
-						<span>Confidence: {Math.round((submission.aiConfidence || 0) * 100)}%</span>
+					<span class="font-semibold text-gray-600 dark:text-slate-300">
+						Total: {submission.totalScore} pts
 					</span>
-					<span>{formatRelativeOrDate(submission.submittedAt)}</span>
+					<span class="flex items-center gap-1">
+						<span>{formatRelativeOrDate(submission.submittedAt)}</span>
+					</span>
 				</div>
 			</div>
 		</div>

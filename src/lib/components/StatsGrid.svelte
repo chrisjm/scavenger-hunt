@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { TrendingUp, CheckCircle, Activity } from 'lucide-svelte';
+	import { TrendingUp, CheckCircle, Activity, Award } from 'lucide-svelte';
 
 	interface Props {
 		loading: boolean;
@@ -8,6 +8,8 @@
 		completionRate: number;
 		approvedSubmissions: number;
 		totalSubmissions: number;
+		totalPoints: number;
+		averageScore: number;
 	}
 
 	let {
@@ -16,14 +18,16 @@
 		unlockedTasks,
 		completionRate,
 		approvedSubmissions,
-		totalSubmissions
+		totalSubmissions,
+		totalPoints,
+		averageScore
 	}: Props = $props();
 </script>
 
 {#if !loading && totalTasks > 0}
-	<div class="grid grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4 mb-6 md:mb-8">
+	<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-6 md:mb-8">
 		<div
-			class="bg-white rounded-xl p-4 shadow-md border border-gray-100 col-span-2 lg:col-span-1 dark:bg-slate-900 dark:border-slate-700"
+			class="bg-white rounded-xl p-4 shadow-md border border-gray-100 dark:bg-slate-900 dark:border-slate-700"
 		>
 			<div class="flex items-center gap-2 mb-2">
 				<TrendingUp size={20} class="text-blue-600 dark:text-blue-400" />
@@ -36,6 +40,19 @@
 					class="bg-blue-600 h-2 rounded-full transition-all duration-500 dark:bg-blue-500"
 					style="width: {completionRate}%"
 				></div>
+			</div>
+		</div>
+
+		<div
+			class="bg-white rounded-xl p-4 shadow-md border border-gray-100 dark:bg-slate-900 dark:border-slate-700"
+		>
+			<div class="flex items-center gap-2 mb-2">
+				<Award size={20} class="text-amber-600 dark:text-amber-400" />
+				<span class="text-sm font-medium text-gray-600 dark:text-slate-300">Total Points</span>
+			</div>
+			<div class="text-2xl font-bold text-amber-600 dark:text-amber-400">{totalPoints}</div>
+			<div class="text-xs text-gray-500 dark:text-slate-400">
+				Avg {averageScore} pts / submission
 			</div>
 		</div>
 
