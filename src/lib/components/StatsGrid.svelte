@@ -25,7 +25,7 @@
 </script>
 
 {#if !loading && totalTasks > 0}
-	<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-6 md:mb-8">
+	<div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-6 md:mb-8">
 		<div
 			class="bg-white rounded-xl p-4 shadow-md border border-gray-100 dark:bg-slate-900 dark:border-slate-700"
 		>
