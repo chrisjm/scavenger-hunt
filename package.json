@@ -26,6 +26,7 @@
 		"db:backup": "node scripts/db-backup.js backup",
 		"db:restore": "node scripts/db-backup.js restore",
 		"db:backup:list": "node scripts/db-backup.js list",
+		"db:backfill": "tsx scripts/backfill-scores.ts",
 		"setup": "node scripts/setup-env.js"
 	},
 	"devDependencies": {
@@ -53,6 +54,7 @@
 		"svelte": "^5.43.8",
 		"svelte-check": "^4.3.4",
 		"tailwindcss": "^4.1.17",
+		"tsx": "^4.21.0",
 		"typescript": "^5.9.3",
 		"typescript-eslint": "^8.47.0",
 		"vite": "^7.2.2",
