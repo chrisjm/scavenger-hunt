@@ -16,6 +16,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Updated scoring system to use AI for scoring and added a score breakdown.
+
 ### Fixed
 
 - Fix image rotation and filetype
