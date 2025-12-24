@@ -28,8 +28,13 @@ export interface SubmissionListItem {
 	taskDescription: string;
 	imagePath: string;
 	valid: boolean;
-	aiReasoning: string;
-	aiConfidence: number;
+	aiComment: string;
+	totalScore: number;
+	scoreBreakdown: {
+		accuracy: number;
+		composition: number;
+		vibe: number;
+	};
 	submittedAt: string;
 	taskId: number;
 	groupId?: string;

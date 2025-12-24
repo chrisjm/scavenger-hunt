@@ -5,6 +5,7 @@ import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { and, eq } from 'drizzle-orm';
 import { db, schema } from '$lib/server/db';
+import { normalizeSubmissionRow } from '$lib/server/submissions/scoring';
 
 export const GET: RequestHandler = async ({ params, url, locals }) => {
 	try {
@@ -41,6 +42,9 @@ export const GET: RequestHandler = async ({ params, url, locals }) => {
 				aiConfidence: submissions.aiConfidence,
 				aiReasoning: submissions.aiReasoning,
 				valid: submissions.valid,
+				totalScore: submissions.totalScore,
+				scoreBreakdown: submissions.scoreBreakdown,
+				aiComment: submissions.aiComment,
 				submittedAt: submissions.submittedAt,
 				taskDescription: tasks.description,
 				userName: userProfiles.displayName,
@@ -52,7 +56,7 @@ export const GET: RequestHandler = async ({ params, url, locals }) => {
 			.innerJoin(photos, eq(submissions.photoId, photos.id))
 			.where(and(...conditions));
 
-		return json(userSubmissions);
+		return json(userSubmissions.map(normalizeSubmissionRow));
 	} catch (error) {
 		console.error('Error fetching user submissions (SvelteKit):', error);
 		return json({ error: 'Failed to fetch user submissions' }, { status: 500 });

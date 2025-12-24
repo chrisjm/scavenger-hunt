@@ -68,6 +68,9 @@ export const submissions = sqliteTable('submissions', {
 	aiMatch: integer('ai_match', { mode: 'boolean' }),
 	aiConfidence: real('ai_confidence'),
 	aiReasoning: text('ai_reasoning'),
+	totalScore: integer('total_score'),
+	scoreBreakdown: text('score_breakdown'),
+	aiComment: text('ai_comment'),
 	valid: integer('valid', { mode: 'boolean' }).default(false),
 	submittedAt: integer('submitted_at', { mode: 'timestamp' }).$defaultFn(() => new Date())
 });
