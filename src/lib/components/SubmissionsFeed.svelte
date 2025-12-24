@@ -1,20 +1,10 @@
 <script lang="ts">
 	import SubmissionsList from './SubmissionsList.svelte';
 
-	interface Submission {
-		id: string;
-		userName: string;
-		taskDescription: string;
-		imagePath: string;
-		valid: boolean;
-		aiReasoning: string;
-		aiConfidence: number;
-		submittedAt: string;
-		taskId: number;
-	}
+	import type { SubmissionListItem } from '$lib/types/submission';
 
 	interface Props {
-		submissions: Submission[];
+		submissions: SubmissionListItem[];
 	}
 
 	let { submissions }: Props = $props();

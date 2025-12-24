@@ -4,6 +4,7 @@
 	import StatsGrid from '$lib/components/StatsGrid.svelte';
 	import TaskGrid from '$lib/components/TaskGrid.svelte';
 	import TabbedView from '$lib/components/TabbedView.svelte';
+	import type { SubmissionListItem } from '$lib/types/submission';
 	import { getUserContext } from '$lib/stores/user';
 
 	// Get user context from layout
@@ -18,19 +19,6 @@
 		unlockDate: string;
 	}
 
-	interface Submission {
-		id: string;
-		userId: string;
-		taskId: number;
-		valid: boolean;
-		userName: string;
-		taskDescription: string;
-		imagePath: string;
-		aiReasoning: string;
-		aiConfidence: number;
-		submittedAt: string;
-	}
-
 	interface LeaderboardEntry {
 		name: string;
 		score: number;
@@ -39,7 +27,7 @@
 	// State
 	let loading = $state(true);
 	let tasks = $state<Task[]>([]);
-	let submissions = $state<Submission[]>([]);
+	let submissions = $state<SubmissionListItem[]>([]);
 	let leaderboard = $state<LeaderboardEntry[]>([]);
 	let leaderboardLoading = $state(false);
 	// Group selection handled on /groups/select
@@ -73,7 +61,7 @@
 		try {
 			const response = await fetch(`/api/submissions?groupId=${activeGroupId}`);
 			if (response.ok) {
-				submissions = await response.json();
+				submissions = (await response.json()) as SubmissionListItem[];
 			}
 		} catch (error) {
 			console.error('Failed to load submissions:', error);

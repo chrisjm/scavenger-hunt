@@ -2,21 +2,7 @@
 	import Leaderboard from './Leaderboard.svelte';
 	import ReactionBar from './ReactionBar.svelte';
 	import { formatRelativeOrDate } from '$lib/utils/date';
-	import type { ReactionSummary } from '$lib/types/submission';
-
-	interface Submission {
-		id: string;
-		userName: string;
-		taskDescription: string;
-		imagePath: string;
-		valid: boolean;
-		aiReasoning: string;
-		aiConfidence: number;
-		submittedAt: string;
-		reactions?: ReactionSummary[];
-		viewerReactionEmojis?: string[];
-		availableReactionEmojis?: string[];
-	}
+	import type { SubmissionListItem } from '$lib/types/submission';
 
 	interface LeaderboardEntry {
 		name: string;
@@ -24,7 +10,7 @@
 	}
 
 	interface Props {
-		submissions: Submission[];
+		submissions: SubmissionListItem[];
 		leaderboard: LeaderboardEntry[];
 		leaderboardLoading: boolean;
 	}
