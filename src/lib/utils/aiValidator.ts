@@ -156,17 +156,29 @@ function buildFailureResult(reason: string): AiValidationResult {
 	};
 }
 
-export function normalizeJudgeResponse(payload: RawJudgeResponse): AiValidationResult {
-	if (!payload || typeof payload !== 'object') {
+function ensureNumber(value: unknown): number {
+	if (typeof value !== 'number' || Number.isNaN(value)) {
 		throw new Error('Invalid AI response structure');
 	}
 
-	const breakdown = payload.breakdown ?? {};
-	const accuracy = clamp(Number(breakdown.accuracy ?? 0), 0, 50);
-	const composition = clamp(Number(breakdown.composition ?? 0), 0, 25);
-	const vibe = clamp(Number(breakdown.vibe ?? 0), 0, 25);
+	return value;
+}
 
-	let totalScore = clamp(Number(payload.score ?? 0), 0, 100);
+export function normalizeJudgeResponse(payload: RawJudgeResponse): AiValidationResult {
+	if (!payload || typeof payload !== 'object' || payload === null) {
+		throw new Error('Invalid AI response structure');
+	}
+
+	const rawBreakdown = payload.breakdown;
+	if (!rawBreakdown || typeof rawBreakdown !== 'object') {
+		throw new Error('Invalid AI response structure');
+	}
+
+	const accuracy = clamp(ensureNumber(rawBreakdown.accuracy), 0, 50);
+	const composition = clamp(ensureNumber(rawBreakdown.composition), 0, 25);
+	const vibe = clamp(ensureNumber(rawBreakdown.vibe), 0, 25);
+
+	let totalScore = clamp(ensureNumber(payload.score), 0, 100);
 	let isApproved =
 		typeof payload.isApproved === 'boolean'
 			? payload.isApproved

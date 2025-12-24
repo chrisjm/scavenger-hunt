@@ -48,7 +48,7 @@ describe('normalizeJudgeResponse', () => {
         score: 'not-a-number',
         comment: 42
       } as unknown as Record<string, unknown>)
-    ).toThrowErrorMatchingInlineSnapshot('"Invalid AI response structure"');
+    ).toThrowError('Invalid AI response structure');
   });
 });
 
