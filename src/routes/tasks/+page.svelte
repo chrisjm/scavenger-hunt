@@ -111,12 +111,6 @@
 	class="min-h-screen bg-gradient-to-br from-green-50 via-white to-red-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950"
 >
 	<div class="container mx-auto max-w-4xl p-4 md:p-6">
-		<div class="relative mb-6 text-center md:mb-8">
-			<p class="mx-auto max-w-2xl px-4 text-lg text-gray-600 md:text-xl dark:text-slate-300">
-				Find festive items, snap a photo, or choose one from your library to complete the challenge!
-			</p>
-		</div>
-
 		<div class="mb-6 md:mb-8">
 			<StatsGrid
 				{loading}
