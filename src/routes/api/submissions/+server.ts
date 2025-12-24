@@ -366,7 +366,12 @@ export const _GET_leaderboard: RequestHandler = async ({ url, locals }) => {
 			.groupBy(userProfiles.id, userProfiles.displayName)
 			.orderBy(desc(score), asc(earliest));
 
-		return json(leaderboard.map(({ earliest: _earliest, ...rest }) => rest));
+		return json(
+			leaderboard.map(({ earliest, ...rest }) => {
+				void earliest;
+				return rest;
+			})
+		);
 	} catch (error) {
 		console.error('Error fetching leaderboard (SvelteKit):', error);
 		return json({ error: 'Failed to fetch leaderboard' }, { status: 500 });
