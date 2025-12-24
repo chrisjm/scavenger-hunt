@@ -114,12 +114,5 @@
 				<span class="text-xs font-semibold">{reaction.count}</span>
 			</button>
 		{/each}
-
-		<a
-			class="ml-auto text-xs font-semibold text-blue-600 dark:text-blue-300 hover:underline"
-			href={`/submissions/${submissionId}/reactions`}
-		>
-			View all reactions
-		</a>
 	</div>
 </div>

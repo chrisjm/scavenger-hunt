@@ -6,7 +6,8 @@
 	import { Trash2, RotateCcw } from 'lucide-svelte';
 	import { getUserContext } from '$lib/stores/user';
 	import { formatRelativeOrDate, formatSubmittedAt } from '$lib/utils/date';
-	import type { ReactionDetailEntry } from '$lib/types/submission';
+	import type { ReactionDetailEntry, ReactionSummary } from '$lib/types/submission';
+	import ReactionBar from '$lib/components/ReactionBar.svelte';
 
 	const userContext = getUserContext();
 	let userId = $derived(userContext.userId);
@@ -33,6 +34,9 @@
 			if (!res.ok) throw new Error(data.error || 'Failed to load reactions');
 			reactions = data.reactions ?? [];
 			viewerReactions = data.viewerReactions ?? [];
+			if (Array.isArray(data.availableEmojis)) {
+				availableEmojis = data.availableEmojis;
+			}
 		} catch (error) {
 			console.error('Failed to load reaction details:', error);
 			reactionsError = error instanceof Error ? error.message : 'Failed to load reactions';
@@ -54,11 +58,20 @@
 	let removing = $state(false);
 	let reactions = $state<ReactionDetailEntry[]>([]);
 	let viewerReactions = $state<string[]>([]);
+	let availableEmojis = $state<string[]>([]);
 	let reactionsLoading = $state(false);
 	let reactionsError = $state<string | null>(null);
 
 	const viewerReactionSet = $derived.by(() => new Set(viewerReactions));
 	const totalReactions = $derived.by(() => reactions.reduce((sum, entry) => sum + entry.count, 0));
+	const reactionSummaries = $derived.by<ReactionSummary[]>(() =>
+		reactions.map((reaction) => ({
+			emoji: reaction.emoji,
+			count: reaction.count,
+			viewerHasReacted: reaction.viewerHasReacted,
+			sampleReactors: reaction.reactors.slice(0, 3)
+		}))
+	);
 
 	onMount(() => {
 		loadData();
@@ -202,6 +215,13 @@
 								</div>
 							</div>
 						</div>
+
+						<ReactionBar
+							submissionId={submission.id}
+							reactions={reactionSummaries}
+							viewerReactionEmojis={viewerReactions}
+							{availableEmojis}
+						/>
 					</div>
 
 					<div>

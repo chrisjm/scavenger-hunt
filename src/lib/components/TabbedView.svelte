@@ -1,6 +1,8 @@
 <script lang="ts">
 	import Leaderboard from './Leaderboard.svelte';
+	import ReactionBar from './ReactionBar.svelte';
 	import { formatRelativeOrDate } from '$lib/utils/date';
+	import type { ReactionSummary } from '$lib/types/submission';
 
 	interface Submission {
 		id: string;
@@ -11,6 +13,9 @@
 		aiReasoning: string;
 		aiConfidence: number;
 		submittedAt: string;
+		reactions?: ReactionSummary[];
+		viewerReactionEmojis?: string[];
+		availableReactionEmojis?: string[];
 	}
 
 	interface LeaderboardEntry {
@@ -202,6 +207,13 @@
 											</span>
 											<span>{formatRelativeOrDate(submission.submittedAt)}</span>
 										</div>
+
+										<ReactionBar
+											submissionId={submission.id}
+											reactions={submission.reactions ?? []}
+											viewerReactionEmojis={submission.viewerReactionEmojis ?? []}
+											availableEmojis={submission.availableReactionEmojis ?? []}
+										/>
 									</div>
 								</div>
 							</div>
