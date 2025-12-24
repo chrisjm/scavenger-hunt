@@ -1,8 +1,8 @@
 <script lang="ts">
+	import { browser } from '$app/environment';
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
-	import { onMount } from 'svelte';
 	import { Trash2, RotateCcw } from 'lucide-svelte';
 	import { getUserContext } from '$lib/stores/user';
 	import { formatRelativeOrDate, formatSubmittedAt } from '$lib/utils/date';
@@ -78,21 +78,23 @@
 		}))
 	);
 
-	onMount(() => {
-		loadData();
-	});
-
 	async function loadData() {
 		const taskIdParam = page.params.taskId;
 		const submissionId = page.params.submissionId;
 		const taskId = Number(taskIdParam);
+		const groupId = activeGroupId;
 
 		if (!Number.isFinite(taskId) || !submissionId) {
 			goto(resolve('/tasks'));
 			return;
 		}
 
+		if (!groupId) {
+			return;
+		}
+
 		try {
+			loading = true;
 			// Load all tasks and find the one we need
 			const taskRes = await fetch('/api/tasks');
 			if (taskRes.ok) {
@@ -100,13 +102,8 @@
 				task = tasks.find((t) => t.id === taskId) ?? null;
 			}
 
-			if (!activeGroupId) {
-				goto(resolve('/tasks'));
-				return;
-			}
-
 			// Load submissions for the current group and find the one we need
-			const subRes = await fetch(`/api/submissions/all?groupId=${activeGroupId}`);
+			const subRes = await fetch(`/api/submissions/all?groupId=${groupId}`);
 			if (subRes.ok) {
 				const subs: Submission[] = await subRes.json();
 				submission = subs.find((s) => s.id === submissionId) ?? null;
@@ -123,6 +120,12 @@
 			loading = false;
 		}
 	}
+
+	$effect(() => {
+		if (!browser) return;
+		if (!activeGroupId) return;
+		loadData();
+	});
 
 	async function handleRemove() {
 		if (!submission || !userId) return;
