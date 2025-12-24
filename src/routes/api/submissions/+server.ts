@@ -9,6 +9,10 @@ import { ensureGroupAccess } from '$lib/server/groupAccess';
 import { extractKeyFromUrl, fetchObjectBuffer } from '$lib/utils/s3';
 import { validateImageWithAI, isSubmissionValid } from '$lib/utils/aiValidator';
 import { REACTION_EMOJIS } from '$lib/server/reactions/reactionService';
+import {
+	parseScoreBreakdown,
+	normalizeSubmissionRow
+} from '$lib/server/submissions/scoring';
 
 const MAX_INLINE_REACTORS = 3;
 
@@ -180,7 +184,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 			console.error('AI validation failed:', aiError);
 			return json({ error: 'AI validation failed' }, { status: 500 });
 		}
-		const valid = isSubmissionValid(aiResponse, task);
+		const valid = isSubmissionValid(aiResponse);
 
 		// 4. Record submission (keep history)
 		const [submission] = await db
@@ -190,9 +194,12 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 				groupId,
 				taskId,
 				photoId,
-				aiMatch: aiResponse.match,
-				aiConfidence: aiResponse.confidence,
-				aiReasoning: aiResponse.reasoning,
+				aiMatch: valid,
+				aiConfidence: null,
+				aiReasoning: aiResponse.aiComment,
+				totalScore: aiResponse.totalScore,
+				scoreBreakdown: JSON.stringify(aiResponse.breakdown),
+				aiComment: aiResponse.aiComment,
 				valid
 			})
 			.returning();

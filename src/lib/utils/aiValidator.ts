@@ -21,15 +21,31 @@ if (!GEMINI_API_KEY && isCI) {
 const genAI = GEMINI_API_KEY ? new GoogleGenerativeAI(GEMINI_API_KEY) : null;
 
 export interface AiValidationResult {
-	match: boolean;
-	confidence: number;
-	reasoning: string;
+	totalScore: number;
+	breakdown: {
+		accuracy: number;
+		composition: number;
+		vibe: number;
+	};
+	aiComment: string;
+	isApproved: boolean;
 }
 
 interface TaskLike {
 	aiPrompt: string;
-	minConfidence: number;
 }
+
+type RawJudgeResponse = {
+	score?: unknown;
+	breakdown?: {
+		accuracy?: unknown;
+		composition?: unknown;
+		vibe?: unknown;
+	};
+	is_approved?: unknown;
+	isApproved?: unknown;
+	comment?: unknown;
+};
 
 /**
  * Validates an image against a task using Gemini AI.
@@ -56,21 +72,39 @@ export async function validateImageWithAI(
 		const imageBase64 = imageBuffer.toString('base64');
 
 		const prompt = `
-Role: You are a strict scavenger hunt judge.
-Task: Verify if the image contains: ${task.aiPrompt}
+### ROLE
+You are the "Holiday Huntmaster," a witty, spirited, and slightly sarcastic AI judge for a Scavenger Hunt game.
 
-Instructions:
-- Analyze the image carefully for the requested item
-- Be strict but fair in your assessment
-- Consider lighting, clarity, and prominence of the item
-- Return confidence as a decimal between 0.0 and 1.0
-- Provide brief, helpful reasoning
+### GOAL
+Analyze the user's photo against the task description. Output a JSON object with a score (0-100) and commentary.
 
-Output: Return JSON only with this exact format:
+### TASK DESCRIPTION
+${task.aiPrompt}
+
+### SCORING ALGORITHM
+1. ACCURACY (Max 50 pts):
+   - 0 pts: Item missing/unrelated.
+   - 25 pts: Item present but debatable/hard to see.
+   - 50 pts: Item clearly visible.
+   CRITICAL: If Accuracy is 0, Total Score must be 0.
+
+2. COMPOSITION (Max 25 pts):
+   - Reward good lighting, framing, and focus.
+   - Deduct for blurry/dark photos.
+
+3. THE VIBE (Max 25 pts):
+   - Bonus for creativity, humor, and local flavor.
+
+### OUTPUT FORMAT (JSON ONLY)
 {
-  "match": true/false,
-  "confidence": 0.0-1.0,
-  "reasoning": "brief explanation"
+  "score": integer,
+  "breakdown": {
+    "accuracy": integer,
+    "composition": integer,
+    "vibe": integer
+  },
+  "is_approved": boolean, // true if accuracy >= 25
+  "comment": "string"
 }
 		`.trim();
 
@@ -88,38 +122,83 @@ Output: Return JSON only with this exact format:
 		const text = response.text();
 
 		try {
-			const aiResponse = JSON.parse(text) as Partial<AiValidationResult>;
-
-			if (
-				typeof aiResponse.match !== 'boolean' ||
-				typeof aiResponse.confidence !== 'number' ||
-				typeof aiResponse.reasoning !== 'string'
-			) {
-				throw new Error('Invalid AI response structure');
-			}
-
-			// Clamp confidence between 0 and 1
-			aiResponse.confidence = Math.max(0, Math.min(1, aiResponse.confidence));
-
-			return aiResponse as AiValidationResult;
-		} catch {
-			console.error('Failed to parse AI response:', text);
-			throw new Error('AI returned invalid JSON response');
+			const aiResponse = JSON.parse(text) as RawJudgeResponse;
+			return normalizeJudgeResponse(aiResponse);
+		} catch (parseError) {
+			console.error('Failed to parse AI response:', text, parseError);
+			return buildFailureResult('AI returned invalid JSON response');
 		}
 	} catch (error) {
 		console.error('AI validation error:', error);
-
-		return {
-			match: false,
-			confidence: 0,
-			reasoning: `AI validation failed: ${error instanceof Error ? error.message : 'Unknown error'}`
-		};
+		return buildFailureResult(
+			`AI validation failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+		);
 	}
 }
 
+const DEFAULT_BREAKDOWN = Object.freeze({
+	accuracy: 0,
+	composition: 0,
+	vibe: 0
+});
+const FALLBACK_COMMENT = 'The judges are confused. Please try again.';
+
+function clamp(value: number, min: number, max: number) {
+	return Math.max(min, Math.min(max, value));
+}
+
+function buildFailureResult(reason: string): AiValidationResult {
+	return {
+		totalScore: 0,
+		breakdown: { ...DEFAULT_BREAKDOWN },
+		aiComment: reason || FALLBACK_COMMENT,
+		isApproved: false
+	};
+}
+
+export function normalizeJudgeResponse(payload: RawJudgeResponse): AiValidationResult {
+	if (!payload || typeof payload !== 'object') {
+		throw new Error('Invalid AI response structure');
+	}
+
+	const breakdown = payload.breakdown ?? {};
+	const accuracy = clamp(Number(breakdown.accuracy ?? 0), 0, 50);
+	const composition = clamp(Number(breakdown.composition ?? 0), 0, 25);
+	const vibe = clamp(Number(breakdown.vibe ?? 0), 0, 25);
+
+	let totalScore = clamp(Number(payload.score ?? 0), 0, 100);
+	let isApproved =
+		typeof payload.isApproved === 'boolean'
+			? payload.isApproved
+			: typeof payload.is_approved === 'boolean'
+				? payload.is_approved
+				: accuracy >= 25;
+
+	if (accuracy === 0) {
+		totalScore = 0;
+		isApproved = false;
+	}
+
+	const aiComment =
+		typeof payload.comment === 'string' && payload.comment.trim()
+			? payload.comment.trim()
+			: FALLBACK_COMMENT;
+
+	return {
+		totalScore,
+		breakdown: {
+			accuracy,
+			composition,
+			vibe
+		},
+		aiComment,
+		isApproved
+	};
+}
+
 /**
- * Determines if a submission is valid based on AI response and task requirements.
+ * Determines if a submission is valid based on AI response.
  */
-export function isSubmissionValid(aiResponse: AiValidationResult, task: TaskLike): boolean {
-	return aiResponse.match && aiResponse.confidence >= task.minConfidence;
+export function isSubmissionValid(aiResponse: AiValidationResult): boolean {
+	return aiResponse.isApproved;
 }
