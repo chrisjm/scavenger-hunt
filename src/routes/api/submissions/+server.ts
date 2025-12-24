@@ -9,10 +9,7 @@ import { ensureGroupAccess } from '$lib/server/groupAccess';
 import { extractKeyFromUrl, fetchObjectBuffer } from '$lib/utils/s3';
 import { validateImageWithAI, isSubmissionValid } from '$lib/utils/aiValidator';
 import { REACTION_EMOJIS } from '$lib/server/reactions/reactionService';
-import {
-	parseScoreBreakdown,
-	normalizeSubmissionRow
-} from '$lib/server/submissions/scoring';
+import { normalizeSubmissionRow } from '$lib/server/submissions/scoring';
 
 const MAX_INLINE_REACTORS = 3;
 
@@ -204,7 +201,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 			})
 			.returning();
 
-		return json({ success: true, submission });
+		return json({ success: true, submission: normalizeSubmissionRow(submission) });
 	} catch (error) {
 		console.error('Submission error (SvelteKit):', error);
 		return json({ error: 'Submission processing failed' }, { status: 500 });
@@ -246,6 +243,9 @@ export const GET: RequestHandler = async ({ url, locals }) => {
 				aiConfidence: submissions.aiConfidence,
 				aiReasoning: submissions.aiReasoning,
 				valid: submissions.valid,
+				totalScore: submissions.totalScore,
+				scoreBreakdown: submissions.scoreBreakdown,
+				aiComment: submissions.aiComment,
 				submittedAt: submissions.submittedAt,
 				taskDescription: tasks.description,
 				userName: userProfiles.displayName,
@@ -258,7 +258,8 @@ export const GET: RequestHandler = async ({ url, locals }) => {
 			.where(eq(submissions.groupId, groupId))
 			.orderBy(desc(submissions.submittedAt));
 
-		const hydrated = await attachReactionSummaries(submissionsQuery, authUser.userId);
+		const normalized = submissionsQuery.map(normalizeSubmissionRow);
+		const hydrated = await attachReactionSummaries(normalized, authUser.userId);
 
 		return json(hydrated);
 	} catch (error) {
@@ -302,6 +303,9 @@ export const _GET_all: RequestHandler = async ({ url, locals }) => {
 				aiConfidence: submissions.aiConfidence,
 				aiReasoning: submissions.aiReasoning,
 				valid: submissions.valid,
+				totalScore: submissions.totalScore,
+				scoreBreakdown: submissions.scoreBreakdown,
+				aiComment: submissions.aiComment,
 				submittedAt: submissions.submittedAt,
 				taskDescription: tasks.description,
 				userName: userProfiles.displayName,
@@ -314,7 +318,8 @@ export const _GET_all: RequestHandler = async ({ url, locals }) => {
 			.where(eq(submissions.groupId, groupId))
 			.orderBy(desc(submissions.submittedAt));
 
-		const hydrated = await attachReactionSummaries(scopedSubmissions, authUser.userId);
+		const normalized = scopedSubmissions.map(normalizeSubmissionRow);
+		const hydrated = await attachReactionSummaries(normalized, authUser.userId);
 
 		return json(hydrated);
 	} catch (error) {
@@ -346,20 +351,22 @@ export const _GET_leaderboard: RequestHandler = async ({ url, locals }) => {
 		}
 
 		const { submissions, userProfiles } = schema;
-		const score = sql<number>`count(distinct ${submissions.taskId})`;
+		const score = sql<number>`coalesce(sum(${submissions.totalScore}), 0)`;
+		const earliest = sql<number>`min(${submissions.submittedAt})`;
 
 		const leaderboard = await db
 			.select({
 				name: userProfiles.displayName,
-				score
+				score,
+				earliest
 			})
 			.from(submissions)
 			.innerJoin(userProfiles, eq(submissions.userId, userProfiles.id))
 			.where(and(eq(submissions.valid, true), eq(submissions.groupId, groupId)))
 			.groupBy(userProfiles.id, userProfiles.displayName)
-			.orderBy(desc(score));
+			.orderBy(desc(score), asc(earliest));
 
-		return json(leaderboard);
+		return json(leaderboard.map(({ earliest: _earliest, ...rest }) => rest));
 	} catch (error) {
 		console.error('Error fetching leaderboard (SvelteKit):', error);
 		return json({ error: 'Failed to fetch leaderboard' }, { status: 500 });
