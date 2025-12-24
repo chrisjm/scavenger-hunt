@@ -56,3 +56,16 @@ export interface SubmissionReactionDetailPayload {
   viewerReactions: string[];
   availableEmojis: string[];
 }
+
+export interface ReactionAuditEvent {
+  id: string;
+  action: 'add' | 'remove';
+  emoji: string;
+  createdAt: string;
+  submissionId: string;
+  taskDescription: string;
+  submitterId: string;
+  submitterName: string;
+  reactorId: string;
+  reactorName: string;
+}

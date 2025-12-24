@@ -47,6 +47,17 @@
 					View users and manage admin access.
 				</div>
 			</button>
+
+			<button
+				type="button"
+				onclick={() => goto(resolve('/admin/reactions'))}
+				class="rounded-2xl bg-white p-6 text-left shadow-xl transition-transform hover:scale-[1.01] dark:bg-slate-900"
+			>
+				<div class="text-lg font-semibold text-gray-800 dark:text-slate-100">Reactions audit</div>
+				<div class="mt-2 text-sm text-gray-600 dark:text-slate-300">
+					Review emoji adds/removes across all submissions.
+				</div>
+			</button>
 		</div>
 	</div>
 </div>
