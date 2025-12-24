@@ -4,6 +4,7 @@
 	import StatsGrid from '$lib/components/StatsGrid.svelte';
 	import TaskGrid from '$lib/components/TaskGrid.svelte';
 	import TabbedView from '$lib/components/TabbedView.svelte';
+	import type { SubmissionListItem } from '$lib/types/submission';
 	import { getUserContext } from '$lib/stores/user';
 
 	// Get user context from layout
@@ -18,19 +19,6 @@
 		unlockDate: string;
 	}
 
-	interface Submission {
-		id: string;
-		userId: string;
-		taskId: number;
-		valid: boolean;
-		userName: string;
-		taskDescription: string;
-		imagePath: string;
-		aiReasoning: string;
-		aiConfidence: number;
-		submittedAt: string;
-	}
-
 	interface LeaderboardEntry {
 		name: string;
 		score: number;
@@ -39,7 +27,7 @@
 	// State
 	let loading = $state(true);
 	let tasks = $state<Task[]>([]);
-	let submissions = $state<Submission[]>([]);
+	let submissions = $state<SubmissionListItem[]>([]);
 	let leaderboard = $state<LeaderboardEntry[]>([]);
 	let leaderboardLoading = $state(false);
 	// Group selection handled on /groups/select
@@ -73,7 +61,7 @@
 		try {
 			const response = await fetch(`/api/submissions?groupId=${activeGroupId}`);
 			if (response.ok) {
-				submissions = await response.json();
+				submissions = (await response.json()) as SubmissionListItem[];
 			}
 		} catch (error) {
 			console.error('Failed to load submissions:', error);
@@ -111,12 +99,6 @@
 	class="min-h-screen bg-gradient-to-br from-green-50 via-white to-red-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950"
 >
 	<div class="container mx-auto max-w-4xl p-4 md:p-6">
-		<div class="relative mb-6 text-center md:mb-8">
-			<p class="mx-auto max-w-2xl px-4 text-lg text-gray-600 md:text-xl dark:text-slate-300">
-				Find festive items, snap a photo, or choose one from your library to complete the challenge!
-			</p>
-		</div>
-
 		<div class="mb-6 md:mb-8">
 			<StatsGrid
 				{loading}

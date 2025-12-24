@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
 	import SubmissionsList from '$lib/components/SubmissionsList.svelte';
+	import type { SubmissionListItem } from '$lib/types/submission';
 	import { getUserContext } from '$lib/stores/user';
 	import { Loader } from 'lucide-svelte';
 
@@ -9,19 +10,7 @@
 	const isAdmin = $derived(userContext.isAdmin);
 	const activeGroupId = $derived(userContext.activeGroupId);
 
-	interface Submission {
-		id: string;
-		userName: string;
-		taskDescription: string;
-		imagePath: string;
-		valid: boolean;
-		aiReasoning: string;
-		aiConfidence: number;
-		submittedAt: string;
-		taskId: number;
-	}
-
-	let submissions = $state<Submission[]>([]);
+	let submissions = $state<SubmissionListItem[]>([]);
 	let loading = $state(false);
 	let error = $state<string | null>(null);
 

@@ -1,5 +1,5 @@
 import crypto from 'node:crypto';
-import { integer, sqliteTable, text, real } from 'drizzle-orm/sqlite-core';
+import { integer, sqliteTable, text, real, index, uniqueIndex } from 'drizzle-orm/sqlite-core';
 import { relations } from 'drizzle-orm';
 
 export const userProfiles = sqliteTable('user_profiles', {
@@ -14,7 +14,9 @@ export const userProfiles = sqliteTable('user_profiles', {
 export const userProfilesRelations = relations(userProfiles, ({ many }) => ({
 	photos: many(photos),
 	submissions: many(submissions),
-	groups: many(userGroups)
+	groups: many(userGroups),
+	reactions: many(submissionReactions),
+	reactionEvents: many(submissionReactionEvents)
 }));
 
 export const photos = sqliteTable('photos', {
@@ -70,7 +72,7 @@ export const submissions = sqliteTable('submissions', {
 	submittedAt: integer('submitted_at', { mode: 'timestamp' }).$defaultFn(() => new Date())
 });
 
-export const submissionsRelations = relations(submissions, ({ one }) => ({
+export const submissionsRelations = relations(submissions, ({ one, many }) => ({
 	photo: one(photos, {
 		fields: [submissions.photoId],
 		references: [photos.id]
@@ -86,6 +88,78 @@ export const submissionsRelations = relations(submissions, ({ one }) => ({
 	group: one(groups, {
 		fields: [submissions.groupId],
 		references: [groups.id]
+	}),
+	reactions: many(submissionReactions),
+	reactionEvents: many(submissionReactionEvents)
+}));
+
+export const submissionReactions = sqliteTable(
+	'submission_reactions',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => crypto.randomUUID()),
+		submissionId: text('submission_id')
+			.notNull()
+			.references(() => submissions.id, { onDelete: 'cascade' }),
+		userId: text('user_id')
+			.notNull()
+			.references(() => userProfiles.id, { onDelete: 'cascade' }),
+		emoji: text('emoji').notNull(),
+		createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date())
+	},
+	(table) => ({
+		submissionUserEmojiUnique: uniqueIndex('submission_reactions_submission_user_emoji_unique').on(
+			table.submissionId,
+			table.userId,
+			table.emoji
+		),
+		submissionIdx: index('submission_reactions_submission_idx').on(table.submissionId),
+		userIdx: index('submission_reactions_user_idx').on(table.userId)
+	})
+);
+
+export const submissionReactionsRelations = relations(submissionReactions, ({ one }) => ({
+	submission: one(submissions, {
+		fields: [submissionReactions.submissionId],
+		references: [submissions.id]
+	}),
+	user: one(userProfiles, {
+		fields: [submissionReactions.userId],
+		references: [userProfiles.id]
+	})
+}));
+
+export const submissionReactionEvents = sqliteTable(
+	'submission_reaction_events',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => crypto.randomUUID()),
+		submissionId: text('submission_id')
+			.notNull()
+			.references(() => submissions.id, { onDelete: 'cascade' }),
+		userId: text('user_id')
+			.notNull()
+			.references(() => userProfiles.id, { onDelete: 'cascade' }),
+		emoji: text('emoji').notNull(),
+		action: text('action').notNull(),
+		createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date())
+	},
+	(table) => ({
+		submissionIdx: index('submission_reaction_events_submission_idx').on(table.submissionId),
+		userIdx: index('submission_reaction_events_user_idx').on(table.userId)
+	})
+);
+
+export const submissionReactionEventsRelations = relations(submissionReactionEvents, ({ one }) => ({
+	submission: one(submissions, {
+		fields: [submissionReactionEvents.submissionId],
+		references: [submissions.id]
+	}),
+	user: one(userProfiles, {
+		fields: [submissionReactionEvents.userId],
+		references: [userProfiles.id]
 	})
 }));
 

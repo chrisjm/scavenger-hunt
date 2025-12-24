@@ -6,6 +6,7 @@
 	import { Camera, Image as ImageIcon, Loader } from 'lucide-svelte';
 	import PhotoSelector from '$lib/components/PhotoSelector.svelte';
 	import SubmissionsList from '$lib/components/SubmissionsList.svelte';
+	import type { SubmissionListItem } from '$lib/types/submission';
 	import { getUserContext } from '$lib/stores/user';
 
 	const userContext = getUserContext();
@@ -23,22 +24,9 @@
 		id: string;
 	}
 
-	interface Submission {
-		id: string;
-		userId: string;
-		taskId: number;
-		userName: string;
-		taskDescription: string;
-		imagePath: string;
-		valid: boolean;
-		aiReasoning: string;
-		aiConfidence: number;
-		submittedAt: string;
-	}
-
 	let task = $state<Task | null>(null);
 	let loadingTask = $state(true);
-	let historySubmissions = $state<Submission[]>([]);
+	let historySubmissions = $state<SubmissionListItem[]>([]);
 	let loadingHistory = $state(false);
 	let historyError = $state<string | null>(null);
 
@@ -101,7 +89,7 @@
 				throw new Error(data.error || 'Failed to load submissions');
 			}
 
-			const all = (await response.json()) as Submission[];
+			const all = (await response.json()) as SubmissionListItem[];
 			historySubmissions = all.filter((sub) => sub.userId === userId && sub.taskId === taskId);
 		} catch (err) {
 			console.error('Failed to load submission history:', err);
