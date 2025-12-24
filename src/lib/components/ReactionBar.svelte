@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { getUserContext } from '$lib/stores/user';
+	import { SvelteMap, SvelteSet } from 'svelte/reactivity';
 	import type { ReactionSummary } from '$lib/types/submission';
 
 	interface Props {
@@ -18,17 +19,15 @@
 	let errorMessage: string | null = $state(null);
 
 	const reactionMap = $derived.by(() => {
-		const map = new Map<string, ReactionSummary>();
+		const map = new SvelteMap<string, ReactionSummary>();
 		for (const reaction of reactions) {
 			map.set(reaction.emoji, reaction);
 		}
 		return map;
 	});
 
-	let orderedEmojis = $state<ReactionSummary[]>([]);
-
-	$effect(() => {
-		orderedEmojis = availableEmojis.map((emoji) => {
+	const orderedEmojis = $derived.by(() =>
+		availableEmojis.map((emoji) => {
 			return (
 				reactionMap.get(emoji) ?? {
 					emoji,
@@ -37,11 +36,11 @@
 					sampleReactors: []
 				}
 			);
-		});
-	});
+		})
+	);
 
 	function optimisticUpdate(emoji: string, isAdding: boolean) {
-		const nextViewer = new Set(viewerReactionEmojis);
+		const nextViewer = new SvelteSet(viewerReactionEmojis);
 		if (isAdding) {
 			nextViewer.add(emoji);
 		} else {
@@ -115,4 +114,7 @@
 			</button>
 		{/each}
 	</div>
+	{#if errorMessage}
+		<p class="mt-2 text-sm text-red-600 dark:text-red-300">{errorMessage}</p>
+	{/if}
 </div>

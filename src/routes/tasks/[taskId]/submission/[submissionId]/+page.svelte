@@ -260,7 +260,7 @@
 								</h3>
 							</div>
 							<p class="text-sm text-gray-500 dark:text-slate-400">
-								{reactions.length} emoji {reactions.length === 1 ? 'reaction' : 'reactions'} • {totalReactions}{' '}
+								{reactions.length} emoji {reactions.length === 1 ? 'reaction' : 'reactions'} • {totalReactions}
 								total taps
 							</p>
 						</header>
@@ -344,8 +344,7 @@
 															reaction.reactors.length ===
 														1
 															? ''
-															: 's'}{' '}
-														not shown.
+															: 's'} not shown.
 													</p>
 												{/if}
 											{/if}

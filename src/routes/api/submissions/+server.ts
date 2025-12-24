@@ -12,8 +12,6 @@ import { REACTION_EMOJIS } from '$lib/server/reactions/reactionService';
 
 const MAX_INLINE_REACTORS = 3;
 
-type SubmissionRow = Awaited<ReturnType<typeof db.select>> extends Array<infer T> ? T : never;
-
 async function attachReactionSummaries<
 	T extends {
 		id: string;

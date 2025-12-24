@@ -1,6 +1,7 @@
 <!-- ABOUTME: Admin page to review reaction audit events with filtering and pagination. -->
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { SvelteURLSearchParams } from 'svelte/reactivity';
 	import { formatRelativeOrDate } from '$lib/utils/date';
 	import type { ReactionAuditEvent } from '$lib/types/submission';
 
@@ -24,7 +25,7 @@
 		loading = true;
 		error = null;
 		try {
-			const params = new URLSearchParams();
+			const params = new SvelteURLSearchParams();
 			params.set('perPage', '50');
 			if (cursor) params.set('cursor', cursor);
 			if (query.trim()) params.set('q', query.trim());
@@ -123,7 +124,7 @@
 						bind:value={emojiFilter}
 					>
 						<option value="all">All emojis</option>
-						{#each EMOJIS as emoji}
+						{#each EMOJIS as emoji (emoji)}
 							<option value={emoji}>{emoji}</option>
 						{/each}
 					</select>
