@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
+	import { getRoundedLocalDatetimeLocalString } from '$lib/utils/unlockDate';
 
 	type AdminTask = {
 		id: number;
@@ -45,6 +46,9 @@
 	let bulkSaving = $state(false);
 
 	onMount(() => {
+		if (!createUnlockDate) {
+			createUnlockDate = getRoundedLocalDatetimeLocalString();
+		}
 		loadGroups();
 		load();
 	});
@@ -350,21 +354,8 @@
 						id="createAiPrompt"
 					></textarea>
 				</div>
-				<div>
-					<label
-						for="createMinConfidence"
-						class="text-sm font-medium text-gray-700 dark:text-slate-200">Min Confidence</label
-					>
-					<input
-						type="number"
-						step="0.01"
-						min="0"
-						max="1"
-						class="mt-1 w-full rounded-xl border border-gray-200 bg-white p-3 text-sm text-gray-800 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
-						bind:value={createMinConfidence}
-						id="createMinConfidence"
-					/>
-				</div>
+				<!-- TODO: Remove min confidence handling once backend no longer expects it -->
+				<input type="hidden" bind:value={createMinConfidence} id="createMinConfidence" />
 				<div class="md:col-span-2">
 					<div class="text-sm font-medium text-gray-700 dark:text-slate-200">
 						Assign to Groups (select one or more)
@@ -453,7 +444,6 @@
 								<th class="py-2 pr-4">Description</th>
 								<th class="py-2 pr-4">Groups</th>
 								<th class="py-2 pr-4">Unlock</th>
-								<th class="py-2 pr-4">Min Conf</th>
 								<th class="py-2 pr-4"></th>
 							</tr>
 						</thead>
@@ -527,20 +517,6 @@
 											/>
 										{:else}
 											{new Date(task.unlockDate).toLocaleString()}
-										{/if}
-									</td>
-									<td class="py-3 pr-4 align-top text-gray-700 dark:text-slate-200">
-										{#if editingTaskId === task.id}
-											<input
-												type="number"
-												step="0.01"
-												min="0"
-												max="1"
-												class="w-full rounded-xl border border-gray-200 bg-white p-2 text-sm text-gray-800 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
-												bind:value={editMinConfidence}
-											/>
-										{:else}
-											{task.minConfidence}
 										{/if}
 									</td>
 									<td class="py-3 pr-4 align-top">
