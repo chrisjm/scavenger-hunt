@@ -14,6 +14,13 @@ export interface ReactionSummary {
   sampleReactors: ReactorSample[];
 }
 
+export interface ReactionDetailEntry {
+  emoji: string;
+  count: number;
+  viewerHasReacted: boolean;
+  reactors: ReactorSample[];
+}
+
 export interface SubmissionListItem {
   id: string;
   userId?: string;
@@ -30,4 +37,22 @@ export interface SubmissionListItem {
   reactions: ReactionSummary[];
   viewerReactionEmojis: string[];
   availableReactionEmojis: string[];
+}
+
+export interface ReactionDetailSubmission {
+  id: string;
+  userId?: string;
+  userName: string;
+  taskDescription: string;
+  imagePath: string;
+  valid: boolean;
+  submittedAt: string;
+  groupId?: string;
+}
+
+export interface SubmissionReactionDetailPayload {
+  submission: ReactionDetailSubmission;
+  reactions: ReactionDetailEntry[];
+  viewerReactions: string[];
+  availableEmojis: string[];
 }
