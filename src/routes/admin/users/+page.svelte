@@ -15,6 +15,7 @@
 		isAdmin: boolean;
 		createdAt: string;
 		lastLoginAt: string | null;
+		currentGroup: { id: string; name: string } | null;
 	};
 
 	type AdminGroup = {
@@ -305,6 +306,7 @@
 						<thead class="text-xs uppercase text-gray-500 dark:text-slate-400">
 							<tr>
 								<th class="py-2 pr-4">Name</th>
+								<th class="py-2 pr-4">Current Group</th>
 								<th class="py-2 pr-4">Admin</th>
 								<th class="py-2 pr-4">Last Login</th>
 								<th class="py-2 pr-4">Created</th>
@@ -319,6 +321,13 @@
 										<div class="font-medium text-gray-800 dark:text-slate-100">
 											{user.displayName}
 										</div>
+									</td>
+									<td class="py-3 pr-4 align-top text-gray-700 dark:text-slate-200">
+										{#if user.currentGroup}
+											<div class="font-medium">{user.currentGroup.name}</div>
+										{:else}
+											<span class="text-gray-500 dark:text-slate-400">—</span>
+										{/if}
 									</td>
 									<td class="py-3 pr-4 align-top">
 										{#if user.isAdmin}

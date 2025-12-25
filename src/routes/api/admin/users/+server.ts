@@ -26,8 +26,38 @@ export const GET: RequestHandler = async ({ locals }) => {
 			return json(adminCheck.body, { status: adminCheck.status });
 		}
 
-		const { userProfiles } = schema;
+		const { userProfiles, userGroups, groups } = schema;
 		const rows = await db.select().from(userProfiles).orderBy(userProfiles.createdAt);
+
+		const membershipRows = await db
+			.select({
+				userId: userGroups.userId,
+				groupId: userGroups.groupId,
+				groupName: groups.name,
+				joinedAt: userGroups.joinedAt
+			})
+			.from(userGroups)
+			.innerJoin(groups, eq(userGroups.groupId, groups.id));
+
+		const primaryGroupByUserId = new Map<string, { id: string; name: string; joinedAtMs: number }>();
+		for (const membership of membershipRows) {
+			const joinedAtMs =
+				membership.joinedAt instanceof Date
+					? membership.joinedAt.getTime()
+					: typeof membership.joinedAt === 'number'
+						? membership.joinedAt
+						: membership.joinedAt
+							? new Date(membership.joinedAt).getTime()
+							: 0;
+			const existing = primaryGroupByUserId.get(membership.userId);
+			if (!existing || joinedAtMs < existing.joinedAtMs) {
+				primaryGroupByUserId.set(membership.userId, {
+					id: membership.groupId,
+					name: membership.groupName,
+					joinedAtMs
+				});
+			}
+		}
 
 		const authUsers = await db.select().from(schema.authUsers);
 		const authIdByProfileId = new Map<string, string>();
@@ -49,6 +79,7 @@ export const GET: RequestHandler = async ({ locals }) => {
 		const users = rows.map((row) => {
 			const authId = authIdByProfileId.get(row.id);
 			const lastLoginAt = authId ? lastLoginByAuthId.get(authId) : undefined;
+			const primaryGroup = primaryGroupByUserId.get(row.id);
 
 			return {
 				id: row.id,
@@ -58,7 +89,13 @@ export const GET: RequestHandler = async ({ locals }) => {
 					row.createdAt instanceof Date
 						? row.createdAt.toISOString()
 						: new Date(row.createdAt as unknown as number).toISOString(),
-				lastLoginAt: lastLoginAt ? lastLoginAt.toISOString() : null
+				lastLoginAt: lastLoginAt ? lastLoginAt.toISOString() : null,
+				currentGroup: primaryGroup
+					? {
+						id: primaryGroup.id,
+						name: primaryGroup.name
+					}
+					: null
 			};
 		});
 
