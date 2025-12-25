@@ -6,8 +6,9 @@ import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { eq, inArray } from 'drizzle-orm';
 import { db, schema } from '$lib/server/db';
+import { resolveTaskGroupScope } from '$lib/server/taskVisibility';
 
-export const GET: RequestHandler = async ({ locals }) => {
+export const GET: RequestHandler = async ({ locals, url }) => {
 	try {
 		const authUser = locals.user;
 		if (!authUser) {
@@ -23,9 +24,14 @@ export const GET: RequestHandler = async ({ locals }) => {
 			.where(eq(userGroups.userId, authUser.userId));
 
 		const userGroupIds = userGroupRows.map((row) => row.groupId);
+		const requestedGroupId = url.searchParams.get('groupId');
+		const scopedGroupIds = resolveTaskGroupScope({
+			userGroupIds,
+			requestedGroupId
+		});
 
-		// If user is not in any groups, return empty array
-		if (userGroupIds.length === 0) {
+		// If user is not in any groups or requested group is unavailable, return empty array
+		if (scopedGroupIds.length === 0) {
 			return json([]);
 		}
 
@@ -33,7 +39,7 @@ export const GET: RequestHandler = async ({ locals }) => {
 		const taskGroupRows = await db
 			.select({ taskId: taskGroups.taskId })
 			.from(taskGroups)
-			.where(inArray(taskGroups.groupId, userGroupIds));
+			.where(inArray(taskGroups.groupId, scopedGroupIds));
 
 		const taskIds = [...new Set(taskGroupRows.map((row) => row.taskId))];
 

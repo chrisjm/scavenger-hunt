@@ -63,7 +63,8 @@
 		if (!userId || !activeGroupId) return;
 		progressLoading = true;
 		try {
-			const tasksResponse = await fetch('/api/tasks');
+			const params = activeGroupId ? `?groupId=${activeGroupId}` : '';
+			const tasksResponse = await fetch(`/api/tasks${params}`);
 			const tasks = (await tasksResponse.json()) as TaskSummary[];
 			const unlockedTasks = tasks.filter((task) => task.unlocked);
 

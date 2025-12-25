@@ -96,7 +96,8 @@
 		try {
 			loading = true;
 			// Load all tasks and find the one we need
-			const taskRes = await fetch('/api/tasks');
+			const params = activeGroupId ? `?groupId=${activeGroupId}` : '';
+			const taskRes = await fetch(`/api/tasks${params}`);
 			if (taskRes.ok) {
 				const tasks = (await taskRes.json()) as Task[];
 				task = tasks.find((t) => t.id === taskId) ?? null;

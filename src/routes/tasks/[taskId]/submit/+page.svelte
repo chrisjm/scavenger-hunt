@@ -57,7 +57,8 @@
 		}
 
 		try {
-			const response = await fetch('/api/tasks');
+			const params = activeGroupId ? `?groupId=${activeGroupId}` : '';
+			const response = await fetch(`/api/tasks${params}`);
 			if (response.ok) {
 				const tasks = (await response.json()) as Task[];
 				task = tasks.find((t) => t.id === taskId) ?? null;
