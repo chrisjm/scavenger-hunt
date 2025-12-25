@@ -39,7 +39,10 @@ export const GET: RequestHandler = async ({ locals }) => {
 			.from(userGroups)
 			.innerJoin(groups, eq(userGroups.groupId, groups.id));
 
-		const primaryGroupByUserId = new Map<string, { id: string; name: string; joinedAtMs: number }>();
+		const primaryGroupByUserId = new Map<
+			string,
+			{ id: string; name: string; joinedAtMs: number }
+		>();
 		for (const membership of membershipRows) {
 			const joinedAtMs =
 				membership.joinedAt instanceof Date
@@ -92,9 +95,9 @@ export const GET: RequestHandler = async ({ locals }) => {
 				lastLoginAt: lastLoginAt ? lastLoginAt.toISOString() : null,
 				currentGroup: primaryGroup
 					? {
-						id: primaryGroup.id,
-						name: primaryGroup.name
-					}
+							id: primaryGroup.id,
+							name: primaryGroup.name
+						}
 					: null
 			};
 		});
