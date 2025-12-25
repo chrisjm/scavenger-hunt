@@ -60,6 +60,7 @@
 	$effect(() => {
 		if (!browser) return;
 		if (activeGroupId) {
+			loadTasks();
 			loadSubmissions();
 			loadLeaderboard();
 		}
@@ -79,7 +80,8 @@
 
 	async function loadTasks() {
 		try {
-			const response = await fetch('/api/tasks');
+			const params = activeGroupId ? `?groupId=${activeGroupId}` : '';
+			const response = await fetch(`/api/tasks${params}`);
 			tasks = await response.json();
 		} catch (error) {
 			console.error('Failed to load tasks:', error);
