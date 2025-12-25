@@ -2,19 +2,19 @@
 // ABOUTME: Ensures group-scoped task lists can honor active group filters.
 
 interface TaskGroupScopeInput {
-  userGroupIds: string[];
-  requestedGroupId: string | null;
+	userGroupIds: string[];
+	requestedGroupId: string | null;
 }
 
 export function resolveTaskGroupScope({
-  userGroupIds,
-  requestedGroupId
+	userGroupIds,
+	requestedGroupId
 }: TaskGroupScopeInput): string[] {
-  const uniqueIds = [...new Set(userGroupIds)];
+	const uniqueIds = [...new Set(userGroupIds)];
 
-  if (!requestedGroupId) {
-    return uniqueIds;
-  }
+	if (!requestedGroupId) {
+		return uniqueIds;
+	}
 
-  return uniqueIds.includes(requestedGroupId) ? [requestedGroupId] : [];
+	return uniqueIds.includes(requestedGroupId) ? [requestedGroupId] : [];
 }
