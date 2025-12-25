@@ -27,6 +27,7 @@
 		"db:restore": "node scripts/db-backup.js restore",
 		"db:backup:list": "node scripts/db-backup.js list",
 		"db:backfill": "tsx scripts/backfill-scores.ts",
+		"move-user-group": "tsx ./scripts/move-user-group.ts",
 		"setup": "node scripts/setup-env.js"
 	},
 	"devDependencies": {
